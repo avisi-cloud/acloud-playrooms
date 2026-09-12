@@ -1,0 +1,20 @@
+.task
+bin
+node_modules
+frontend/dist
+frontend/node_modules
+frontend/.vite
+frontend/coverage
+
+# Stray icns output if wails3 generate icons is run from the module root
+/icons.icns
+
+# Platform scaffolds wails3 may regenerate but we don't ship
+build/android
+build/ios
+build/linux
+build/docker
+
+
+# Windows installer prereq fetched only when building the NSIS package
+build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
