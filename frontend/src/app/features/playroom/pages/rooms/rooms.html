@@ -1,0 +1,112 @@
+<div class="page-shell rooms-view">
+  <header class="page-header">
+    <div class="page-header-left">
+      <div class="page-header-stack">
+        <h1 class="page-header-title">Playrooms<span class="punt">.</span></h1>
+        <p class="page-header-sub">{{ filteredRooms().length }} rooms · {{ mineCount() }} mine</p>
+      </div>
+    </div>
+    <div class="page-header-actions">
+      <p-button
+        label="Refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        [disabled]="refreshing()"
+        [loading]="refreshing()"
+        (click)="refreshRooms()"
+      />
+      <p-button
+        label="Create Playroom"
+        icon="pi pi-plus"
+        severity="success"
+        size="small"
+        title="Create a playroom (c)"
+        (click)="openCreate()"
+      />
+    </div>
+  </header>
+
+  <!-- Filters get their own row. Six controls plus a shortcut legend in one
+       wrapping header grew it at the window's own 900px minimum. -->
+  <div class="filter-bar">
+    <p-iconfield>
+      <p-inputicon styleClass="pi pi-search" />
+      <input
+        id="room-search"
+        pInputText
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+        placeholder="Search playrooms"
+        class="search-input"
+      />
+    </p-iconfield>
+    <label class="mine-toggle">
+      <p-toggleswitch [ngModel]="mineOnly()" (ngModelChange)="mineOnly.set($event)" />
+      <span>Mine</span>
+    </label>
+
+    <!-- The shortcuts exist; without this nothing tells you so. -->
+    <span class="shortcut-hint" title="Keyboard shortcuts on this screen">
+      <kbd>c</kbd> create <span class="shortcut-sep">·</span> <kbd>/</kbd> search
+      <span class="shortcut-sep">·</span> <kbd>esc</kbd> close
+    </span>
+  </div>
+
+  <section class="page-body content">
+    @if (!loaded()) {
+      <!-- Nothing is drawn while the first read runs: the brand mark in the
+           shell breathes instead. This branch still has to exist, though —
+           without it the "no playrooms yet" state rendered on every first load
+           and every playhouse switch, before any data had arrived. -->
+      <p class="sr-only" role="status">Loading playrooms…</p>
+    } @else if (filteredRooms().length === 0) {
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <i class="pi pi-desktop" style="font-size: 1.75rem"></i>
+        </div>
+        @if (hasFilters()) {
+          <h3 class="empty-state-title">No playrooms match</h3>
+          <p class="empty-state-text">Nothing here matches the current search or filter.</p>
+          <div class="empty-state-actions">
+            <p-button
+              label="Clear filters"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              (click)="clearFilters()"
+            />
+          </div>
+        } @else {
+          <h3 class="empty-state-title">No playrooms yet</h3>
+          <p class="empty-state-text">Create one to get started.</p>
+          <div class="empty-state-actions">
+            <p-button label="Create" icon="pi pi-plus" size="small" (click)="openCreate()" />
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="room-grid">
+        @for (room of filteredRooms(); track room.name) {
+          <app-playroom-card
+            [room]="room"
+            [currentUser]="state.user()"
+            (openRoom)="openRoom($event)"
+            (connectRoom)="openConnect($event, 'connect')"
+            (openInEditor)="openConnect($event, 'open')"
+            (startRoom)="startRoom($event)"
+            (stopRoom)="stopRoom($event)"
+            (editRoom)="openUpdate($event)"
+            (deleteRoom)="askDelete($event)"
+          />
+        }
+      </div>
+    }
+  </section>
+</div>
+
+<!-- ── Create wizard ─────────────────────────────────────────────────────── -->
+<app-create-playroom-drawer [(visible)]="showCreate" [playhouse]="state.playhouse()" />
+
+<app-playroom-actions-host #roomActions />

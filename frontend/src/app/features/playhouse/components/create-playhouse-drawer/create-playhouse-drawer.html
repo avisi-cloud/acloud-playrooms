@@ -1,0 +1,488 @@
+<p-drawer
+  [visible]="visible"
+  (visibleChange)="onVisibleChange($event)"
+  position="right"
+  [style]="{ width: 'var(--overlay-lg)' }"
+  styleClass="av-drawer ph-create-drawer"
+  appendTo="body"
+>
+  <ng-template pTemplate="header">
+    <div class="drawer-head">
+      <div class="drawer-title">Create playhouse<span class="punt">.</span></div>
+      <div class="drawer-subtitle">Guided wrapper for <code>acloud playhouse create</code>.</div>
+    </div>
+  </ng-template>
+
+  <div class="wizard-shell">
+    <app-wizard-stepper [steps]="steps" [activeIndex]="step" (stepSelect)="goStep($event)" />
+
+    <section class="wizard-card">
+      @switch (stepKey()) {
+        @case ('basics') {
+          <div class="step-head">
+            <div>
+              <div class="step-title">Name the environment</div>
+              <div class="step-sub">
+                The CLI creates or resumes a cluster slug with the <code>playhouse-</code> prefix.
+              </div>
+            </div>
+          </div>
+          <div class="field-group" [class.has-error]="touched && nameError()">
+            <label class="field-label">Playhouse name</label>
+            <input
+              pInputText
+              class="w-full"
+              [(ngModel)]="form.name"
+              (blur)="touched = true"
+              placeholder="demo"
+              spellcheck="false"
+              autocorrect="off"
+              autocapitalize="off"
+              autocomplete="off"
+            />
+            <small class="field-hint" [class.error]="touched && nameError()">{{
+              (touched && nameError()) ||
+                'You can type demo or playhouse-demo; the CLI normalizes it.'
+            }}</small>
+          </div>
+          <!-- Dimmed until there is a name; it used to read
+               "playhouse-<name>", which looks like a template that failed to
+               interpolate rather than a hint. -->
+          <div class="slug-preview" [class.slug-preview--empty]="!form.name.trim()">
+            <span>Cluster slug</span>
+            @if (form.name.trim()) {
+              <strong>{{ displaySlug() }}</strong>
+            } @else {
+              <strong
+                ><span class="slug-stem">playhouse-</span><em class="slug-blank">name</em></strong
+              >
+            }
+          </div>
+          <!-- Positive phrasing: the flag is --no-default, but a toggle whose ON
+               means "do not" has to be un-negated on every read. -->
+          <label class="toggle-line mt-3">
+            <span
+              >Set as the active playhouse after creation<small class="flag-ref"
+                >--no-default</small
+              ></span
+            >
+            <p-toggleswitch
+              [ngModel]="!form.noDefault"
+              (ngModelChange)="form.noDefault = !$event"
+            />
+          </label>
+        }
+        @case ('tailscale') {
+          <div class="step-head">
+            <div>
+              <div class="step-title">Connectivity</div>
+              <div class="step-sub">
+                How playrooms in this playhouse are reached. This becomes their default exposure.
+              </div>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Exposure</label>
+            <p-select
+              [options]="exposureOptions"
+              optionLabel="label"
+              optionValue="id"
+              [(ngModel)]="form.exposure"
+              [style]="{ width: '100%' }"
+              appendTo="body"
+            />
+            <small class="field-hint">
+              @switch (form.exposure) {
+                @case ('nodeport') {
+                  Free direct SSH, but only where the provider gives nodes public IPs.
+                }
+                @case ('portforward') {
+                  No public exposure at all; playrooms are reached through the API server.
+                }
+                @default {
+                  Playrooms join your tailnet. Needs a Tailscale organisation and OAuth credentials.
+                }
+              }
+            </small>
+          </div>
+
+          <!-- Only the tailscale exposure needs credentials. Asking for them
+               unconditionally is what used to make the other two unreachable. -->
+          @if (needsTailscale()) {
+            <div
+              class="field-group"
+              [class.has-error]="touched && !form.tailscaleOAuthClientID.trim()"
+            >
+              <label class="field-label">OAuth client ID</label>
+              <input
+                pInputText
+                class="w-full"
+                [(ngModel)]="form.tailscaleOAuthClientID"
+                autocomplete="off"
+              />
+              <small
+                class="field-hint"
+                [class.error]="touched && !form.tailscaleOAuthClientID.trim()"
+                >Required for a brand-new playhouse.</small
+              >
+            </div>
+            <div
+              class="field-group"
+              [class.has-error]="touched && !form.tailscaleOAuthClientSecret.trim()"
+            >
+              <label class="field-label">OAuth client secret</label>
+              <input
+                pInputText
+                class="w-full"
+                type="password"
+                [(ngModel)]="form.tailscaleOAuthClientSecret"
+                autocomplete="off"
+              />
+              <small
+                class="field-hint"
+                [class.error]="touched && !form.tailscaleOAuthClientSecret.trim()"
+                >Not persisted in the GUI cache, and masked in the command preview.</small
+              >
+            </div>
+          }
+        }
+        @case ('placement') {
+          <div class="step-head">
+            <div>
+              <div class="step-title">Placement and upgrades</div>
+              <div class="step-sub">
+                Pick the cloud account to provision in. Other fields are inferred unless you set
+                them.
+              </div>
+            </div>
+          </div>
+          <div class="field-group" [class.has-error]="touched && cloudAccountError()">
+            <label class="field-label">Cloud account <span class="req">*</span></label>
+            <p-select
+              appTypeToFilter
+              [options]="cloudAccounts"
+              [(ngModel)]="form.cloudAccount"
+              optionValue="Identity"
+              optionLabel="DisplayName"
+              [editable]="true"
+              [loading]="cloudAccountsLoading"
+              [placeholder]="
+                cloudAccountsLoading ? 'Loading cloud accounts…' : 'Select or type a cloud account'
+              "
+              (onBlur)="touched = true"
+              appendTo="body"
+              filterBy="DisplayName,Provider,Regions"
+              [style]="{ width: '100%' }"
+            >
+              <ng-template let-account pTemplate="item">
+                <div class="ca-option">
+                  <span class="ca-name">{{ account.DisplayName }}</span>
+                  <span class="ca-meta"
+                    >{{ account.Provider
+                    }}{{ account.Regions ? ' · ' + account.Regions : '' }}</span
+                  >
+                </div>
+              </ng-template>
+            </p-select>
+            @if (cloudAccountsError) {
+              <small class="field-hint error"
+                >Could not load cloud accounts: {{ cloudAccountsError }}
+                <a class="link" (click)="loadCloudAccounts()">Retry</a></small
+              >
+            } @else {
+              <small class="field-hint" [class.error]="touched && cloudAccountError()">{{
+                (touched && cloudAccountError()) ||
+                  'Pick from the list, or type a cloud account identity or name.'
+              }}</small>
+            }
+          </div>
+          <div class="field-group">
+            <label class="field-label">Environment</label>
+            <p-select
+              appTypeToFilter
+              [options]="environments"
+              [(ngModel)]="form.environment"
+              optionValue="Slug"
+              optionLabel="Name"
+              [editable]="true"
+              [showClear]="true"
+              [loading]="environmentsLoading"
+              [placeholder]="
+                environmentsLoading ? 'Loading environments…' : 'Inferred if the org has one'
+              "
+              appendTo="body"
+              filterBy="Name,Slug,Description"
+              [style]="{ width: '100%' }"
+            >
+              <ng-template let-env pTemplate="item">
+                <div class="ca-option">
+                  <span class="ca-name">{{ env.Name || env.Slug }}</span>
+                  <span class="ca-meta"
+                    >{{ env.Slug }}{{ env.Description ? ' · ' + env.Description : '' }}</span
+                  >
+                </div>
+              </ng-template>
+            </p-select>
+            @if (environmentsError) {
+              <small class="field-hint error"
+                >Could not load environments: {{ environmentsError }}
+                <a class="link" (click)="loadEnvironments()">Retry</a></small
+              >
+            } @else {
+              <small class="field-hint"
+                >Optional. Pick from the list, type an environment slug, or leave empty to let the
+                CLI infer it.</small
+              >
+            }
+          </div>
+          <label class="toggle-line advanced-toggle"
+            ><span>Show advanced placement flags</span
+            ><p-toggleswitch [(ngModel)]="form.advancedPlacement"
+          /></label>
+          @if (form.advancedPlacement) {
+            <div class="field-group">
+              <label class="field-label">Region</label
+              ><input
+                pInputText
+                class="w-full"
+                [(ngModel)]="form.region"
+                placeholder="inferred if only one"
+              />
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label">Update channel</label
+                ><input
+                  pInputText
+                  class="w-full"
+                  [(ngModel)]="form.updateChannel"
+                  [disabled]="!!form.version.trim()"
+                  placeholder="regular"
+                />
+              </div>
+              <div class="field-group">
+                <label class="field-label">Pinned version</label
+                ><input
+                  pInputText
+                  class="w-full"
+                  [(ngModel)]="form.version"
+                  (ngModelChange)="form.updateChannel = $event ? '' : 'regular'"
+                  placeholder="leave empty to track channel"
+                />
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Maintenance schedule identity</label
+              ><input
+                pInputText
+                class="w-full"
+                [(ngModel)]="form.maintenanceScheduleIdentity"
+                placeholder="dedicated schedule if empty"
+              />
+            </div>
+          } @else {
+            <div class="review-grid">
+              <div><span>Region</span><strong>CLI inferred</strong></div>
+              <div><span>Update channel</span><strong>regular</strong></div>
+            </div>
+          }
+        }
+        @case ('capacity') {
+          <div class="step-head">
+            <div>
+              <div class="step-title">Capacity</div>
+              <div class="step-sub">
+                Defaults match the CLI: one system node and autoscaling playroom capacity up to
+                three nodes.
+              </div>
+            </div>
+          </div>
+          <label class="toggle-line advanced-toggle"
+            ><span>Show advanced node flags</span
+            ><p-toggleswitch [(ngModel)]="form.advancedCapacity"
+          /></label>
+          <div class="field-row">
+            <div class="field-group" [class.has-error]="touched && capacityError()">
+              <label class="field-label">System nodes</label>
+              <input pInputText class="w-full" type="number" min="1" [(ngModel)]="form.nodeCount" />
+            </div>
+            <div class="field-group" [class.has-error]="touched && capacityError()">
+              <label class="field-label">Max playroom nodes</label>
+              <input
+                pInputText
+                class="w-full"
+                type="number"
+                min="1"
+                [(ngModel)]="form.maxPlayroomNodes"
+              />
+            </div>
+          </div>
+          @if (touched && capacityError()) {
+            <small class="field-hint error">{{ capacityError() }}</small>
+          }
+          @if (form.advancedCapacity) {
+            <div class="field-row mt-3">
+              <div class="field-group">
+                <label class="field-label">Node type</label
+                ><input
+                  pInputText
+                  class="w-full"
+                  [(ngModel)]="form.nodeType"
+                  placeholder="provider default"
+                />
+              </div>
+              <div class="field-group">
+                <label class="field-label">System node type</label
+                ><input
+                  pInputText
+                  class="w-full"
+                  [(ngModel)]="form.systemNodeType"
+                  placeholder="provider default"
+                />
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label">Playroom node type</label
+                ><input
+                  pInputText
+                  class="w-full"
+                  [(ngModel)]="form.playroomNodeType"
+                  placeholder="provider default"
+                />
+              </div>
+              <div class="field-group">
+                <label class="field-label">Wait timeout</label
+                ><input pInputText class="w-full" [(ngModel)]="form.waitTimeout" />
+              </div>
+            </div>
+            <!-- Privileged playrooms land on their own pool, so it has its own
+                 node type and ceiling. Zero leaves the flag off entirely. -->
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label">Privileged node type</label>
+                <input
+                  pInputText
+                  class="w-full"
+                  [(ngModel)]="form.privilegedNodeType"
+                  placeholder="provider default"
+                />
+              </div>
+              <div class="field-group" [class.has-error]="touched && capacityPrivilegedError()">
+                <label class="field-label">Max privileged nodes</label>
+                <input
+                  pInputText
+                  class="w-full"
+                  type="number"
+                  min="0"
+                  [(ngModel)]="form.maxPrivilegedNodes"
+                />
+                <small class="field-hint" [class.error]="touched && capacityPrivilegedError()">
+                  {{ capacityPrivilegedError() || '0 leaves the CLI default in place.' }}
+                </small>
+              </div>
+            </div>
+          }
+        }
+        @default {
+          <div class="step-head">
+            <div>
+              <div class="step-title">Review</div>
+              <div class="step-sub">
+                Create waits for the playhouse to run and bootstraps it before returning.
+              </div>
+            </div>
+          </div>
+          <div class="review-grid">
+            <div>
+              <span>Name</span><strong>{{ displaySlug() }}</strong>
+            </div>
+            <div>
+              <span>Cloud account</span><strong>{{ selectedCloudAccountLabel() }}</strong>
+            </div>
+            <div>
+              <span>Environment</span
+              ><strong>{{
+                (form.environment || '').trim()
+                  ? environmentLabel((form.environment || '').trim())
+                  : 'CLI inferred'
+              }}</strong>
+            </div>
+            <div>
+              <span>Exposure</span><strong>{{ form.exposure }}</strong>
+            </div>
+            <div>
+              <span>Tailscale</span
+              ><strong>{{
+                needsTailscale()
+                  ? form.tailscaleOAuthClientID
+                    ? 'credentials set'
+                    : 'missing'
+                  : 'not needed'
+              }}</strong>
+            </div>
+            <div>
+              <span>System nodes</span><strong>{{ form.nodeCount }}</strong>
+            </div>
+            <div>
+              <span>Max playroom nodes</span><strong>{{ form.maxPlayroomNodes }}</strong>
+            </div>
+            <div>
+              <span>Version strategy</span
+              ><strong>{{ form.version || form.updateChannel || 'regular' }}</strong>
+            </div>
+            <div>
+              <span>Default</span
+              ><strong>{{ form.noDefault ? 'leave unchanged' : 'select after create' }}</strong>
+            </div>
+          </div>
+          @if (versionError()) {
+            <div class="danger-copy danger-copy--strong">
+              <i class="pi pi-exclamation-triangle"></i>{{ versionError() }}
+            </div>
+          }
+        }
+      }
+    </section>
+  </div>
+
+  <app-command-preview [input]="toInput()" [previewFn]="previewCreate" [enabled]="visible" />
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [text]="true"
+      size="small"
+      styleClass="footer-cancel"
+      (click)="close()"
+    />
+    @if (step > 0) {
+      <p-button
+        label="Back"
+        icon="pi pi-arrow-left"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        (click)="previous()"
+      />
+    }
+    @if (step < steps.length - 1) {
+      <p-button
+        label="Next"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        size="small"
+        (click)="next()"
+      />
+    } @else {
+      <p-button
+        label="Create playhouse"
+        icon="pi pi-plus"
+        size="small"
+        [disabled]="!canCreate()"
+        (click)="submit()"
+      />
+    }
+  </ng-template>
+</p-drawer>

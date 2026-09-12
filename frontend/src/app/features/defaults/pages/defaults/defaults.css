@@ -1,0 +1,291 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.settings-view {
+  font-size: 14px;
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────────── */
+.settings-body {
+  padding: 22px 28px 40px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+
+/* Centred, so growing the window does not leave the column pinned left. */
+.settings-column {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.dirty-count {
+  font-size: 11.5px;
+  color: var(--cyan);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Groups ───────────────────────────────────────────────────────────────── */
+.defaults-group {
+  margin-bottom: 32px;
+}
+
+.group-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--tx-3);
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── Default row ──────────────────────────────────────────────────────────
+   Three columns: the key, a capped control, and the built-in reference. It was
+   `180px 1fr`, which handed the control everything left over — a ~1050px text
+   input for a value like "4Gi", and a slider whose full travel spanned the
+   window for a seven-stop choice.
+   ───────────────────────────────────────────────────────────────────────── */
+.default-row {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 400px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+  padding: 12px;
+  margin: 0 -12px;
+  border-bottom: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  transition: background 0.14s;
+}
+.default-row.is-dirty {
+  background: color-mix(in srgb, var(--cyan) 5%, transparent);
+  box-shadow: inset 2px 0 0 var(--cyan);
+}
+
+.row-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+}
+.key-name {
+  font-size: 12.5px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  color: var(--tx);
+}
+
+:host ::ng-deep .source-tag.p-tag {
+  font-size: 9.5px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  padding: 1px 7px;
+}
+
+.reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  color: var(--tx-3);
+  cursor: pointer;
+  transition:
+    color 0.14s,
+    border-color 0.14s;
+  flex-shrink: 0;
+}
+.reset-btn:hover {
+  color: var(--tx);
+  border-color: var(--cyan);
+}
+.reset-btn .pi {
+  font-size: 11px;
+}
+
+.row-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.row-builtin {
+  padding-top: 8px;
+  font-size: 11px;
+  color: var(--tx-3);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.row-builtin code {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--tx-2);
+}
+
+/* ── Slider ───────────────────────────────────────────────────────────────── */
+.slider-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slider-value-row {
+  display: flex;
+  justify-content: flex-end;
+}
+.slider-current-val {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+:host ::ng-deep .settings-slider.p-slider {
+  background: var(--border-2);
+  border: none;
+  height: 4px;
+}
+:host ::ng-deep .settings-slider.p-slider .p-slider-range {
+  background: var(--cyan);
+}
+:host ::ng-deep .settings-slider.p-slider .p-slider-handle {
+  width: 16px;
+  height: 16px;
+  background: var(--cyan);
+  border: 2px solid var(--win);
+  box-shadow: 0 0 0 2px var(--cyan);
+  transition: box-shadow 0.14s;
+}
+:host ::ng-deep .settings-slider.p-slider .p-slider-handle:hover,
+:host ::ng-deep .settings-slider.p-slider .p-slider-handle:focus-visible {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--cyan) 30%, transparent);
+}
+
+/* Ticks are absolutely positioned at index / (count - 1), matching where the
+   handle actually stops. As equal flex slots they were centred in their own
+   cell, so every label drifted from the value it named. */
+.slider-ticks {
+  position: relative;
+  height: 12px;
+  margin-top: 2px;
+}
+.slider-tick {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 9.5px;
+  color: var(--tx-3);
+  user-select: none;
+  line-height: 1;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+/* The end labels would otherwise hang off the track. */
+.slider-tick:first-child {
+  transform: translateX(0);
+}
+.slider-tick:last-child {
+  transform: translateX(-100%);
+}
+
+/* ── Select ───────────────────────────────────────────────────────────────── */
+:host ::ng-deep .p-select {
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+/* ── Toggle ───────────────────────────────────────────────────────────────── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.toggle-val {
+  font-size: 12.5px;
+  color: var(--tx-2);
+}
+
+/* ── Text input ───────────────────────────────────────────────────────────── */
+.text-input {
+  width: 100%;
+  font-size: 12.5px;
+  font-family: var(--font-mono);
+}
+
+/* ── Overridden ───────────────────────────────────────────────────────────
+   A row whose value is no longer the built-in one says so in green, on the
+   control itself: the source tag alone was a small badge at the far left of
+   the row, too far from the value it described to register as a change.
+   Unsaved edits keep their own cyan row tint (.is-dirty) — the two states are
+   independent, and a saved override has to stay visible after the tint goes.
+
+   The colour is --ok rather than the flat --accent: both are the same green in
+   dark mode, but --accent keeps that brightness on the light surface too,
+   where it is too pale to read at 11-12px.
+   ───────────────────────────────────────────────────────────────────────── */
+.settings-view {
+  --changed: var(--ok);
+}
+
+:host ::ng-deep .is-overridden .settings-slider.p-slider .p-slider-range {
+  background: var(--changed);
+}
+:host ::ng-deep .is-overridden .settings-slider.p-slider .p-slider-handle {
+  background: var(--changed);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--changed) 35%, transparent);
+}
+:host ::ng-deep .is-overridden .settings-slider.p-slider .p-slider-handle:hover,
+:host ::ng-deep .is-overridden .settings-slider.p-slider .p-slider-handle:focus-visible {
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--changed) 35%, transparent);
+}
+
+/* The current value, whichever control holds it. */
+.is-overridden .slider-current-val,
+.is-overridden .toggle-val,
+.is-overridden .text-input {
+  color: var(--changed);
+}
+
+.is-overridden .text-input,
+:host ::ng-deep .is-overridden .p-select {
+  border-color: color-mix(in srgb, var(--changed) 50%, var(--border-2));
+}
+:host ::ng-deep .is-overridden .p-select .p-select-label {
+  color: var(--changed);
+}
+:host ::ng-deep .is-overridden .p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-slider {
+  background: var(--changed);
+}
+
+/* And the value it moved away from, so the two can be compared at a glance. */
+.is-overridden .row-builtin {
+  color: var(--tx-2);
+}
+.is-overridden .row-builtin code {
+  color: var(--tx);
+  background: color-mix(in srgb, var(--tx-3) 16%, transparent);
+  border-radius: var(--r-sm);
+  padding: 1px 6px;
+}
+
+@media (max-width: 900px) {
+  .default-row {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .row-label {
+    padding-top: 0;
+  }
+  .row-builtin {
+    padding-top: 0;
+  }
+}

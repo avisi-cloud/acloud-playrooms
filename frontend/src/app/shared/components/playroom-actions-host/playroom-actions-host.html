@@ -1,0 +1,35 @@
+<app-playroom-connect-dialog [(visible)]="showConnect" [room]="room" [tab]="connectTab" />
+
+<app-playroom-update-drawer [(visible)]="showUpdate" [room]="room" />
+
+<app-confirm-delete-dialog
+  [(visible)]="showDelete"
+  [title]="'Delete ' + (room?.name ?? '')"
+  subtitle="This deletes the playroom. Type the name to confirm."
+  [confirmTarget]="room?.name ?? ''"
+  confirmLabel="Confirm name"
+  warning="Deleting removes the playroom and its persistent storage. This cannot be undone."
+  [previewInput]="deleteInput()"
+  [previewFn]="previewDelete"
+  (confirm)="confirmDelete()"
+>
+  <details class="disclosure" advanced>
+    <summary>Advanced delete flags</summary>
+    <div class="field-row mt-3">
+      <div class="field-group">
+        <label class="field-label">Wait timeout</label>
+        <input pInputText class="w-full" [(ngModel)]="deleteTimeout" />
+      </div>
+      <div class="toggle-stack">
+        <label class="toggle-line">
+          <span>Return without waiting<small class="flag-ref">--no-wait</small></span>
+          <p-toggleswitch [(ngModel)]="deleteNoWait" />
+        </label>
+        <label class="toggle-line">
+          <span>Delete one you do not own<small class="flag-ref">--force</small></span>
+          <p-toggleswitch [(ngModel)]="deleteForce" />
+        </label>
+      </div>
+    </div>
+  </details>
+</app-confirm-delete-dialog>

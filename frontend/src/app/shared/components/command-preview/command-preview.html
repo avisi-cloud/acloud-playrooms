@@ -1,0 +1,32 @@
+<div class="command-preview" [class.tight]="tight">
+  @if (copyable) {
+    <div class="command-preview-header">
+      <span class="section-label">{{ label }}</span>
+      <p-button
+        [label]="copied() ? 'Copied' : 'Copy'"
+        icon="pi pi-copy"
+        severity="secondary"
+        [text]="true"
+        size="small"
+        [disabled]="!resolvedCommand()"
+        (click)="copyCommandToClipboard()"
+      />
+    </div>
+  }
+  <button
+    class="command-block"
+    [class.command-block--readonly]="!copyable"
+    type="button"
+    (click)="copyCommandToClipboard()"
+  >
+    <span class="command-prompt">❯</span>
+    @if (resolvedCommand(); as resolved) {
+      <span class="command-text">{{ resolved }}</span>
+    } @else {
+      <!-- Waiting on the backend. Without this the block is a bare black bar
+           with a prompt glyph, which is what you look at while typing a name on
+           the first step of a create wizard. -->
+      <span class="command-text command-text--pending">{{ placeholder }}</span>
+    }
+  </button>
+</div>

@@ -1,0 +1,497 @@
+/* The sidebar: brand, the three scope pickers, nav, tool statuses, and the
+   footer row of activity / theme / account.
+
+   Split out of app.css, which had grown to hold four unrelated things. Loaded
+   through `styleUrls` on the App component, so it stays component-scoped — it
+   is not a shared stylesheet and nothing else should import it.
+
+   SIDEBAR — always light text regardless of theme (sits over background image)
+
+   Three text tiers, not one. Everything here used to be #f5f7fa at full
+   opacity — brand name, sub, version, section labels, nav, tool names — so six
+   levels of information rendered identically and nothing receded.
+   ════════════════════════════════════════════════════════════════════════ */
+.sidebar {
+  --side-tx: #f5f7fa; /* values, nav, anything you act on */
+  --side-tx-2: rgba(245, 247, 250, 0.72); /* supporting text */
+  --side-tx-3: rgba(245, 247, 250, 0.52); /* uppercase labels, version */
+
+  position: relative;
+  width: 220px;
+  flex: 0 0 220px;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 8px;
+  color: var(--side-tx);
+  margin: 0 6px 0 10px;
+  min-height: 0;
+}
+
+/* No scrim. A gradient over the sidebar column alone left a hard vertical edge
+   where it stopped — visible in the 10px strip above the main panel, which the
+   panel does not cover — so the one background image read as two surfaces with
+   a divider between them. The controls carry their own backgrounds, and the
+   artwork is dark enough throughout to hold light text without help. */
+.sidebar > * {
+  position: relative;
+}
+
+/* macOS draws its traffic lights over the content because the window is
+   configured with a transparent full-size title bar. Every other platform gets
+   a real title bar above the webview, where reserving this space would just be
+   a dead 38px strip. The shell sets the height at startup; the 38px fallback
+   means a mac never renders a frame without the gap. */
+.traffic-zone {
+  height: var(--traffic-zone-height, 38px);
+  flex-shrink: 0;
+  --wails-draggable: drag;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 14px 16px 20px;
+  flex-shrink: 0;
+  /* Drag surface. The traffic-light strip alone is thin, and with the window's
+     title bar hidden this is the natural place to grab. */
+  --wails-draggable: drag;
+}
+/* …but not the controls inside it. */
+.sidebar-brand a,
+.sidebar-brand button {
+  --wails-draggable: no-drag;
+}
+
+.sidebar-brand-img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.sidebar-brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sidebar-brand-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--side-tx);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.sidebar-brand-sub {
+  font-size: 10px;
+  color: var(--side-tx-2);
+  margin-top: 2px;
+}
+
+.sidebar-brand-version {
+  font-size: 9.5px;
+  color: var(--side-tx-3);
+  margin-top: 3px;
+  font-family: var(--font-mono);
+}
+
+/* Only rendered when the running acloud is newer than the version these
+   screens were verified against. Amber rather than red: nothing is broken,
+   a control may just be missing. The full sentence is in the title. */
+.sidebar-brand-warning {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 9.5px;
+  line-height: 1.2;
+  /* The sidebar stays dark in both themes, so this is the on-dark amber. */
+  color: var(--warn-on-dark);
+  cursor: help;
+}
+
+.sidebar-brand-warning i {
+  font-size: 9px;
+  flex: none;
+}
+
+.sidebar-brand-warning span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.punt {
+  color: var(--cyan);
+}
+
+/* Scrolls rather than clips. The tool list comes from the backend, and at the
+   window's 600px minimum height a third entry used to push the account button
+   off the bottom with no way to reach it. */
+.sidebar-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 247, 250, 0.22) transparent;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-section {
+  padding: 4px 12px;
+  flex-shrink: 0;
+}
+
+.sidebar-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--side-tx-3);
+  margin-bottom: 6px;
+}
+
+/* Context, organisation and playhouse pickers — one control, three scopes. */
+.scope-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(245, 247, 250, 0.15);
+  border-radius: 6px;
+  padding: 7px 10px;
+  cursor: pointer;
+  color: var(--side-tx);
+  font-size: 12.5px;
+  font-family: var(--font-sans);
+  transition:
+    border-color 0.14s,
+    background 0.14s;
+}
+.scope-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.38);
+  border-color: rgba(245, 247, 250, 0.28);
+}
+.scope-btn:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+.scope-slug {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  text-align: left;
+}
+.scope-chevron {
+  color: var(--side-tx-2);
+  font-size: 11px;
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+
+/* Tool status */
+.tools-section {
+  padding-top: 10px;
+}
+
+.tool-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tool-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 20px;
+  color: var(--side-tx-2);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.tool-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(245, 247, 250, 0.28);
+  flex: 0 0 8px;
+}
+
+.tool-dot.installed {
+  background: var(--ok);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--ok) 14%, transparent),
+    0 0 12px color-mix(in srgb, var(--ok) 72%, transparent);
+  animation: tool-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes tool-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--ok) 14%, transparent),
+      0 0 12px color-mix(in srgb, var(--ok) 72%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, var(--ok) 22%, transparent),
+      0 0 16px color-mix(in srgb, var(--ok) 95%, transparent);
+  }
+}
+
+.tool-dot.missing {
+  background: rgba(245, 247, 250, 0.25);
+  box-shadow: 0 0 0 1px rgba(245, 247, 250, 0.12);
+}
+
+.tool-dot.unknown {
+  background: var(--warn);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--warn) 16%, transparent),
+    0 0 10px color-mix(in srgb, var(--warn) 52%, transparent);
+}
+
+.tool-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Nav links */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 0;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--side-tx);
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  transition:
+    background 0.14s,
+    color 0.14s;
+  user-select: none;
+}
+.sidebar-link:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: var(--side-tx);
+}
+.sidebar-link.active {
+  background: rgba(17, 153, 187, 0.22);
+  color: #9fe3f5;
+}
+
+.sidebar-badge {
+  margin-left: auto;
+  font-size: 10.5px;
+  color: var(--side-tx-2);
+  background: rgba(255, 255, 255, 0.1);
+  padding: 1px 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: rgba(245, 247, 250, 0.1);
+  margin: 8px 12px;
+  flex-shrink: 0;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+/* Footer: theme toggle + user */
+.sidebar-footer {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.theme-btn {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--side-tx);
+  font-family: var(--font-sans);
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+.theme-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(245, 247, 250, 0.16);
+}
+.theme-icon {
+  font-size: 11px;
+  color: var(--side-tx-2);
+  flex-shrink: 0;
+}
+.theme-label {
+  font-size: 11.5px;
+  flex: 1;
+  min-width: 0;
+}
+.theme-state {
+  font-size: 9.5px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--side-tx-3);
+}
+
+.account-btn {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--side-tx);
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+.account-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(245, 247, 250, 0.16);
+}
+.account-btn:disabled {
+  cursor: default;
+  opacity: 0.8;
+}
+
+/* Signed out is the state that needs an action taken, so it gets a real
+   button rather than less emphasis than everything around it. */
+.account-btn.signed-out {
+  background: rgba(17, 153, 187, 0.16);
+  border-color: rgba(17, 153, 187, 0.42);
+}
+.account-btn.signed-out:hover:not(:disabled) {
+  background: rgba(17, 153, 187, 0.24);
+  border-color: rgba(17, 153, 187, 0.6);
+}
+
+.account-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  flex: 1;
+  min-width: 0;
+}
+.account-name {
+  font-size: 11.5px;
+  color: var(--side-tx);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-action {
+  font-size: 9.5px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--side-tx-3);
+}
+.account-btn.signed-out .account-action {
+  color: #9fe3f5;
+  font-weight: 600;
+}
+
+.account-chevron {
+  font-size: 11px;
+  color: var(--side-tx-3);
+  flex-shrink: 0;
+}
+
+/* ── Activity: the way into the session's command log ─────────────────── */
+.activity-btn {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px;
+  margin-bottom: 4px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--side-tx);
+  font-family: var(--font-sans);
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+.activity-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(245, 247, 250, 0.16);
+}
+.activity-icon {
+  font-size: 11px;
+  color: var(--side-tx-2);
+  flex-shrink: 0;
+}
+.activity-btn.running .activity-icon {
+  color: #7dd7ea;
+}
+.activity-btn.failed .activity-icon {
+  color: var(--bad-on-dark);
+}
+.activity-label {
+  font-size: 11.5px;
+  flex: 1;
+  min-width: 0;
+}
+.activity-state {
+  font-size: 9.5px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  color: var(--side-tx-3);
+}
+.activity-btn.running .activity-state {
+  color: #7dd7ea;
+}
+.activity-btn.failed .activity-state {
+  color: var(--bad-on-dark);
+  font-weight: 600;
+}

@@ -1,0 +1,178 @@
+<div class="page-shell settings-view">
+  <header class="page-header">
+    <!-- Back button and title in one group. All three children used to sit
+         directly under justify-content: space-between, which spread them across
+         the full width and stranded the title in the middle of the header. -->
+    <div class="page-header-left">
+      <button class="page-back-btn" (click)="goBack()">
+        <i class="pi pi-arrow-left"></i>
+        <span>Back</span>
+      </button>
+      <div class="page-header-divider"></div>
+      <div class="page-header-stack">
+        <h1 class="page-header-title">Defaults<span class="punt">.</span></h1>
+        <p class="page-header-sub">
+          Override the built-in values used when creating playrooms, here and in the terminal.
+        </p>
+      </div>
+    </div>
+    <div class="page-header-actions">
+      @if (dirtyCount() > 0) {
+        <span class="dirty-count">{{ dirtyCount() }} unsaved</span>
+      }
+      <p-button
+        label="Reset all"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        title="Clears every configured default, restoring the built-in values"
+        [disabled]="loading() || saving() || !hasConfigured()"
+        (click)="resetAll()"
+      />
+      <p-button
+        label="Save"
+        icon="pi pi-check"
+        size="small"
+        [disabled]="loading() || saving() || !hasDirty()"
+        [loading]="saving()"
+        (click)="saveDefaults()"
+      />
+    </div>
+  </header>
+
+  <div class="page-body settings-body">
+    @if (loading()) {
+      <!-- The shell's brand mark breathes instead; see PageLoadingService. -->
+      <p class="sr-only" role="status">Loading defaults…</p>
+    } @else if (failure(); as failed) {
+      <div class="state-center">
+        <i class="pi pi-exclamation-circle state-icon danger"></i>
+        <span class="state-text">{{ failed.problem }}</span>
+        @if (failed.remedy) {
+          <span class="state-hint">{{ failed.remedy }}</span>
+        }
+        <p-button
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (click)="refreshDefaults()"
+        />
+      </div>
+    } @else {
+      <div class="settings-column">
+        @for (group of groups(); track group.label) {
+          <section class="defaults-group">
+            <div class="group-label">{{ group.label }}</div>
+
+            @for (row of group.rows; track row.Key) {
+              <div
+                class="default-row"
+                [class.is-dirty]="row.dirty"
+                [class.is-overridden]="row.overridden"
+              >
+                <!-- Key label + source badge + reset -->
+                <div class="row-label">
+                  <span class="key-name">{{ row.Key }}</span>
+                  @if (row.Source !== 'built-in') {
+                    <p-tag
+                      [value]="row.Source"
+                      [severity]="sourceSeverity(row.Source)"
+                      [rounded]="true"
+                      styleClass="source-tag"
+                    />
+                  }
+                  @if (row.dirty) {
+                    <button
+                      class="reset-btn"
+                      type="button"
+                      title="Revert to built-in"
+                      [attr.aria-label]="'Revert ' + row.Key + ' to its built-in value'"
+                      (click)="markDirty(row.Key, row.Builtin)"
+                    >
+                      <i class="pi pi-undo"></i>
+                    </button>
+                  }
+                </div>
+
+                <!-- Control -->
+                <div class="row-control">
+                  @switch (row.field.kind) {
+                    @case ('slider') {
+                      <div class="slider-wrap">
+                        <div class="slider-value-row">
+                          <span class="slider-current-val">{{ sliderCurrentLabel(row) }}</span>
+                        </div>
+                        <p-slider
+                          [ngModel]="sliderValues[row.Key]"
+                          (ngModelChange)="sliderValues[row.Key] = $event"
+                          (onSlideEnd)="onSliderChange(row, $event.value ?? sliderValues[row.Key])"
+                          [min]="0"
+                          [max]="sliderMax(row.field)"
+                          [step]="sliderStep"
+                          styleClass="settings-slider"
+                        />
+                        <!-- Ticks are positioned at their real stops. Equal
+                               flex slots put the first label at 1/2n of the
+                               track while the handle's first stop is at 0, so
+                               every label drifted from the value it named. -->
+                        <div class="slider-ticks">
+                          @for (opt of sliderOptions(row.field); track opt; let i = $index) {
+                            <span class="slider-tick" [style.left.%]="tickPosition(row.field, i)">{{
+                              opt
+                            }}</span>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    @case ('select') {
+                      <p-select
+                        [options]="selectOptions(row.field)"
+                        optionLabel="label"
+                        optionValue="value"
+                        [ngModel]="row.draft"
+                        (ngModelChange)="markDirty(row.Key, $event)"
+                        appendTo="body"
+                        [style]="{ width: '100%' }"
+                      />
+                    }
+
+                    @case ('toggle') {
+                      <div class="toggle-row">
+                        <p-toggleswitch
+                          [ngModel]="toggleValue(row)"
+                          (ngModelChange)="setToggle(row.Key, $event)"
+                        />
+                        <span class="toggle-val">{{
+                          toggleValue(row) ? 'enabled' : 'disabled'
+                        }}</span>
+                      </div>
+                    }
+
+                    @default {
+                      <input
+                        pInputText
+                        class="text-input"
+                        [ngModel]="row.draft"
+                        (ngModelChange)="markDirty(row.Key, $event)"
+                        [placeholder]="row.Builtin || 'optional'"
+                      />
+                    }
+                  }
+                </div>
+
+                <!-- The reference the control is being measured against, so it
+                       carries weight once the value has moved away from it. -->
+                <div class="row-builtin">
+                  built-in: <code>{{ row.Builtin || '(empty)' }}</code>
+                </div>
+              </div>
+            }
+          </section>
+        }
+      </div>
+    }
+  </div>
+</div>

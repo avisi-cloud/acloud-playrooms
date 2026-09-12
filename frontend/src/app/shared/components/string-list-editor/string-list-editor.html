@@ -1,0 +1,34 @@
+<div [class.repeat-group]="grouped">
+  @if (showHeader) {
+    <div class="repeat-group-head">
+      <div class="repeat-label">{{ label }}</div>
+      <span class="repeat-count">{{ filledValueCount() }}</span>
+    </div>
+  }
+  @for (value of values(); track $index) {
+    <div class="repeat-row">
+      <input
+        pInputText
+        class="flex-1"
+        [ngModel]="value"
+        (ngModelChange)="replaceValueAt($index, $event)"
+        [placeholder]="placeholder"
+      />
+      <p-button
+        icon="pi pi-times"
+        severity="danger"
+        [text]="true"
+        size="small"
+        [attr.aria-label]="'Remove ' + itemLabel + ' ' + ($index + 1)"
+        (click)="removeValueAt($index)"
+      />
+    </div>
+  }
+  <p-button
+    [label]="'+ ' + addLabel"
+    severity="secondary"
+    [text]="true"
+    size="small"
+    (click)="addBlankRow()"
+  />
+</div>

@@ -1,0 +1,333 @@
+<p-drawer
+  [visible]="visible"
+  (visibleChange)="onVisibleChange($event)"
+  position="right"
+  [style]="{ width: 'var(--overlay-lg)' }"
+  styleClass="av-drawer"
+  appendTo="body"
+>
+  <ng-template pTemplate="header">
+    <div class="drawer-head">
+      <div class="drawer-title">Create playroom<span class="punt">.</span></div>
+      <div class="drawer-subtitle">Guided wrapper for <code>acloud playroom create</code>.</div>
+    </div>
+  </ng-template>
+
+  <div class="wizard-shell">
+    <app-wizard-stepper [steps]="steps" [activeIndex]="step" (stepSelect)="goStep($event)" />
+
+    <section class="wizard-card">
+      @switch (stepKey()) {
+        @case ('basics') {
+          <div class="step-head">
+            <div>
+              <div class="step-title">Name and image</div>
+              <div class="step-sub">
+                The name becomes the pod name, SSH host and workspace folder.
+              </div>
+            </div>
+          </div>
+          <div class="field-group" [class.has-error]="nameError()">
+            <label class="field-label">Name</label>
+            <input
+              pInputText
+              class="w-full"
+              [(ngModel)]="form.name"
+              (blur)="touched = true"
+              placeholder="api-refactor"
+              spellcheck="false"
+              autocorrect="off"
+              autocapitalize="off"
+              autocomplete="off"
+            />
+            <small class="field-hint" [class.error]="nameError()">{{
+              nameError() || 'Required. Lowercase letters, digits, dashes (DNS-1123).'
+            }}</small>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Image</label>
+            <p-select
+              [options]="images"
+              [(ngModel)]="form.image"
+              optionValue="Name"
+              optionLabel="Name"
+              [editable]="true"
+              placeholder="Select or type an image"
+              appendTo="body"
+              [style]="{ width: '100%' }"
+            >
+              <ng-template let-image pTemplate="item">
+                <div class="ca-option">
+                  <span class="ca-name"
+                    >{{ image.Name }}{{ image.IsDefault ? ' (default)' : '' }}</span
+                  >
+                  <span class="ca-meta">{{ image.Reference }}</span>
+                </div>
+              </ng-template>
+            </p-select>
+            <small class="field-hint">Pick a published flavor, or type a full registry path.</small>
+          </div>
+        }
+        @case ('resources') {
+          <div class="step-head">
+            <div>
+              <div class="step-title">Resources</div>
+              <div class="step-sub">
+                Defaults come from your playroom defaults. Adjust CPU, memory and storage.
+              </div>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Storage</label
+            ><input pInputText class="w-full" [(ngModel)]="form.storage" />
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">CPU request</label
+              ><input pInputText class="w-full" [(ngModel)]="form.cpuReq" />
+            </div>
+            <div class="field-group">
+              <label class="field-label">CPU limit</label
+              ><input pInputText class="w-full" [(ngModel)]="form.cpuLim" />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Memory request</label
+              ><input pInputText class="w-full" [(ngModel)]="form.memReq" />
+            </div>
+            <div class="field-group">
+              <label class="field-label">Memory limit</label
+              ><input pInputText class="w-full" [(ngModel)]="form.memLim" />
+            </div>
+          </div>
+        }
+        @case ('forwarding') {
+          <div class="step-head">
+            <div>
+              <div class="step-title">Forwarding</div>
+              <div class="step-sub">
+                Optional SSH key, environment variables, git repos, copy paths and ports.
+              </div>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">SSH public key</label
+            ><input
+              pInputText
+              class="w-full"
+              [(ngModel)]="form.sshKey"
+              placeholder="~/.ssh/id_ed25519.pub"
+            />
+          </div>
+
+          <app-string-list-editor
+            label="Environment"
+            [(values)]="form.env"
+            placeholder="ANTHROPIC_API_KEY"
+            addLabel="add env var"
+            itemLabel="environment variable"
+          />
+          <app-string-list-editor
+            label="Git repositories"
+            [(values)]="form.git"
+            placeholder="git@gitlab.avisi.cloud:team/repo.git"
+            addLabel="add git repo"
+            itemLabel="git repository"
+          />
+          <app-string-list-editor
+            label="Copy paths"
+            [(values)]="form.copy"
+            placeholder="~/work/api"
+            addLabel="add copy path"
+            itemLabel="copy path"
+          />
+          <app-string-list-editor
+            label="Forwarded ports"
+            [(values)]="form.ports"
+            placeholder="3000 or 80:3000"
+            addLabel="add port"
+            itemLabel="port"
+          />
+        }
+        @case ('options') {
+          <div class="step-head">
+            <div>
+              <div class="step-title">Network & options</div>
+              <div class="step-sub">Proxy group, wait behaviour and system flags.</div>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Exposure</label>
+            <p-select
+              [options]="exposureOptions"
+              optionLabel="label"
+              optionValue="id"
+              [(ngModel)]="form.exposure"
+              [style]="{ width: '100%' }"
+              appendTo="body"
+            />
+            <small class="field-hint"
+              >Leave on the playhouse default unless this room needs something different. Port
+              forwards require Tailscale.</small
+            >
+          </div>
+          <div class="field-group">
+            <label class="field-label">Proxy group</label
+            ><input pInputText class="w-full" [(ngModel)]="form.proxyGroup" />
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Wait timeout</label
+              ><input pInputText class="w-full" [(ngModel)]="form.waitTimeout" />
+            </div>
+            <div class="toggle-stack">
+              <label class="toggle-line"
+                ><span>Return without waiting<small class="flag-ref">--no-wait</small></span
+                ><p-toggleswitch [(ngModel)]="form.noWait"
+              /></label>
+              <label class="toggle-line"
+                ><span>Reinstall the agent<small class="flag-ref">--force-install</small></span
+                ><p-toggleswitch [(ngModel)]="form.forceInstall"
+              /></label>
+            </div>
+          </div>
+          <label class="toggle-line mt-2"
+            ><span
+              >Discard the disk when the playroom goes<small class="flag-ref"
+                >--ephemeral</small
+              ></span
+            ><p-toggleswitch [(ngModel)]="form.ephemeral"
+          /></label>
+          <label class="toggle-line mt-2"
+            ><span>Mount the system read-only<small class="flag-ref">--read-only</small></span
+            ><p-toggleswitch [(ngModel)]="form.readOnly"
+          /></label>
+
+          <!-- Dangerous flags are shown with the CLI's own warning rather than
+               hidden, so the GUI stays a faithful mirror of the command. -->
+          <!-- [open] while privileged is on: collapsing it used to hide the
+               acknowledgement and its validation message, leaving Create
+               disabled on the Review step with the reason out of sight. -->
+          <details class="disclosure mt-3" [open]="form.privileged">
+            <summary>Advanced &mdash; privileged mode</summary>
+            <label class="toggle-line mt-3"
+              ><span>Run privileged<small class="flag-ref">--privileged</small></span
+              ><p-toggleswitch [(ngModel)]="form.privileged"
+            /></label>
+            @if (form.privileged) {
+              <div class="danger-note">
+                <i class="pi pi-exclamation-triangle"></i>
+                <span>
+                  A privileged playroom runs with all Linux capabilities and access to host devices.
+                  It can affect the node it lands on and anything else running there. Only use it
+                  when a workload genuinely requires it.
+                </span>
+              </div>
+              <label class="toggle-line mt-2">
+                <span>I understand what privileged mode grants</span>
+                <p-toggleswitch [(ngModel)]="form.acknowledgePrivileged" />
+              </label>
+              @if (touched && privilegedError()) {
+                <small class="field-hint error">{{ privilegedError() }}</small>
+              }
+            }
+          </details>
+        }
+        @default {
+          <div class="step-head">
+            <div>
+              <div class="step-title">Review</div>
+              <div class="step-sub">
+                Create runs in the background; the new playroom appears in the list as it comes up.
+              </div>
+            </div>
+          </div>
+          <div class="review-grid">
+            <div>
+              <span>Name</span><strong>{{ form.name || 'not set' }}</strong>
+            </div>
+            <div>
+              <span>Image</span><strong>{{ form.image }}</strong>
+            </div>
+            <div>
+              <span>Storage</span><strong>{{ form.storage }}</strong>
+            </div>
+            <div>
+              <span>CPU request / limit</span><strong>{{ form.cpuReq }} / {{ form.cpuLim }}</strong>
+            </div>
+            <div>
+              <span>Memory request / limit</span
+              ><strong>{{ form.memReq }} / {{ form.memLim }}</strong>
+            </div>
+            <div>
+              <span>Ports</span><strong>{{ portCount() }} forwarded</strong>
+            </div>
+            <div>
+              <span>Wait</span><strong>{{ form.noWait ? 'no-wait' : form.waitTimeout }}</strong>
+            </div>
+            <div>
+              <span>System</span
+              ><strong
+                >{{ form.readOnly ? 'read-only' : 'writable'
+                }}{{ form.ephemeral ? ' · ephemeral' : '' }}</strong
+              >
+            </div>
+            <div>
+              <span>Exposure</span><strong>{{ form.exposure || 'playhouse default' }}</strong>
+            </div>
+            @if (form.privileged && form.acknowledgePrivileged) {
+              <div><span>Privileged</span><strong class="danger-text">yes</strong></div>
+            }
+          </div>
+          <!-- Whatever is blocking Create, said next to the disabled button. -->
+          @if (blockingError()) {
+            <div class="danger-copy danger-copy--strong">
+              <i class="pi pi-exclamation-triangle"></i>{{ blockingError() }}
+            </div>
+          }
+        }
+      }
+    </section>
+  </div>
+
+  <app-command-preview [input]="toInput()" [previewFn]="previewCreate" [enabled]="visible" />
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [text]="true"
+      size="small"
+      styleClass="footer-cancel"
+      (click)="close()"
+    />
+    @if (step > 0) {
+      <p-button
+        label="Back"
+        icon="pi pi-arrow-left"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        (click)="previous()"
+      />
+    }
+    @if (step < steps.length - 1) {
+      <p-button
+        label="Next"
+        icon="pi pi-arrow-right"
+        iconPos="right"
+        size="small"
+        (click)="next()"
+      />
+    } @else {
+      <p-button
+        label="Create"
+        icon="pi pi-plus"
+        size="small"
+        [disabled]="!canCreate()"
+        (click)="create()"
+      />
+    }
+  </ng-template>
+</p-drawer>

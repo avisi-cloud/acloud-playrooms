@@ -1,0 +1,113 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="onVisibleChange($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="false"
+  [style]="{ width: 'var(--overlay-sm)' }"
+  styleClass="av-dialog"
+  appendTo="body"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-head-content">
+      <div class="dialog-head-text">
+        <div class="dialog-title">{{ room?.name }}</div>
+        <div class="dialog-subtitle">{{ room?.host || 'Host not assigned yet' }}</div>
+      </div>
+      <p-button
+        icon="pi pi-times"
+        severity="secondary"
+        [text]="true"
+        size="small"
+        (click)="close()"
+      />
+    </div>
+    <div class="tab-bar dialog-header-tabs">
+      <button type="button" [class.active]="tab === 'connect'" (click)="tab = 'connect'">
+        <i class="pi pi-terminal"></i> Connect
+      </button>
+      <button type="button" [class.active]="tab === 'open'" (click)="tab = 'open'">
+        <i class="pi pi-code"></i> Open
+      </button>
+    </div>
+  </ng-template>
+
+  @if (room) {
+    @if (tab === 'connect') {
+      <div class="field-group">
+        <label class="field-label">User</label>
+        <input pInputText class="w-full" [(ngModel)]="user" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Terminal</label>
+        <p-select
+          [options]="terminals"
+          optionLabel="label"
+          optionValue="id"
+          [(ngModel)]="terminal"
+          [style]="{ width: '100%' }"
+          appendTo="body"
+        />
+      </div>
+      <label class="toggle-line">
+        <span>Forward SSH agent<small class="flag-ref">--forward-agent</small></span>
+        <p-toggleswitch [(ngModel)]="forwardAgent" />
+      </label>
+      <label class="toggle-line">
+        <span>Reach it over Tailscale<small class="flag-ref">--tunnel</small></span>
+        <p-toggleswitch [(ngModel)]="tunnel" />
+      </label>
+    } @else {
+      <div class="field-group">
+        <label class="field-label">Editor</label>
+        <p-select
+          [options]="editors"
+          optionLabel="label"
+          optionValue="id"
+          [(ngModel)]="editor"
+          [style]="{ width: '100%' }"
+          appendTo="body"
+        />
+      </div>
+      <label class="toggle-line">
+        <span>Reach it over Tailscale<small class="flag-ref">--tunnel</small></span>
+        <p-toggleswitch [(ngModel)]="tunnel" />
+      </label>
+    }
+
+    <!-- The one action that hands off to a real terminal, and the only surface
+         in the app that did not show the command it would run. -->
+    @if (tab === 'connect') {
+      <app-command-preview
+        [input]="connectInput()"
+        [previewFn]="previewConnect"
+        [enabled]="visible"
+        [tight]="true"
+      />
+    } @else {
+      <app-command-preview
+        [input]="openInput()"
+        [previewFn]="previewOpen"
+        [enabled]="visible"
+        [tight]="true"
+      />
+    }
+  }
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [outlined]="true"
+      size="small"
+      (click)="close()"
+    />
+    <p-button
+      [label]="tab === 'connect' ? 'Connect' : 'Open'"
+      [icon]="tab === 'connect' ? 'pi pi-terminal' : 'pi pi-code'"
+      size="small"
+      (click)="execute()"
+    />
+  </ng-template>
+</p-dialog>

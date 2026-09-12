@@ -1,0 +1,29 @@
+/* The shell frame itself. Everything else the component styles lives beside
+   this file and is listed in `styleUrls` on the App component:
+
+     app-sidebar.css      brand, scope pickers, nav, tools, footer
+     app-toast.css        our replacement toast body
+     app-main-panel.css   the routed panel and the brand mark in it
+   ════════════════════════════════════════════════════════════════════════ */
+
+:host {
+  display: block;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ── Shell ───────────────────────────────────────────────────────────────── */
+.app-shell {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: url('/brand/AvisiBackground.webp') center / cover no-repeat var(--surf-1);
+  padding: 10px 10px 10px 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}

@@ -1,0 +1,138 @@
+<p-drawer
+  [visible]="visible"
+  (visibleChange)="onVisibleChange($event)"
+  position="right"
+  [style]="{ width: 'var(--overlay-md)' }"
+  styleClass="av-drawer"
+  appendTo="body"
+>
+  <ng-template pTemplate="header">
+    <div class="drawer-head">
+      <div class="drawer-title">Update playroom<span class="punt">.</span></div>
+      <div class="drawer-subtitle">
+        <code>{{ form.name }}</code> · empty fields keep their current value.
+      </div>
+    </div>
+  </ng-template>
+
+  <section class="update-card">
+    <div class="update-card-head">Image</div>
+    <div class="field-group">
+      <label class="field-label">Image</label>
+      <p-select
+        [options]="images"
+        [(ngModel)]="form.image"
+        optionValue="Name"
+        optionLabel="Name"
+        [editable]="true"
+        placeholder="Select or type an image"
+        appendTo="body"
+        [style]="{ width: '100%' }"
+      >
+        <ng-template let-image pTemplate="item">
+          <div class="ca-option">
+            <span class="ca-name">{{ image.Name }}{{ image.IsDefault ? ' (default)' : '' }}</span>
+            <span class="ca-meta">{{ image.Reference }}</span>
+          </div>
+        </ng-template>
+      </p-select>
+      <small class="field-hint"
+        >Pick a published flavor, or type a full registry path. Leave the current image to keep
+        it.</small
+      >
+    </div>
+  </section>
+
+  <section class="update-card">
+    <div class="update-card-head">Resources</div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">CPU request</label
+        ><input pInputText class="w-full" [(ngModel)]="form.cpuReq" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">CPU limit</label
+        ><input pInputText class="w-full" [(ngModel)]="form.cpuLim" />
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Memory request</label
+        ><input pInputText class="w-full" [(ngModel)]="form.memReq" />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Memory limit</label
+        ><input pInputText class="w-full" [(ngModel)]="form.memLim" />
+      </div>
+    </div>
+  </section>
+
+  <section class="update-card">
+    <div class="update-card-head">Behaviour</div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Wait timeout</label
+        ><input pInputText class="w-full" [(ngModel)]="form.waitTimeout" />
+      </div>
+      <div class="toggle-stack">
+        <label class="toggle-line"
+          ><span>Return without waiting<small class="flag-ref">--no-wait</small></span
+          ><p-toggleswitch [(ngModel)]="form.noWait"
+        /></label>
+        <label class="toggle-line"
+          ><span>Change the read-only setting</span
+          ><p-toggleswitch [(ngModel)]="form.changeReadOnly"
+        /></label>
+        @if (form.changeReadOnly) {
+          <!-- Indented behind a rule: a parent and its revealed child used to sit
+             at the same level and read as unrelated siblings. -->
+          <div class="toggle-children">
+            <label class="toggle-line"
+              ><span>Mount the system read-only<small class="flag-ref">--read-only</small></span
+              ><p-toggleswitch [(ngModel)]="form.readOnly"
+            /></label>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="update-card">
+    <div class="update-card-head">Forwarded ports</div>
+    <label class="toggle-line"
+      ><span>Replace the forwarded ports<small class="flag-ref">--port</small></span
+      ><p-toggleswitch [(ngModel)]="form.changePorts"
+    /></label>
+    @if (form.changePorts) {
+      <div class="toggle-children">
+        <label class="toggle-line"
+          ><span>Remove every forwarded port</span><p-toggleswitch [(ngModel)]="form.clearPorts"
+        /></label>
+        @if (!form.clearPorts) {
+          <app-string-list-editor
+            [(values)]="form.ports"
+            placeholder="3000 or 80:3000"
+            addLabel="add port"
+            itemLabel="port"
+            [showHeader]="false"
+            [grouped]="false"
+          />
+        }
+      </div>
+    }
+  </section>
+
+  <app-command-preview [input]="previewInput()" [previewFn]="previewUpdate" [enabled]="visible" />
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [text]="true"
+      size="small"
+      styleClass="footer-cancel"
+      (click)="close()"
+    />
+    <p-button label="Update" icon="pi pi-sync" size="small" (click)="save()" />
+  </ng-template>
+</p-drawer>

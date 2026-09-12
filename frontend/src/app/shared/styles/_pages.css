@@ -1,0 +1,209 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Page chrome shared by the main feature screens: shell layout, headers,
+   loading/error states, and empty states.
+   ───────────────────────────────────────────────────────────────────────── */
+.page-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: var(--tx);
+  font-size: 14px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 26px 14px;
+  min-height: 72px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.page-header-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-2);
+  flex-shrink: 0;
+}
+
+.page-header-stack {
+  min-width: 0;
+}
+
+.page-header-title {
+  font-size: 21px;
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.page-header-sub {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--tx-3);
+}
+
+.page-header-actions,
+.page-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.page-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--border-2);
+  padding: 5px 11px 5px 9px;
+  border-radius: var(--r-sm);
+  color: var(--tx-3);
+  font-size: 12px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition:
+    color 0.14s,
+    background 0.14s,
+    border-color 0.14s;
+}
+
+.page-back-btn:hover {
+  color: var(--tx);
+  background: var(--surf-3);
+  border-color: var(--border-2);
+}
+
+.page-back-btn .pi {
+  font-size: 10px;
+}
+
+.page-body {
+  flex: 1;
+  overflow: auto;
+  padding: 22px 26px;
+  position: relative;
+  z-index: 1;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+
+.state-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 320px;
+  text-align: center;
+}
+
+.state-icon {
+  font-size: 1.5rem;
+}
+
+.state-icon.danger {
+  color: var(--bad);
+}
+
+/* Capped and left-aligned. A backend failure hands this whatever the CLI
+   returned, which has been an entire HTML document rendered as one unwrapped
+   line across the full width of the panel. describeError() trims the text; this
+   keeps the line length readable. */
+.state-text {
+  font-size: 13px;
+  color: var(--tx-2);
+  max-width: 52ch;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* The way out, on the error states that have one: the CLI's own "pass --force
+   to act on it anyway", one step quieter than the failure it follows. */
+.state-hint {
+  font-size: 12px;
+  color: var(--tx-3);
+  max-width: 52ch;
+  line-height: 1.5;
+  opacity: 0.85;
+  overflow-wrap: anywhere;
+}
+
+.empty-state {
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.empty-state-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--surf-2);
+  border: 1px solid var(--border-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tx-3);
+  margin-bottom: 10px;
+}
+
+.empty-state-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.empty-state-text {
+  font-size: 13px;
+  color: var(--tx-2);
+  margin: 0;
+}
+
+.empty-state-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+@media (max-width: 720px) {
+  .page-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .page-header-left {
+    width: 100%;
+  }
+
+  .page-header-actions,
+  .page-header-right {
+    width: 100%;
+  }
+}

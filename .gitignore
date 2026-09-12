@@ -1,20 +1,40 @@
-.task
-bin
-node_modules
-frontend/dist
-frontend/node_modules
-frontend/.vite
-frontend/coverage
+# Local editor and OS state
+.idea/
+.vscode/
+.DS_Store
+*.swp
+*.swo
 
-# Stray icns output if wails3 generate icons is run from the module root
+# Build output
+/bin/
+*.app/
+*.dmg
+*.zip
+*.tar.gz
+
+# Wails and Task caches
+/.task/
 /icons.icns
 
-# Platform scaffolds wails3 may regenerate but we don't ship
-build/android
-build/ios
-build/linux
-build/docker
+# Frontend dependencies and generated output
+/frontend/node_modules/
+/frontend/dist/
+/frontend/.angular/
+/frontend/.vite/
+/frontend/coverage/
+/npm-debug.log*
+/yarn-debug.log*
+/yarn-error.log*
+/pnpm-debug.log*
 
+# Root-level dependency folders if commands are run from the wrong directory
+/node_modules/
+
+# Platform scaffolds wails3 may regenerate but we do not ship yet
+/build/android/
+/build/ios/
+/build/linux/
+/build/docker/
 
 # Windows installer prereq fetched only when building the NSIS package
-build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+/build/windows/nsis/MicrosoftEdgeWebview2Setup.exe

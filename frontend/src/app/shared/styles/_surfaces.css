@@ -1,0 +1,90 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Shared surfaces — the command preview and the segmented tab bar. Used
+   by playroom create/update, playhouse create, and the connect dialog.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Command preview */
+.command-preview {
+  margin-top: 20px;
+}
+.command-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.command-block {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  background: #030d12;
+  border: 1px solid rgba(17, 153, 187, 0.2);
+  border-radius: var(--r-sm);
+  padding: 11px 14px;
+  color: #b8dde8;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  transition: border-color 0.14s;
+}
+.command-block:hover {
+  border-color: rgba(17, 153, 187, 0.42);
+}
+.command-prompt {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.command-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Waiting on the backend, or it failed. Without this the block is a bare black
+   bar with a prompt glyph — which is what you stare at while typing a name on
+   the first step of the create wizard. */
+.command-text--pending {
+  color: rgba(184, 221, 232, 0.42);
+  font-style: italic;
+}
+
+/* Segmented tab bar (connect/open, etc.) */
+.tab-bar {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+  padding: 3px;
+  background: var(--surf-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  margin-bottom: 18px;
+}
+.tab-bar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 32px;
+  border-radius: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--tx-3);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.14s;
+  font-family: inherit;
+}
+/* Was white at 5%, which over --surf-3 in light mode is no change at all. */
+.tab-bar button:hover {
+  color: var(--tx-2);
+  background: color-mix(in srgb, var(--tx) 6%, transparent);
+}
+.tab-bar button.active {
+  background: var(--surf-2);
+  color: var(--tx);
+  box-shadow: var(--shadow-sm);
+}

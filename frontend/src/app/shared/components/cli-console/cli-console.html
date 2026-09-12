@@ -1,0 +1,91 @@
+@if (console.visible()) {
+  <!-- Click-catcher, so the panel dismisses like a dialog: anywhere outside it
+       closes. Transparent on purpose — this is a corner panel, and dimming the
+       whole app for it would read as heavier than it is. It sits directly under
+       the panel, so it also swallows the click on the sidebar's Activity
+       button, which is what makes that button close rather than re-toggle. -->
+  <div class="cli-log__backdrop" (click)="console.close()"></div>
+  <section class="cli-log" role="log" aria-live="polite" aria-label="Activity log">
+    <header class="cli-log__head">
+      <span class="cli-log__title">
+        @if (console.isRunning()) {
+          <i class="pi pi-spin pi-spinner"></i>
+          <span>{{ console.cancellable()?.title }}</span>
+        } @else {
+          <i class="pi pi-list"></i>
+          <span>Activity</span>
+        }
+      </span>
+
+      <span class="cli-log__actions">
+        @if (console.isRunning()) {
+          <p-button
+            label="Cancel"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            (click)="console.cancelMostRecentCommand()"
+          />
+        }
+        @if (!console.isEmpty()) {
+          <p-button
+            icon="pi pi-copy"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            title="Copy the whole log"
+            (click)="copyWholeLogToClipboard()"
+          />
+          <p-button
+            icon="pi pi-trash"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            title="Clear the log"
+            (click)="console.clearLog()"
+          />
+        }
+        <p-button
+          icon="pi pi-times"
+          severity="secondary"
+          [text]="true"
+          size="small"
+          title="Close"
+          (click)="console.close()"
+        />
+      </span>
+    </header>
+
+    <div class="cli-log__output" #output>
+      @for (line of console.lines(); track $index) {
+        @switch (line.kind) {
+          @case ('command') {
+            <!-- The "$ " prompt is drawn by CSS so it never lands in a text selection. -->
+            <div class="cli-log__line cli-log__line--cmd" [attr.data-op]="line.operationId">
+              {{ line.text }}
+            </div>
+          }
+          @case ('stderr') {
+            <div class="cli-log__line cli-log__line--err">{{ line.text }}</div>
+          }
+          @case ('failure') {
+            <div class="cli-log__line cli-log__line--fail">{{ line.text }}</div>
+          }
+          @case ('cancelled') {
+            <div class="cli-log__line cli-log__line--muted">{{ line.text }}</div>
+          }
+          @case ('spacer') {
+            <div class="cli-log__spacer"></div>
+          }
+          @default {
+            <div class="cli-log__line">{{ line.text }}</div>
+          }
+        }
+      } @empty {
+        <div class="cli-log__line cli-log__line--muted">
+          Nothing has run yet this session. Commands you start will appear here.
+        </div>
+      }
+    </div>
+  </section>
+}

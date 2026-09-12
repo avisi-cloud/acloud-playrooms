@@ -1,0 +1,233 @@
+/* The routed content panel, and the brand mark inside it.
+
+   They are one file because the mark is the panel: both layers are pseudo-
+   elements on `.main-panel`, and the breathing animation is what `shellBusy()`
+   in app.ts drives through `.is-loading`. The BREATH_MS constant there must
+   stay in step with the animation periods below.
+
+   MAIN PANEL — routed content lives here
+   ════════════════════════════════════════════════════════════════════════ */
+.main-panel {
+  flex: 1;
+  min-width: 0;
+  background: var(--win);
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── The brand mark ───────────────────────────────────────────────────────
+   Two layers cut to the same silhouette, bleeding off the bottom-right corner
+   and cropped by the panel:
+
+     ::after   the mark — the watermark that is always there
+     ::before  the light that moves through it while the app is busy
+
+   The SVG is a mask rather than an image, so one asset serves both themes and
+   the colour comes from tokens; the light theme's separate dark asset is no
+   longer needed. The file is a single filled path, so its alpha is exactly the
+   letter.
+
+   No glow around the silhouette, tempting as it is: masking is applied after
+   filters, so a drop-shadow on either layer is cut away by the very mask that
+   gives it its shape. The light has to come from inside the letter.
+   ───────────────────────────────────────────────────────────────────────── */
+.main-panel::before,
+.main-panel::after {
+  content: '';
+  position: absolute;
+  right: -180px;
+  bottom: -100px;
+  /* A square box, so the letter mask covers all of it. It was 80px taller,
+     which left a strip along the top that the letter never reached — and the
+     fade below is a second mask layer, which painted that strip as a faint bar
+     above the mark. The letter itself does not move: both masks are anchored
+     to the bottom-right corner. */
+  width: 560px;
+  height: 560px;
+  pointer-events: none;
+  z-index: 0;
+  /* Longhands, not the `mask:` shorthand. The shorthand's `position / size`
+     syntax is the part WebKit has been least reliable about, and a mask that
+     fails to parse does not degrade quietly — it paints the layer's whole
+     560x640 box instead of the letter. */
+  -webkit-mask-image: url('/brand/AvisiLetterWhite.svg');
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: bottom right;
+  -webkit-mask-size: contain;
+  mask-image: url('/brand/AvisiLetterWhite.svg');
+  mask-repeat: no-repeat;
+  mask-position: bottom right;
+  mask-size: contain;
+}
+
+/* The letter dissolves as it travels away from the corner it bleeds from, so
+   the mark reads as part of the panel instead of a shape cut out and laid on
+   top of it. At 4% opacity a hard edge did not matter; with colour in it, the
+   silhouette was the first thing you saw.
+
+   Gated on @supports because this is a second mask layer: an engine that does
+   not understand the compositing mode would not ignore that layer, it would
+   add it — painting a plain rectangle over the corner. Without support the
+   mark simply keeps the crisp edge it has now. */
+@supports ((mask-composite: intersect) or (-webkit-mask-composite: source-in)) {
+  .main-panel::before,
+  .main-panel::after {
+    -webkit-mask-image:
+      url('/brand/AvisiLetterWhite.svg'),
+      linear-gradient(318deg, #000 0%, #000 34%, transparent 82%);
+    -webkit-mask-repeat: no-repeat, no-repeat;
+    -webkit-mask-position:
+      bottom right,
+      0 0;
+    -webkit-mask-size:
+      contain,
+      100% 100%;
+    -webkit-mask-composite: source-in;
+    mask-image:
+      url('/brand/AvisiLetterWhite.svg'),
+      linear-gradient(318deg, #000 0%, #000 34%, transparent 82%);
+    mask-repeat: no-repeat, no-repeat;
+    mask-position:
+      bottom right,
+      0 0;
+    mask-size:
+      contain,
+      100% 100%;
+    mask-composite: intersect;
+  }
+}
+
+.main-panel::after {
+  background: var(--tx);
+  opacity: 0.04;
+}
+
+/* The brand gradient inside the letter. It is on at rest too, faintly — the
+   mark is worth a little colour all the time — and swells while busy.
+
+   Two highlights cross it at different speeds, a narrow one and a wide soft one
+   trailing behind, which is what keeps the sweep from reading as a single flat
+   bar. They are parked off the shape at rest, so a resting mark is pure colour
+   with nothing travelling through it. */
+.main-panel::before {
+  opacity: 0.12;
+  background-repeat: no-repeat;
+  background-image:
+    linear-gradient(
+      106deg,
+      transparent 34%,
+      color-mix(in srgb, #ffffff 62%, var(--cyan)) 50%,
+      transparent 66%
+    ),
+    linear-gradient(
+      106deg,
+      transparent 22%,
+      color-mix(in srgb, #ffffff 32%, var(--accent)) 50%,
+      transparent 78%
+    ),
+    linear-gradient(158deg, var(--cyan) 0%, var(--accent) 92%);
+  background-size:
+    230% 100%,
+    330% 100%,
+    100% 100%;
+  background-position:
+    200% 0,
+    240% 0,
+    0 0;
+  /* A safety net only. The shell stops the animation at the end of a cycle,
+     where the animated value already equals this resting one, so there should
+     be nothing left to transition. */
+  transition: opacity 0.9s ease;
+}
+
+/* Everything here is slow on purpose. The swell is what should read as "this
+   is working" — the highlights only give it dimension, and at nearly four
+   seconds per pass they drift rather than fly past. Each cycle has a different
+   length, so they never lock into one beat: that is the difference between
+   "alive" and "a loading widget".
+
+   The mark is already on every screen, so a wait costs no layout: nothing
+   appears, moves, or is replaced, and there is no skeleton to mistake for
+   content that has arrived. See PageLoadingService for what counts as busy. */
+.main-panel.is-loading::after {
+  animation: brand-breathe 5.2s ease-in-out infinite;
+}
+.main-panel.is-loading::before {
+  animation:
+    brand-glow 5.6s ease-in-out infinite,
+    brand-sweep 5.6s ease-in-out infinite;
+  will-change: opacity, background-position;
+}
+
+/* Opacity only. The mark and the light are two layers cut to the same
+   silhouette, so scaling one of them by even a percent pushed its edge past the
+   other and drew a hard rim around the letter. The swell carries the movement
+   on its own. */
+@keyframes brand-breathe {
+  0%,
+  100% {
+    opacity: 0.04;
+  }
+  50% {
+    opacity: 0.085;
+  }
+}
+
+@keyframes brand-glow {
+  0%,
+  100% {
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.34;
+  }
+}
+
+/* The sweep shares the swell's period on purpose: the light crosses while the
+   mark brightens and is parked again before it dims, so the two read as one
+   breath rather than two overlapping effects. It also means both animations are
+   back at their resting values at the end of every cycle, which is what lets
+   the shell stop them without anything jumping — see MIN_BUSY_MS in app.ts.
+
+   The rest is also the cheap part of the cycle: with the background still, only
+   the composited opacity is changing. */
+@keyframes brand-sweep {
+  0% {
+    background-position:
+      200% 0,
+      240% 0,
+      0 0;
+  }
+  48%,
+  100% {
+    background-position:
+      -110% 0,
+      -70% 0,
+      0 0;
+  }
+}
+
+/* Left visible but still, for anyone who asked not to be animated at. */
+@media (prefers-reduced-motion: reduce) {
+  .main-panel.is-loading::after {
+    animation: none;
+    opacity: 0.085;
+  }
+  .main-panel.is-loading::before {
+    animation: none;
+    opacity: 0.26;
+  }
+}
+
+.app-shell.light .main-panel {
+  border-color: rgba(0, 51, 69, 0.1);
+  box-shadow:
+    0 4px 20px rgba(0, 51, 69, 0.07),
+    0 24px 56px rgba(0, 51, 69, 0.05);
+}

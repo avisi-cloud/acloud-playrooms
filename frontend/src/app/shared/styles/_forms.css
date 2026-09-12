@@ -1,0 +1,243 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Form primitives — shared across every create/update/connect form and the
+   defaults screen. Plain (non-encapsulated) classes so they apply globally to
+   component templates. Keep component-specific tweaks in the component CSS.
+   ───────────────────────────────────────────────────────────────────────── */
+.field-group {
+  margin-bottom: 16px;
+}
+.field-label {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--tx);
+  margin-bottom: 6px;
+}
+.field-hint {
+  display: block;
+  font-size: 11.5px;
+  color: var(--tx-3);
+  margin-top: 5px;
+  line-height: 1.45;
+}
+.field-hint.error {
+  color: var(--bad);
+}
+
+/* Error state on a field group (name/cloud-account validation, etc.) */
+.has-error .field-label {
+  color: var(--bad);
+}
+.has-error input {
+  border-color: var(--bad) !important;
+}
+
+.req {
+  color: var(--bad);
+  font-weight: 700;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.section-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tx-3);
+}
+
+/* Repeating add/remove rows (env vars, git repos, ports, …) */
+.repeat-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--tx-3);
+  margin-bottom: 8px;
+}
+.repeat-row {
+  display: flex;
+  gap: 7px;
+  margin-bottom: 7px;
+  align-items: center;
+}
+
+/* A repeat list given its own bordered block, so four of them stacked read as
+   four groups rather than one long run of near-identical rows. */
+.repeat-group {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 12px 13px 10px;
+  margin-bottom: 10px;
+  background: var(--surf-2);
+}
+.repeat-group-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+.repeat-group-head .repeat-label {
+  margin-bottom: 0;
+}
+.repeat-count {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--tx-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Toggle lines */
+.toggle-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12.5px;
+  color: var(--tx-2);
+  cursor: pointer;
+  min-height: 28px;
+}
+.toggle-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+/* The flag a toggle corresponds to, kept as a quiet suffix rather than used as
+   the label itself. A label should say what happens; the flag name is
+   reference, and the command preview carries the real arguments anyway. */
+.flag-ref {
+  margin-left: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--tx-3);
+  white-space: nowrap;
+}
+
+/* A toggle that reveals more toggles below it. Without the indent a parent and
+   its children read as unrelated siblings and the reveal looks like the form
+   jumping rather than opening. */
+.toggle-children {
+  margin: 6px 0 0 4px;
+  padding-left: 14px;
+  border-left: 2px solid var(--border-2);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Destructive-confirm chrome (shared by the delete dialogs) ───────────── */
+.danger-copy {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-bottom: 16px;
+  border: 1px solid color-mix(in srgb, var(--bad) 30%, transparent);
+  background: color-mix(in srgb, var(--bad) 10%, transparent);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--tx-2);
+}
+.danger-copy .pi {
+  color: var(--bad);
+  margin-top: 2px;
+}
+/* Same box, message in the danger colour — used for blocking form errors. */
+.danger-copy--strong {
+  color: var(--bad);
+  margin: 12px 0 0;
+}
+
+.confirm-slug-hint {
+  margin-bottom: 6px;
+  font-size: 12px;
+  color: var(--tx-2);
+}
+.confirm-slug-hint code {
+  padding: 1px 6px;
+  border-radius: 5px;
+  background: var(--surf-3);
+  border: 1px solid var(--border-2);
+  font-weight: 700;
+  color: var(--tx);
+}
+
+/* Collapsible "advanced" section. Named for what it is: it used to be
+   .danger-details, which is the class actual danger surfaces want. */
+.disclosure {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  background: var(--surf-3);
+}
+.disclosure summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tx);
+}
+.disclosure summary::marker {
+  color: var(--tx-3);
+}
+
+/* Inline warning for a dangerous flag — the CLI's own caution text, shown next
+   to the toggle rather than hidden behind it. */
+.danger-note {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 9px 10px;
+  border-radius: var(--r-sm);
+  border: 1px solid color-mix(in srgb, var(--warn) 38%, transparent);
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
+  color: var(--tx-2);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.danger-note .pi {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--warn);
+  font-size: 12px;
+}
+
+.danger-text {
+  color: var(--bad);
+}
+
+/* Two-line option layout for entity pickers (cloud account, environment,
+   image): a primary name on top with secondary metadata below. Shared by the
+   create-playhouse and create/update-playroom drawers. */
+.ca-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ca-option .ca-name {
+  color: var(--tx);
+  font-size: 13px;
+}
+.ca-option .ca-meta {
+  color: var(--tx-3);
+  font-size: 11.5px;
+  overflow-wrap: anywhere;
+}
+
+.field-hint .link {
+  color: var(--cyan);
+  cursor: pointer;
+  text-decoration: underline;
+}
