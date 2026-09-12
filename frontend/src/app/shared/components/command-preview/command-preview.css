@@ -1,0 +1,8 @@
+/* Layout classes (.command-preview, .command-block, .command-prompt, .command-text)
+   are global in shared/styles/_surfaces.css. Only local modifiers live here. */
+.command-preview.tight {
+  margin-top: 4px;
+}
+.command-block--readonly {
+  cursor: default;
+}

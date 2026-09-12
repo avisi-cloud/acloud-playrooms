@@ -1,0 +1,102 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Design tokens — single source of truth for type, color, radius, and shadow.
+   Light mode is the :root default; dark mode overrides via html.app-dark
+   (toggled by PlayroomStateService). Prefer these tokens over hard-coded
+   colors/shadows/font stacks anywhere in the app.
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  --font-sans: 'Poppins', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', Consolas, ui-monospace, monospace;
+
+  --cyan: #1199bb;
+  --accent: #1dd478;
+  --primary: #003345;
+
+  --win: #f5f7fa;
+  --surf-1: #003345; /* sidebar always stays Avisi brand blue */
+  --surf-2: #ffffff;
+  --surf-3: #f0f3f6;
+
+  --border: rgba(0, 51, 69, 0.07);
+  --border-2: rgba(0, 51, 69, 0.15);
+
+  --tx: #1a3440;
+  --tx-2: #4d6975;
+  --tx-3: #87a0ac;
+
+  --ok: #05b16a;
+  --busy: #006a86;
+  --warn: #b07d14;
+  --bad: #d24a3d;
+  --idle: #8a8a90;
+
+  /* The card head and both overlay headers are a fixed dark gradient in either
+     theme, so status text on them needs its own set — brighter than --ok/--bad
+     ever get in light mode. Tokens rather than literals so there is still one
+     place to change them. */
+  --ok-on-dark: #4fd99a;
+  --busy-on-dark: #7dd7ea;
+  --warn-on-dark: #e7b85b;
+  --bad-on-dark: #f87171;
+  --idle-on-dark: rgba(255, 255, 255, 0.4);
+
+  --r: 0.5rem;
+  --r-sm: 0.375rem;
+  --r-lg: 0.875rem;
+
+  /* Overlay widths. Three sizes, chosen by surface type rather than per
+     component — five ad-hoc widths meant opening two overlays in a row resized
+     the working area for no reason a user could infer. */
+  --overlay-sm: 440px;
+  --overlay-md: 560px;
+  --overlay-lg: 680px;
+
+  --shadow-sm: 0 1px 3px rgba(0, 51, 69, 0.08);
+  --shadow: 0 4px 14px rgba(0, 51, 69, 0.1);
+  --shadow-lg: 0 16px 40px rgba(0, 51, 69, 0.12);
+  /* Overlay elevation — drawers/dialogs floating above the blurred shell. */
+  --shadow-overlay: 0 24px 64px rgba(0, 51, 69, 0.28);
+}
+
+html.app-dark {
+  --win: #001b25;
+  --surf-1: #002030;
+  --surf-2: #003345;
+  --surf-3: #003e54;
+
+  --border: rgba(235, 238, 239, 0.07);
+  --border-2: rgba(235, 238, 239, 0.14);
+
+  --tx: #ebeeef;
+  --tx-2: #9bb0bc;
+  --tx-3: #5d7a8a;
+
+  --ok: #1dd478;
+  --busy: #1199bb;
+  --warn: #e7b85b;
+  --bad: #f2675a;
+  --idle: #6b8898;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
+  --shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.45);
+  --shadow-overlay: 0 24px 64px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Focus ────────────────────────────────────────────────────────────────
+   Every custom control in the app is a <button>, an <a>, or something carrying
+   tabindex, and none of them declared a focus style — the app was fully
+   keyboard-navigable while giving no indication of where you were. One rule,
+   :focus-visible so a mouse click never draws it.
+   ───────────────────────────────────────────────────────────────────────── */
+:where(a, button, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* The sidebar keeps its brand-dark background in both themes, so the cyan ring
+   has too little contrast against it. */
+.sidebar :where(a, button, [tabindex]):focus-visible {
+  outline-color: #7dd7ea;
+}

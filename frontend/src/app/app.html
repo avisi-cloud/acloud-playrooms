@@ -1,0 +1,216 @@
+<p-toast position="bottom-right" [breakpoints]="{ '720px': { width: '92vw' } }">
+  <ng-template let-message pTemplate="message">
+    <div
+      class="toast-body"
+      [class.toast-body--linked]="!!message.data?.operationId"
+      (click)="openActivity(message.data?.operationId)"
+    >
+      @if (message.summary) {
+        <!-- PrimeNG's own classes are kept so severity colouring still applies
+             to our replacement template. -->
+        <span class="p-toast-summary toast-summary">{{ message.summary }}</span>
+      }
+      <span class="p-toast-detail toast-detail">{{ message.detail }}</span>
+      <!-- The way out, when the CLI named one: "pass --force to act on it
+           anyway" answers a different question than the failure above it, and
+           reads as an instruction only when it is set apart from it. -->
+      @if (message.data?.remedy) {
+        <span class="toast-remedy">{{ message.data.remedy }}</span>
+      }
+      @if (message.data?.operationId) {
+        <span class="toast-link">View command</span>
+      }
+    </div>
+  </ng-template>
+</p-toast>
+<app-cli-console />
+
+<div class="app-shell" [class.light]="state.theme() === 'light'">
+  <!-- ── Sidebar (always visible) ────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="traffic-zone"></div>
+
+    <div class="sidebar-brand">
+      <!-- Always the white mark: the sidebar keeps its brand background and
+           light text in both themes, so there is no light-mode variant to
+           switch to. This used to be a theme ternary with the same asset on
+           both sides, which read like a bug. -->
+      <img class="sidebar-brand-img" src="/brand/AvisiLetterWhite.svg" alt="Avisi" />
+      <div class="sidebar-brand-text">
+        <span class="sidebar-brand-name">Avisi Playground<span class="punt">.</span></span>
+        <span class="sidebar-brand-sub">Powered by AME</span>
+        @if (session.version()) {
+          <span class="sidebar-brand-version">acloud&nbsp;&nbsp;{{ session.version() }}</span>
+        }
+        <!-- Only ever set when the running acloud is newer than the version
+             these screens were checked against. Everything still works — the
+             commands are real — but a flag added since may have no control. -->
+        @if (session.compatibility(); as compatibility) {
+          <span class="sidebar-brand-warning" [title]="compatibility.Explanation">
+            <i class="pi pi-exclamation-triangle"></i>
+            <span>checked against {{ compatibility.VerifiedVersion }}</span>
+          </span>
+        }
+      </div>
+    </div>
+
+    <!-- Scrolls instead of clipping: the tool list comes from the backend and
+         the window can be as short as 600px. -->
+    <div class="sidebar-scroll">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Context</div>
+        <button
+          class="scope-btn"
+          [disabled]="scope.switching()"
+          (click)="contextMenu.toggle($event)"
+        >
+          <span class="scope-slug">{{ scope.currentContext() || 'No context' }}</span>
+          @if (scope.switching()) {
+            <i class="pi pi-spin pi-spinner scope-chevron"></i>
+          } @else {
+            <i class="pi pi-chevron-down scope-chevron"></i>
+          }
+        </button>
+        <p-menu #contextMenu [model]="contextMenuItems()" [popup]="true" appendTo="body" />
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Organisation</div>
+        <button class="scope-btn" [disabled]="scope.switching()" (click)="orgMenu.toggle($event)">
+          <span class="scope-slug">{{ scope.currentOrganisation() || 'No organisation' }}</span>
+          @if (scope.switching()) {
+            <i class="pi pi-spin pi-spinner scope-chevron"></i>
+          } @else {
+            <i class="pi pi-chevron-down scope-chevron"></i>
+          }
+        </button>
+        <p-menu #orgMenu [model]="organisationMenuItems()" [popup]="true" appendTo="body" />
+      </div>
+
+      <!-- Third in the same hierarchy as context and organisation, so it is the
+           same control: a menu of what you can switch to, not a link to another
+           screen. The screen is still there, one item down the list. -->
+      <div class="sidebar-section">
+        <div class="sidebar-label">Playhouse</div>
+        <button
+          class="scope-btn"
+          [disabled]="scope.switching()"
+          (click)="openPlayhouseMenu($event, playhouseMenu)"
+        >
+          <span class="scope-slug">{{ state.playhouse() || 'Select playhouse' }}</span>
+          @if (scope.loadingPlayhouses()) {
+            <i class="pi pi-spin pi-spinner scope-chevron"></i>
+          } @else {
+            <i class="pi pi-chevron-down scope-chevron"></i>
+          }
+        </button>
+        <p-menu #playhouseMenu [model]="playhouseMenuItems()" [popup]="true" appendTo="body" />
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="sidebar-link" routerLink="/rooms" routerLinkActive="active">
+          <i class="pi pi-desktop"></i>
+          <span>Playrooms</span>
+          @if (state.roomsCount() > 0) {
+            <span class="sidebar-badge">{{ state.roomsCount() }}</span>
+          }
+        </a>
+        <a class="sidebar-link" routerLink="/settings" routerLinkActive="active">
+          <i class="pi pi-sliders-h"></i>
+          <span>Defaults</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="sidebar-section tools-section">
+        <div class="sidebar-label">Tools</div>
+        <div class="tool-list">
+          @for (tool of session.toolStatuses(); track tool.Command) {
+            <div class="tool-row" [title]="toolStatusTitle(tool)">
+              <span
+                class="tool-dot"
+                [class.installed]="tool.State === 'installed'"
+                [class.missing]="tool.State === 'missing'"
+                [class.unknown]="tool.State === 'unknown'"
+              ></span>
+              <span class="tool-name">{{ tool.Name }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-footer">
+        <button
+          type="button"
+          class="activity-btn"
+          [class.running]="console.isRunning()"
+          [class.failed]="console.lastFailed() && !console.isRunning()"
+          [title]="activityTitle()"
+          (click)="console.toggle()"
+        >
+          @if (console.isRunning()) {
+            <i class="pi pi-spin pi-spinner activity-icon"></i>
+          } @else {
+            <i class="pi pi-list activity-icon"></i>
+          }
+          <span class="activity-label">Activity</span>
+          <span class="activity-state">{{ activityState() }}</span>
+        </button>
+
+        <!-- Icon, label and state all describe the current theme. The icon used
+             to show the target while the label showed the state, so the two
+             halves of one row said opposite things. -->
+        <button
+          type="button"
+          class="theme-btn"
+          [title]="
+            state.theme() === 'dark' ? 'Dark mode — switch to light' : 'Light mode — switch to dark'
+          "
+          (click)="state.toggleTheme()"
+        >
+          <i
+            class="theme-icon"
+            [class]="state.theme() === 'dark' ? 'pi pi-moon theme-icon' : 'pi pi-sun theme-icon'"
+          ></i>
+          <span class="theme-label">{{ state.theme() === 'dark' ? 'Dark' : 'Light' }} mode</span>
+          <span class="theme-state">Switch</span>
+        </button>
+
+        <button
+          type="button"
+          class="account-btn"
+          [class.signed-out]="!state.loggedIn()"
+          [disabled]="session.signingInOrOut()"
+          [title]="state.loggedIn() ? 'Account options' : 'Sign in to acloud'"
+          (click)="authMenu.toggle($event)"
+        >
+          <div class="account-text">
+            <span class="account-name">{{
+              state.loggedIn() ? state.user() || 'Signed in' : 'Not signed in'
+            }}</span>
+            <span class="account-action">{{
+              session.signingInOrOut() ? 'Working…' : state.loggedIn() ? 'Log out' : 'Log in'
+            }}</span>
+          </div>
+          @if (session.signingInOrOut()) {
+            <i class="pi pi-spin pi-spinner account-chevron"></i>
+          } @else {
+            <i class="pi pi-ellipsis-v account-chevron"></i>
+          }
+        </button>
+        <p-menu #authMenu [model]="authMenuItems()" [popup]="true" appendTo="body" />
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main panel — routed content ─────────────────────────────────── -->
+  <!-- is-loading makes the brand mark breathe: a screen loading its first
+       data, or a command running. It is the app's only first-load indicator —
+       screens render nothing while they wait. -->
+  <main class="main-panel" [class.is-loading]="shellBusy()">
+    <router-outlet />
+  </main>
+</div>

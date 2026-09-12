@@ -1,0 +1,279 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.detail-view {
+  font-size: 14px;
+}
+
+:host ::ng-deep .detail-tag.p-tag {
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  padding: 5px 13px;
+  letter-spacing: 0.01em;
+}
+
+.pulse {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────────
+   Capped and centred. The list rows are label-left / value-right, so at full
+   window width the two halves of a row sat ~900px apart and the eye had to
+   cross the whole panel to pair them.
+   ───────────────────────────────────────────────────────────────────────── */
+.detail-body {
+  padding: 24px 26px 36px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+
+.detail-column {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.state-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surf-2);
+  border: 1px solid var(--border-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tx-3);
+  margin-bottom: 8px;
+}
+
+.state-title {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 0;
+}
+.state-text {
+  font-size: 13px;
+  color: var(--tx-2);
+  margin: 0 0 8px;
+}
+
+/* ── Status banner ────────────────────────────────────────────────────────
+   Toned by status. It used to bind [ngClass] to the status name with no rules
+   behind it, so every transitional banner was cyan and a teardown looked the
+   same as a build.
+   ───────────────────────────────────────────────────────────────────────── */
+.status-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border-radius: var(--r);
+  margin-bottom: 22px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tx);
+  border: 1px solid color-mix(in srgb, var(--banner-tone) 22%, transparent);
+  border-left: 3px solid var(--banner-tone);
+  background: color-mix(in srgb, var(--banner-tone) 8%, transparent);
+}
+.status-banner {
+  --banner-tone: var(--busy);
+}
+.status-banner.busy {
+  --banner-tone: var(--busy);
+}
+.status-banner.warn {
+  --banner-tone: var(--warn);
+}
+.status-banner.bad {
+  --banner-tone: var(--bad);
+}
+.status-banner.idle {
+  --banner-tone: var(--idle);
+}
+.status-banner .pi-spin {
+  color: var(--banner-tone);
+}
+.status-banner code {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  background: var(--surf-3);
+  padding: 2px 7px;
+  border-radius: 4px;
+  color: var(--tx-2);
+  border: 1px solid var(--border-2);
+  flex-shrink: 0;
+}
+
+/* ── Actions bar ──────────────────────────────────────────────────────── */
+.actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surf-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+/* margin-left:auto on a spacer div wrapped to its own line at narrow widths and
+   the grouping fell apart; on the element itself it just stops pushing. */
+.actions-end {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:host ::ng-deep .detail-more-btn.p-button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  justify-content: center;
+}
+
+/* ── Detail list ──────────────────────────────────────────────────────────
+   Two columns on a wide window: Connection and Resources side by side rather
+   than three full-width sections stacked into a scroll.
+   ───────────────────────────────────────────────────────────────────────── */
+.detail-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.list-section {
+  background: var(--surf-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+/* Resources has the most rows, so it takes the full row of the grid rather
+   than leaving a ragged column beside it. */
+.list-section:nth-child(2) {
+  grid-row: span 2;
+}
+
+.list-section-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 20px 10px;
+  background: var(--surf-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--tx-2);
+}
+
+.card-icon-wrap {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--cyan) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--cyan) 22%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.card-icon {
+  font-size: 11px;
+  color: var(--cyan);
+}
+
+.list-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 20px;
+  padding: 11px 20px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.list-row:last-child {
+  border-bottom: none;
+}
+.list-row span {
+  color: var(--tx-3);
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-size: 12.5px;
+}
+.list-row strong {
+  color: var(--tx);
+  font-weight: 500;
+  text-align: right;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* .mono no longer carries a size of its own. */
+.list-row strong.mono {
+  font-size: 11.5px;
+}
+
+/* SSH host row */
+.ssh-row {
+  align-items: center;
+}
+.ssh-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.ssh-host {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--cyan);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ssh-empty {
+  color: var(--tx-3);
+  font-style: italic;
+  font-size: 12.5px;
+}
+
+:host ::ng-deep .copy-btn.p-button {
+  width: 26px !important;
+  height: 26px !important;
+  padding: 0 !important;
+  flex-shrink: 0;
+  justify-content: center;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .detail-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .list-section:nth-child(2) {
+    grid-row: auto;
+  }
+}

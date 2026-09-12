@@ -1,0 +1,294 @@
+<div class="page-shell select-view">
+  <header class="page-header">
+    <div>
+      <h1 class="page-header-title">Playhouses<span class="punt">.</span></h1>
+      <p class="page-header-sub">Manage the cluster layer that hosts your playrooms.</p>
+    </div>
+    <div class="page-header-actions">
+      <p-button
+        label="Refresh"
+        icon="pi pi-refresh"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        [disabled]="loading() || refreshing()"
+        [loading]="refreshing()"
+        (click)="refreshPlayhouses()"
+      />
+      <p-button label="Create Playhouse" icon="pi pi-plus" size="small" (click)="openCreate()" />
+    </div>
+  </header>
+
+  <div class="page-body select-body">
+    @if (loading()) {
+      <!-- The shell's brand mark breathes instead; see PageLoadingService. -->
+      <p class="sr-only" role="status">Loading playhouses…</p>
+    } @else if (failure(); as failed) {
+      <div class="state-center">
+        <i class="pi pi-exclamation-circle state-icon danger"></i>
+        <span class="state-text">{{ failed.problem }}</span>
+        @if (failed.remedy) {
+          <span class="state-hint">{{ failed.remedy }}</span>
+        }
+        <p-button
+          label="Retry"
+          icon="pi pi-refresh"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (click)="refreshPlayhouses()"
+        />
+      </div>
+    } @else {
+      @if (jobs.provisioning().length) {
+        <div class="provisioning-banner">
+          <i class="pi pi-spin pi-spinner"></i>
+          <div class="provisioning-text">
+            <strong
+              >Provisioning {{ jobs.provisioning().length }} playhouse{{
+                jobs.provisioning().length > 1 ? 's' : ''
+              }}…</strong
+            >
+            <span
+              >{{ jobs.provisioning().join(', ') }} — this can take up to ~20 minutes. You can leave
+              this screen; creation continues in the background.</span
+            >
+          </div>
+        </div>
+      }
+      <section class="manager-layout">
+        <section class="table-panel">
+          <div class="table-toolbar">
+            <div>
+              <div class="table-title">Available playhouses</div>
+              <div class="table-sub">
+                {{ playhouses().length }} visible in the current organisation context
+              </div>
+            </div>
+          </div>
+
+          @if (playhouses().length === 0 && provisioningSlugs().length === 0) {
+            <div class="empty-table">
+              <i class="pi pi-inbox"></i>
+              <div>No playhouses found.</div>
+              <p-button
+                label="Create playhouse"
+                icon="pi pi-plus"
+                size="small"
+                (click)="openCreate()"
+              />
+            </div>
+          } @else {
+            <div class="ph-table-wrap">
+              <table class="ph-table">
+                <thead>
+                  <tr>
+                    <th>Playhouse</th>
+                    <th>Status</th>
+                    <th>Region</th>
+                    <th class="col-version">Version</th>
+                    <th class="col-identity">Identity</th>
+                    <th class="actions-col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (slug of provisioningSlugs(); track slug) {
+                    <tr class="provisioning-row">
+                      <td>
+                        <div class="slug-cell">
+                          <div class="slug-text">
+                            <span class="slug-main">{{ slug }}</span>
+                          </div>
+                        </div>
+                      </td>
+                      <td><p-tag value="creating" severity="warn" styleClass="ph-tag" /></td>
+                      <td>-</td>
+                      <td class="col-version">-</td>
+                      <td class="col-identity"><span class="mono muted">-</span></td>
+                      <td>
+                        <div class="row-actions">
+                          <i class="pi pi-spin pi-spinner" title="Provisioning"></i>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                  @for (playhouse of playhouses(); track playhouse.Slug) {
+                    <tr
+                      [class.selected-row]="playhouse.Slug === state.playhouse()"
+                      [class.provisioning-row]="isDeleting(playhouse.Slug)"
+                    >
+                      <td>
+                        <div class="slug-cell">
+                          <div class="slug-text">
+                            <span class="slug-main">{{ playhouse.Slug }}</span>
+                            <!-- Shown only once the Identity and Version columns
+                                 are dropped, so the data is folded rather than
+                                 lost. -->
+                            <span class="slug-meta"
+                              >{{ playhouse.Version || '-' }} ·
+                              {{ playhouse.Identity || '-' }}</span
+                            >
+                          </div>
+                          @if (playhouse.Slug === state.playhouse()) {
+                            <span class="selected-pill">selected</span>
+                          }
+                        </div>
+                      </td>
+                      <td>
+                        @if (isDeleting(playhouse.Slug)) {
+                          <p-tag value="deleting" severity="danger" styleClass="ph-tag" />
+                        } @else {
+                          <p-tag
+                            [value]="playhouse.Status"
+                            [severity]="statusSeverity(playhouse.Status)"
+                            styleClass="ph-tag"
+                          />
+                        }
+                      </td>
+                      <td>{{ playhouse.Region || '-' }}</td>
+                      <td class="col-version">{{ playhouse.Version || '-' }}</td>
+                      <td class="col-identity">
+                        <span class="mono muted">{{ playhouse.Identity || '-' }}</span>
+                      </td>
+                      <td>
+                        <div class="row-actions">
+                          @if (isDeleting(playhouse.Slug)) {
+                            <i class="pi pi-spin pi-spinner" title="Deleting"></i>
+                          } @else {
+                            <p-button
+                              icon="pi pi-arrow-right"
+                              severity="secondary"
+                              [outlined]="true"
+                              size="small"
+                              title="Use playhouse"
+                              [attr.aria-label]="'Use playhouse ' + playhouse.Slug"
+                              (click)="selectPlayhouse(playhouse.Slug)"
+                            />
+                            <p-button
+                              icon="pi pi-trash"
+                              severity="danger"
+                              [outlined]="true"
+                              size="small"
+                              title="Delete playhouse"
+                              [attr.aria-label]="'Delete playhouse ' + playhouse.Slug"
+                              (click)="askDelete(playhouse, $event)"
+                            />
+                          }
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+
+          <div class="select-footer-hint">
+            <i class="pi pi-info-circle"></i>
+            <span
+              >Missing a playhouse here usually means the CLI organisation context is different.
+              Check <code>acloud context list</code>.</span
+            >
+          </div>
+        </section>
+
+        <!-- Below the table, and side by side until the panel is too narrow for
+             two. The three-column layout put the table in a middle rail that only
+             paid off on a wide window. -->
+        <div class="manager-rail">
+          <aside class="manager-panel">
+            <div class="panel-label">Current playhouse</div>
+            @if (selectedPlayhouse(); as current) {
+              <div class="current-box">
+                <div class="current-head">
+                  <div class="current-icon"><i class="pi pi-home"></i></div>
+                  <p-tag
+                    [value]="current.Status"
+                    [severity]="statusSeverity(current.Status)"
+                    styleClass="ph-tag"
+                  />
+                </div>
+                <div class="current-slug">{{ current.Slug }}</div>
+                <div class="current-meta">
+                  <span
+                    ><i class="pi pi-map-marker"></i>{{ current.Region || 'region unknown' }}</span
+                  >
+                  <span><i class="pi pi-tag"></i>{{ current.Version || 'version unknown' }}</span>
+                </div>
+                <p-button
+                  label="Open playrooms"
+                  icon="pi pi-arrow-right"
+                  size="small"
+                  styleClass="w-full"
+                  (click)="selectPlayhouse(current.Slug)"
+                />
+              </div>
+            } @else {
+              <div class="empty-panel">
+                <div class="empty-panel-icon"><i class="pi pi-home"></i></div>
+                <div class="empty-panel-title">No playhouse selected</div>
+                <div class="empty-panel-text">
+                  Select one from the list or create a new playhouse.
+                </div>
+              </div>
+            }
+          </aside>
+
+          <aside class="manager-panel flow-panel">
+            <div class="panel-label">Create flow</div>
+            <div class="flow-list">
+              <div class="flow-item"><span>1</span>Name the playhouse</div>
+              <div class="flow-item"><span>2</span>Choose how playrooms connect</div>
+              <div class="flow-item"><span>3</span>Use inferred placement or advanced flags</div>
+              <div class="flow-item"><span>4</span>Review the equivalent CLI command</div>
+            </div>
+            <p-button
+              label="Start create"
+              icon="pi pi-plus"
+              size="small"
+              [outlined]="true"
+              styleClass="w-full"
+              (click)="openCreate()"
+            />
+          </aside>
+        </div>
+      </section>
+    }
+  </div>
+</div>
+
+<!-- ── Create wizard ─────────────────────────────────────────────────────── -->
+<app-create-playhouse-drawer [(visible)]="showCreate" (create)="onCreate($event)" />
+
+<!-- ── Delete dialog ─────────────────────────────────────────────────────── -->
+<app-confirm-delete-dialog
+  [(visible)]="showDelete"
+  [title]="'Delete ' + (deleteTarget?.Slug ?? '')"
+  subtitle="This deletes the playhouse cluster. Type the slug to confirm."
+  [confirmTarget]="deleteTarget?.Slug ?? ''"
+  confirmLabel="Confirm slug"
+  warning="Deletion is refused while playrooms exist unless force is enabled. Force skips that safety check and can destroy playroom data."
+  [previewInput]="deleteInput()"
+  [previewFn]="previewDelete"
+  (confirm)="confirmDelete()"
+>
+  <details class="disclosure" advanced>
+    <summary>Advanced delete flags</summary>
+    <div class="field-row mt-3">
+      <div class="field-group">
+        <label class="field-label">Wait timeout</label>
+        <input pInputText class="w-full" [(ngModel)]="deleteTimeout" />
+      </div>
+      <div class="toggle-stack">
+        <label class="toggle-line">
+          <span>Delete even if playrooms exist<small class="flag-ref">--force</small></span>
+          <p-toggleswitch [(ngModel)]="deleteForce" />
+        </label>
+        <label class="toggle-line">
+          <span>Return without waiting<small class="flag-ref">--no-wait</small></span>
+          <p-toggleswitch [(ngModel)]="deleteNoWait" />
+        </label>
+      </div>
+    </div>
+  </details>
+</app-confirm-delete-dialog>

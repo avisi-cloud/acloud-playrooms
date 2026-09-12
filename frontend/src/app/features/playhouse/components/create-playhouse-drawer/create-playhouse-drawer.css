@@ -1,0 +1,53 @@
+/* Wizard layout, form primitives, command preview, drawer chrome, .req, and the
+   review grid are all global in shared/styles. Only playhouse-specific step
+   content lives here.
+
+   .simple-summary and .form-error used to live here as byte-for-byte copies of
+   .review-grid and .danger-copy under different names; both call sites now use
+   the shared classes. */
+
+.slug-preview {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: center;
+  padding: 12px 14px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surf-3);
+}
+.slug-preview span {
+  color: var(--tx-3);
+}
+.slug-preview strong {
+  color: var(--tx);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+}
+
+/* Nothing typed yet: the row recedes, and the placeholder half is visibly a
+   placeholder rather than looking like an unresolved template variable. */
+.slug-preview--empty {
+  opacity: 0.62;
+}
+.slug-stem {
+  color: var(--tx-2);
+}
+.slug-blank {
+  color: var(--tx-3);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.advanced-toggle {
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surf-3);
+}
+
+/* .ca-option and .field-hint .link live in shared/styles/_forms.css so the
+   playroom drawers can reuse them. */

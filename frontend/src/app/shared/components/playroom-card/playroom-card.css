@@ -1,0 +1,281 @@
+:host {
+  display: block;
+}
+
+.playroom-card {
+  cursor: pointer;
+  border: none;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition:
+    box-shadow 0.18s,
+    transform 0.18s;
+  box-shadow: var(--shadow-sm);
+}
+.playroom-card:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+/* The ring flags exceptions, not the healthy default. It used to be on `ok`
+   alone — the one status that needs nothing from you was the only one marked,
+   while a failed room was indistinguishable until you read the dot. */
+.playroom-card.bad {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--bad) 45%, transparent),
+    var(--shadow-sm);
+}
+.playroom-card.warn {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--warn) 42%, transparent),
+    var(--shadow-sm);
+}
+.playroom-card.bad:hover {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--bad) 65%, transparent),
+    var(--shadow);
+}
+.playroom-card.warn:hover {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--warn) 60%, transparent),
+    var(--shadow);
+}
+
+/* ── Card header (always dark navy) ── */
+.card-head {
+  background: linear-gradient(120deg, #001e2d 0%, #003345 45%, #005472 100%);
+  padding: 14px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+/* The card's identity mark. The 32px avatar that used to sit beside it showed
+   the same letter, so the card carried its initial twice. */
+.card-head::before {
+  content: attr(data-initial);
+  position: absolute;
+  right: -4px;
+  bottom: -24px;
+  font-size: 108px;
+  font-weight: 900;
+  font-family: var(--font-sans);
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.07);
+  pointer-events: none;
+  user-select: none;
+  letter-spacing: -4px;
+}
+.card-head > * {
+  position: relative;
+  z-index: 1;
+}
+
+.card-head-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.card-flavor {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.card-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.card-sub {
+  font-size: 11px;
+  color: rgba(191, 224, 236, 0.6);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.card-sep {
+  opacity: 0.5;
+}
+
+.card-status-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+  min-width: 0;
+}
+
+/* Status dot */
+.card-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+}
+.card-dot.ok {
+  background: var(--ok-on-dark);
+}
+.card-dot.busy {
+  background: var(--busy-on-dark);
+}
+.card-dot.warn {
+  background: var(--warn-on-dark);
+}
+.card-dot.bad {
+  background: var(--bad-on-dark);
+}
+.card-dot.idle {
+  background: var(--idle-on-dark);
+}
+
+/* Ready is a steady state, so it gets a steady dot. It used to run an infinite
+   ping — one permanent animation per ready room — which is also backwards:
+   a ping reads as activity. The transitional statuses keep the quieter blink. */
+.card-dot.pulse-dot {
+  animation: blink 1.2s ease-in-out infinite;
+}
+@keyframes blink {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.card-status-lbl {
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.card-status-lbl.ok {
+  color: var(--ok-on-dark);
+}
+.card-status-lbl.busy {
+  color: var(--busy-on-dark);
+}
+.card-status-lbl.warn {
+  color: var(--warn-on-dark);
+}
+.card-status-lbl.bad {
+  color: var(--bad-on-dark);
+}
+.card-status-lbl.idle {
+  color: var(--idle-on-dark);
+}
+
+/* What the backend actually said, when it isn't a state we map. */
+.card-raw-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.38);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* ── Card body (theme surface) ── */
+.card-body {
+  flex: 1;
+  background: var(--surf-2);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card-info-row {
+  display: flex;
+  gap: 14px;
+}
+.card-info-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+}
+.card-info-icon {
+  font-size: 11px;
+  color: var(--tx-3);
+  flex-shrink: 0;
+}
+.card-info-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tx-3);
+  flex-shrink: 0;
+}
+.card-info-val {
+  font-size: 11.5px;
+  color: var(--tx-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-left: 2px;
+}
+
+.card-host {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--cyan);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+.card-actions-end {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+:host ::ng-deep .card-primary-btn.p-button {
+  font-size: 12.5px;
+  padding: 7px 14px;
+  flex-shrink: 0;
+}
+:host ::ng-deep .card-icon-btn.p-button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  justify-content: center;
+  flex-shrink: 0;
+}

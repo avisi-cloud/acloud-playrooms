@@ -1,0 +1,127 @@
+<!-- The whole card is the target again. It carries a real accessible name and
+     a focus ring, so it behaves like the link it is without the underline a
+     text link would draw. -->
+<article
+  class="playroom-card"
+  [ngClass]="statusMap[room.status]?.tone"
+  role="link"
+  tabindex="0"
+  [attr.aria-label]="'Open playroom ' + room.name"
+  (click)="openRoom.emit(room.name)"
+  (keydown)="onCardKeydown($event)"
+>
+  <!-- ── Dark navy header ── -->
+  <div class="card-head" [attr.data-initial]="initial">
+    <div class="card-head-top">
+      <div class="card-name">{{ room.name }}<span class="punt">.</span></div>
+      <span class="card-flavor" [title]="flavorTitle()">{{ flavorLabel() }}</span>
+    </div>
+    <div class="card-sub">
+      {{ ownerLabel() }}
+      @if (room.image) {
+        <span class="card-sep"> · </span>{{ room.image }}
+      }
+    </div>
+    <div class="card-status-row">
+      <span
+        class="card-dot"
+        [ngClass]="statusMap[room.status]?.tone"
+        [class.pulse-dot]="
+          room.status === 'creating' || room.status === 'starting' || room.status === 'deleting'
+        "
+      ></span>
+      <span class="card-status-lbl" [ngClass]="statusMap[room.status]?.tone">{{
+        statusLabel()
+      }}</span>
+      @if (room.rawStatus) {
+        <span class="card-raw-status" [title]="room.rawStatus">{{ room.rawStatus }}</span>
+      }
+    </div>
+  </div>
+
+  <!-- ── Light body ── -->
+  <div class="card-body">
+    <div class="card-info-row">
+      <div class="card-info-item">
+        <i class="pi pi-clock card-info-icon"></i>
+        <span class="card-info-label">Age</span>
+        <span class="card-info-val">{{ ageLabel() }}</span>
+      </div>
+      <div class="card-info-item">
+        <i class="pi pi-database card-info-icon"></i>
+        <span class="card-info-label">Disk</span>
+        <span class="card-info-val">{{ room.disk }}</span>
+      </div>
+    </div>
+    <div class="card-host">{{ room.host || '—' }}</div>
+    <div class="card-actions" (click)="$event.stopPropagation()">
+      @if (room.status === 'ready') {
+        <p-button
+          label="Connect"
+          icon="pi pi-terminal"
+          size="small"
+          styleClass="card-primary-btn"
+          [attr.aria-label]="'Connect to playroom ' + room.name"
+          (click)="$event.stopPropagation(); connectRoom.emit(room.name)"
+        />
+        <p-button
+          icon="pi pi-code"
+          size="small"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="card-icon-btn"
+          title="Open in editor"
+          [attr.aria-label]="'Open playroom ' + room.name + ' in editor'"
+          (click)="$event.stopPropagation(); openInEditor.emit(room.name)"
+        />
+        <p-button
+          icon="pi pi-stop-circle"
+          size="small"
+          severity="secondary"
+          [outlined]="true"
+          styleClass="card-icon-btn"
+          title="Stop"
+          [attr.aria-label]="'Stop playroom ' + room.name"
+          (click)="$event.stopPropagation(); stopRoom.emit(room.name)"
+        />
+      } @else if (room.status === 'stopped') {
+        <p-button
+          label="Start"
+          icon="pi pi-power-off"
+          size="small"
+          styleClass="card-primary-btn"
+          [attr.aria-label]="'Start playroom ' + room.name"
+          (click)="$event.stopPropagation(); startRoom.emit(room.name)"
+        />
+      } @else if (room.status === 'failed') {
+        <!-- Edit, not Retry. A failed room usually failed for a reason you can
+             change — the image, the resource requests — and `playroom update`
+             is a real command that reconciles it. There is no `retry`. -->
+        <p-button
+          label="Edit"
+          icon="pi pi-pencil"
+          size="small"
+          styleClass="card-primary-btn"
+          [attr.aria-label]="'Edit playroom ' + room.name"
+          (click)="$event.stopPropagation(); editRoom.emit(room.name)"
+        />
+      }
+
+      <!-- Everything else behind one menu. Five controls in a 264px row left no
+           margin before it wrapped, and put Delete a click away from Connect. -->
+      <div class="card-actions-end">
+        <p-button
+          icon="pi pi-ellipsis-h"
+          size="small"
+          severity="secondary"
+          [text]="true"
+          styleClass="card-icon-btn"
+          [attr.aria-label]="'More actions for playroom ' + room.name"
+          title="More actions"
+          (click)="$event.stopPropagation(); menu.toggle($event)"
+        />
+        <p-menu #menu [model]="menuItems()" [popup]="true" appendTo="body" />
+      </div>
+    </div>
+  </div>
+</article>

@@ -1,0 +1,121 @@
+/* One themed panel: no terminal block, no fixed colours. The type is monospace
+   because it is command output, but every colour comes from the tokens, so the
+   log reads the same way the rest of the app does in either mode. */
+
+/* Sits immediately below the panel so a click anywhere else lands here.
+
+   Deliberately below PrimeNG's overlay masks (1101+ in this theme): a failure
+   used to open the log over an already-open drawer, and this catcher then
+   swallowed every click on it, leaving the drawer dead with nothing on screen
+   explaining why. The log no longer opens itself over an overlay, and if the
+   user opens it by hand the drawer stays reachable. */
+.cli-log__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1090;
+  background: transparent;
+}
+
+/* Inset matches the main panel's own 10px, so the corners line up instead of
+   sitting 6px inside it. */
+.cli-log {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  z-index: 1091;
+  display: flex;
+  flex-direction: column;
+  width: min(52rem, calc(100vw - 20px));
+  max-height: min(28rem, calc(100vh - 20px));
+  border-radius: var(--r-lg);
+  background: var(--surf-2);
+  color: var(--tx);
+  box-shadow:
+    var(--shadow-overlay),
+    0 0 0 1px var(--border);
+  overflow: hidden;
+}
+
+.cli-log__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 8px 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cli-log__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  color: var(--tx);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cli-log__title .pi {
+  flex-shrink: 0;
+  color: var(--tx-3);
+  font-size: 12px;
+}
+
+.cli-log__title .pi-spinner {
+  color: var(--busy);
+}
+
+.cli-log__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 2px;
+}
+
+.cli-log__output {
+  overflow: auto;
+  flex: 1;
+  min-height: 7rem;
+  padding: 12px 14px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  scrollbar-width: thin;
+}
+
+/* Output sits back a step so the command lines carry the structure. */
+.cli-log__line {
+  color: var(--tx-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.cli-log__line--cmd {
+  padding-bottom: 2px;
+  color: var(--tx);
+  font-weight: 600;
+}
+
+.cli-log__line--cmd::before {
+  content: '$ ';
+  color: var(--cyan);
+}
+
+.cli-log__line--err {
+  color: var(--warn);
+}
+
+.cli-log__line--fail {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+.cli-log__line--muted {
+  color: var(--tx-3);
+}
+
+.cli-log__spacer {
+  height: 12px;
+}

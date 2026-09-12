@@ -1,0 +1,90 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Wizard layout — the shell grid, content card, step heads, and review grid
+   shared by the create-playroom and create-playhouse wizards. The step buttons
+   themselves are the app-wizard-stepper component.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* flex:1 so the wizard takes the drawer's free height and the command preview
+   below it sits against the footer. It used to be a fixed 330px min-height in
+   a full-height drawer, which left the preview floating mid-panel above a
+   large void. */
+.wizard-shell {
+  display: grid;
+  grid-template-columns: 168px minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+}
+
+.wizard-card {
+  min-height: 330px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  background: var(--surf-2);
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.step-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.step-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+.step-sub {
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--tx-3);
+  line-height: 1.5;
+}
+/* nowrap so the chip never breaks across a line end and orphans the word after
+   it ("…with the `playhouse-`" / "prefix."). */
+.step-sub code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: color-mix(in srgb, var(--cyan) 10%, transparent);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--cyan);
+  white-space: nowrap;
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surf-3);
+}
+.review-grid div {
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  background: var(--surf-2);
+}
+.review-grid span {
+  color: var(--tx-3);
+  font-size: 12px;
+}
+.review-grid strong {
+  color: var(--tx);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .wizard-shell {
+    grid-template-columns: 1fr;
+  }
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+}

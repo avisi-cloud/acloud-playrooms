@@ -1,0 +1,354 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.select-view {
+  font-size: 14px;
+}
+
+.select-body {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+
+/* ── Manager layout ───────────────────────────────────────────────────────
+   The table first and always full width, then the two supporting cards below
+   it. They used to flank the table in a three-column grid, which left the list
+   — the thing the screen is for — squeezed into a middle rail that only paid
+   off on a wide window.
+
+   The rail below wraps on its own: two cards while they fit, stacked when they
+   don't, without a breakpoint deciding for them.
+   ───────────────────────────────────────────────────────────────────────── */
+.manager-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.manager-rail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 18px;
+  align-items: start;
+}
+
+/* Flush against the page body's own top/left/right edges rather than floating
+   inset inside its padding — a banner reads as attached to the screen, not as
+   another card. The negative margin cancels exactly the padding .page-body
+   applies (22px 26px); only the bottom keeps a border and radius, since that
+   edge borders the content below rather than the window chrome. */
+.provisioning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 26px;
+  margin: -22px -26px 16px;
+  border: 1px solid rgba(17, 153, 187, 0.28);
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-radius: 0;
+  background: rgba(17, 153, 187, 0.1);
+  color: var(--tx);
+}
+.provisioning-banner > i {
+  color: var(--cyan);
+  margin-top: 2px;
+}
+.provisioning-text {
+  display: grid;
+  gap: 3px;
+  font-size: 12px;
+}
+.provisioning-text span {
+  color: var(--tx-2);
+}
+.provisioning-row {
+  opacity: 0.8;
+}
+.provisioning-row .pi-spinner {
+  color: var(--cyan);
+}
+
+.manager-panel,
+.table-panel {
+  background: var(--surf-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  box-shadow: var(--shadow-sm);
+}
+.manager-panel {
+  padding: 16px;
+}
+
+.panel-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tx-3);
+}
+
+.current-box {
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  background: var(--surf-3);
+}
+.current-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.current-icon,
+.empty-panel-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(17, 153, 187, 0.12);
+  border: 1px solid rgba(17, 153, 187, 0.22);
+  color: var(--cyan);
+}
+.current-slug {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.current-meta {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0 14px;
+  font-size: 12px;
+  color: var(--tx-2);
+}
+.current-meta span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+
+.empty-panel {
+  margin-top: 10px;
+  padding: 18px 12px;
+  border: 1px dashed var(--border-2);
+  border-radius: var(--r-sm);
+  text-align: center;
+}
+.empty-panel-icon {
+  margin: 0 auto 10px;
+}
+.empty-panel-title {
+  font-size: 13px;
+  font-weight: 700;
+}
+.empty-panel-text {
+  font-size: 12px;
+  color: var(--tx-3);
+  margin-top: 4px;
+}
+
+.flow-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 14px;
+}
+.flow-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--tx-2);
+  font-size: 12px;
+}
+.flow-item span {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--surf-3);
+  border: 1px solid var(--border-2);
+  color: var(--tx);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+/* ── Table ────────────────────────────────────────────────────────────── */
+.table-panel {
+  min-width: 0;
+  overflow: hidden;
+}
+/* Shown only once Identity and Version are dropped — see the query at the
+   bottom of this file. */
+.slug-meta {
+  display: none;
+}
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.table-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+.table-sub {
+  font-size: 12px;
+  color: var(--tx-3);
+  margin-top: 3px;
+}
+
+.ph-table-wrap {
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-2) transparent;
+}
+.ph-table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+}
+.ph-table th,
+.ph-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: middle;
+  font-size: 12.5px;
+}
+.ph-table th {
+  color: var(--tx-3);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  background: var(--surf-3);
+}
+.ph-table tbody tr {
+  transition: background 0.14s;
+}
+.ph-table tbody tr:hover,
+.ph-table tbody tr.selected-row {
+  background: color-mix(in srgb, var(--cyan) 9%, transparent);
+}
+
+.slug-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.slug-text {
+  min-width: 0;
+}
+.slug-main {
+  display: block;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 260px;
+}
+.selected-pill {
+  border: 1px solid rgba(17, 153, 187, 0.25);
+  background: rgba(17, 153, 187, 0.12);
+  color: var(--cyan);
+  border-radius: 999px;
+  padding: 2px 7px;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.actions-col {
+  width: 112px;
+}
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 7px;
+}
+.muted {
+  color: var(--tx-3);
+  font-size: 11.5px;
+}
+
+:host ::ng-deep .ph-tag.p-tag {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.empty-table {
+  min-height: 270px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  color: var(--tx-2);
+}
+.empty-table .pi {
+  font-size: 1.6rem;
+  color: var(--tx-3);
+}
+
+.select-footer-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--tx-3);
+  padding: 12px 16px;
+  background: var(--surf-3);
+}
+.select-footer-hint code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: color-mix(in srgb, var(--cyan) 10%, transparent);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--cyan);
+}
+
+/* Identity and Version fold into the slug cell here. The table panel is now
+   the full width of the page body, so it holds all six columns until the
+   window is near its own 900px minimum. */
+@media (max-width: 1000px) {
+  .ph-table .col-identity,
+  .ph-table .col-version {
+    display: none;
+  }
+  .slug-meta {
+    display: block;
+    margin-top: 3px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--tx-3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 720px) {
+  .select-body {
+    padding-top: 18px;
+  }
+}

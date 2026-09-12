@@ -1,0 +1,3 @@
+/* Chrome (.av-dialog, .danger-copy, .confirm-slug-hint, .disclosure) is
+   global in shared/styles. Projected [advanced] content is styled by the host
+   component, so no local styles are needed here. */

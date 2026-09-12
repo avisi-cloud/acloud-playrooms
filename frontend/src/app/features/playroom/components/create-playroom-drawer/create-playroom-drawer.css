@@ -1,0 +1,3 @@
+/* Wizard layout (.wizard-shell, .wizard-card, .step-*, .review-grid) is global
+   in shared/styles/_wizard.css. Form primitives, command preview, and drawer
+   chrome are global too, so no local styles are needed here. */

@@ -1,0 +1,90 @@
+<p-dialog
+  [visible]="visible"
+  (visibleChange)="onVisibleChange($event)"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [closable]="false"
+  [closeOnEscape]="true"
+  [style]="dialogStyle"
+  styleClass="av-dialog av-dialog-danger"
+  appendTo="body"
+>
+  <ng-template pTemplate="header">
+    <div class="dialog-head-content">
+      <span class="dialog-head-icon"><i class="pi pi-trash"></i></span>
+      <div class="dialog-head-text">
+        <div class="dialog-title">{{ title }}</div>
+        <div class="dialog-subtitle">{{ subtitle }}</div>
+      </div>
+      <p-button
+        icon="pi pi-times"
+        severity="secondary"
+        [text]="true"
+        size="small"
+        aria-label="Close"
+        (click)="close()"
+      />
+    </div>
+  </ng-template>
+
+  @if (warning) {
+    <div class="danger-copy">
+      <i class="pi pi-exclamation-triangle"></i>
+      <span>{{ warning }}</span>
+    </div>
+  }
+
+  <div class="field-group">
+    <label class="field-label">{{ confirmLabel }}</label>
+    @if (showHint) {
+      <div class="confirm-slug-hint">
+        Type <code>{{ confirmTarget }}</code> to confirm.
+      </div>
+    }
+    <input
+      pInputText
+      class="w-full"
+      [(ngModel)]="confirmText"
+      (blur)="touched = true"
+      autocomplete="off"
+      spellcheck="false"
+    />
+    @if (typedTextIsANearMiss()) {
+      <small class="field-hint error"
+        >That does not match <code>{{ confirmTarget }}</code> yet.</small
+      >
+    }
+  </div>
+
+  <ng-content select="[advanced]" />
+
+  @if (command || previewFn) {
+    <app-command-preview
+      [command]="command"
+      [input]="previewInput"
+      [previewFn]="previewFn"
+      [enabled]="visible"
+      [copyable]="false"
+      [tight]="true"
+    />
+  }
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [outlined]="true"
+      size="small"
+      (click)="close()"
+    />
+    <p-button
+      [label]="deleteLabel"
+      icon="pi pi-trash"
+      severity="danger"
+      size="small"
+      [disabled]="!typedTextMatchesTarget()"
+      (click)="confirmIfTypedTextMatches()"
+    />
+  </ng-template>
+</p-dialog>

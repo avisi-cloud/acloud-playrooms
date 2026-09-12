@@ -1,0 +1,63 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Global stylesheet entry point.
+
+   The design system lives in shared/styles/ partials (fonts, tokens, forms,
+   surfaces, overlays, utilities). This file only wires them in and keeps the
+   bare base rules + PrimeNG toast tweaks that don't belong to any one partial.
+   ───────────────────────────────────────────────────────────────────────── */
+@import './app/shared/styles/_fonts.css';
+@import './app/shared/styles/_tokens.css';
+@import './app/shared/styles/_pages.css';
+@import './app/shared/styles/_forms.css';
+@import './app/shared/styles/_surfaces.css';
+@import './app/shared/styles/_wizard.css';
+@import './app/shared/styles/_overlays.css';
+@import './app/shared/styles/_utilities.css';
+
+/* ── Global base ──────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--win);
+}
+
+/* Nothing in this app animates to communicate anything a static state doesn't
+   already carry, so honouring the preference costs nothing. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── PrimeNG toast ────────────────────────────────────────────────────────
+   Bottom-right, where the activity log also lives. Rather than move one of
+   them, the toast stack lifts clear while the log is open — so a toast never
+   lands on top of the panel it is inviting you to read.
+   ───────────────────────────────────────────────────────────────────────── */
+.p-toast {
+  z-index: 9999 !important;
+  transition: bottom 0.2s ease;
+}
+.p-toast .p-toast-message {
+  font-family: var(--font-sans);
+}
+
+body:has(.cli-log) .p-toast.p-toast-bottom-right {
+  bottom: calc(min(28rem, 100vh - 20px) + 20px) !important;
+}

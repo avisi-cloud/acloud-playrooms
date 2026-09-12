@@ -1,0 +1,58 @@
+/* The toast body.
+
+   PrimeNG's own template is replaced so a toast can link to the command that
+   raised it, which means the body is ours to style. The p-toast severity
+   classes still apply around it.
+   ════════════════════════════════════════════════════════════════════════ */
+
+.toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+.toast-body--linked {
+  cursor: pointer;
+}
+.toast-summary {
+  font-size: 12px;
+  font-weight: 600;
+}
+/* Clamped: the detail is whatever the CLI handed back, and an unclamped one
+   grew until it filled the corner of the window. */
+.toast-detail {
+  font-size: 12px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+/* The remedy sits under the failure and reads as advice rather than as more of
+   the same sentence: same clamp, one step quieter. */
+.toast-remedy {
+  margin-top: 3px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  opacity: 0.82;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+.toast-link {
+  margin-top: 2px;
+  font-size: 9.5px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+.toast-body--linked:hover .toast-link {
+  opacity: 1;
+  text-decoration: underline;
+}

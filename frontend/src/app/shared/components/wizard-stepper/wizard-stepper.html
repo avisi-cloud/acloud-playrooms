@@ -1,0 +1,22 @@
+<nav class="wizard-steps" aria-label="Wizard steps">
+  @for (step of steps; track step.key; let i = $index; let last = $last) {
+    <button
+      type="button"
+      class="wizard-step"
+      [class.active]="i === activeIndex"
+      [class.done]="i < activeIndex"
+      [class.last]="last"
+      [attr.aria-current]="i === activeIndex ? 'step' : null"
+      (click)="stepSelect.emit(i)"
+    >
+      <span class="wizard-step-marker">
+        @if (i < activeIndex) {
+          <i class="pi pi-check"></i>
+        } @else {
+          <i [class]="step.icon"></i>
+        }
+      </span>
+      <span class="wizard-step-label">{{ step.label }}</span>
+    </button>
+  }
+</nav>

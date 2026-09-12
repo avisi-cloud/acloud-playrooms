@@ -1,0 +1,221 @@
+<div class="page-shell detail-view">
+  <header class="page-header">
+    <div class="page-header-left">
+      <button class="page-back-btn" (click)="goBack()">
+        <i class="pi pi-arrow-left"></i>
+        <span>Playrooms</span>
+      </button>
+      <div class="page-header-divider"></div>
+      <div class="page-header-stack">
+        <h1 class="page-header-title">{{ roomName() }}<span class="punt">.</span></h1>
+        @if (room(); as room) {
+          <p class="page-header-sub">
+            {{ ownerLabel() }} · {{ room.playhouse }} · {{ ageLabel() }}
+          </p>
+        }
+      </div>
+    </div>
+    <div class="page-header-right">
+      @if (room()) {
+        <p-tag
+          [value]="statusLabel()"
+          [severity]="statusSeverity()"
+          [rounded]="true"
+          [class.pulse]="isTransitional()"
+          styleClass="detail-tag"
+        />
+      }
+    </div>
+  </header>
+
+  <!-- Body -->
+  <div class="page-body detail-body">
+    @if (loading) {
+      <!-- The shell's brand mark breathes instead; see PageLoadingService. -->
+      <p class="sr-only" role="status">Loading playroom…</p>
+    } @else if (!room()) {
+      <div class="state-center">
+        <div class="state-icon">
+          <i class="pi pi-exclamation-circle" style="font-size: 1.75rem"></i>
+        </div>
+        <h3 class="state-title">Playroom not found</h3>
+        <p class="state-text">
+          This playroom no longer exists or belongs to a different playhouse.
+        </p>
+        <p-button
+          label="Back to playrooms"
+          icon="pi pi-arrow-left"
+          size="small"
+          (click)="goBack()"
+        />
+      </div>
+    } @else {
+      <div class="detail-column">
+        <!-- Transitional status banner. The tone follows the status now; it used
+             to bind [ngClass] to the status with no matching rules, so a room
+             being torn down looked exactly like one being provisioned. -->
+        @if (isTransitional()) {
+          <div class="status-banner" [ngClass]="statusTone()">
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>{{ statusDescription() }}</span>
+            @if (room()!.rawStatus) {
+              <code>{{ room()!.rawStatus }}</code>
+            }
+          </div>
+        }
+
+        <!-- Action buttons -->
+        <section class="actions-row">
+          @switch (room()!.status) {
+            @case ('ready') {
+              <p-button
+                label="Connect"
+                icon="pi pi-terminal"
+                size="small"
+                (click)="openConnect('connect')"
+              />
+              <p-button
+                label="Open in editor"
+                icon="pi pi-code"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (click)="openConnect('open')"
+              />
+              <p-button
+                label="Stop"
+                icon="pi pi-stop-circle"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (click)="stopRoom()"
+              />
+              <p-button
+                label="Edit"
+                icon="pi pi-pencil"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (click)="openUpdate()"
+              />
+            }
+            @case ('stopped') {
+              <p-button label="Start" icon="pi pi-power-off" size="small" (click)="startRoom()" />
+              <p-button
+                label="Edit"
+                icon="pi pi-pencil"
+                severity="secondary"
+                [outlined]="true"
+                size="small"
+                (click)="openUpdate()"
+              />
+            }
+            @case ('failed') {
+              <!-- No Retry: the CLI has no such command. Editing the image or the
+                   resource requests is the real recovery, and deleting is the
+                   other one. -->
+              <p-button label="Edit" icon="pi pi-pencil" size="small" (click)="openUpdate()" />
+            }
+          }
+
+          <!-- Delete lives behind the overflow, not as a bare icon at the far
+               end of a full-width bar next to routine actions. -->
+          <div class="actions-end">
+            <p-button
+              icon="pi pi-ellipsis-h"
+              size="small"
+              severity="secondary"
+              [text]="true"
+              styleClass="detail-more-btn"
+              title="More actions"
+              [attr.aria-label]="'More actions for playroom ' + roomName()"
+              (click)="moreMenu.toggle($event)"
+            />
+            <p-menu #moreMenu [model]="moreMenuItems()" [popup]="true" appendTo="body" />
+          </div>
+        </section>
+
+        <!-- Info list -->
+        <div class="detail-list">
+          <div class="list-section">
+            <div class="list-section-head">
+              <div class="card-icon-wrap"><i class="pi pi-desktop card-icon"></i></div>
+              <span class="section-title">Connection</span>
+            </div>
+            <div class="list-row ssh-row">
+              <span>SSH host</span>
+              <div class="ssh-value">
+                @if (room()!.host) {
+                  <strong class="ssh-host">{{ room()!.host }}</strong>
+                  <p-button
+                    icon="pi pi-copy"
+                    severity="secondary"
+                    [text]="true"
+                    size="small"
+                    styleClass="copy-btn"
+                    title="Copy SSH host"
+                    [attr.aria-label]="'Copy SSH host for ' + roomName()"
+                    (click)="copyHost()"
+                  />
+                } @else {
+                  <strong class="ssh-empty">not yet assigned</strong>
+                }
+              </div>
+            </div>
+            <div class="list-row">
+              <span>Ports</span><strong>{{ room()!.ports || '—' }}</strong>
+            </div>
+          </div>
+
+          <div class="list-section">
+            <div class="list-section-head">
+              <div class="card-icon-wrap"><i class="pi pi-microchip card-icon"></i></div>
+              <span class="section-title">Resources</span>
+            </div>
+            <div class="list-row">
+              <span>Image</span
+              ><strong class="mono truncate" [title]="room()!.image">{{
+                room()!.image || '—'
+              }}</strong>
+            </div>
+            <div class="list-row">
+              <span>CPU request / limit</span
+              ><strong>{{ room()!.cpuReq }} / {{ room()!.cpuLim }}</strong>
+            </div>
+            <div class="list-row">
+              <span>Memory request / limit</span
+              ><strong>{{ room()!.memReq }} / {{ room()!.memLim }}</strong>
+            </div>
+            <div class="list-row">
+              <span>Storage</span><strong>{{ room()!.disk }} · {{ room()!.diskType }}</strong>
+            </div>
+            <div class="list-row">
+              <span>System</span><strong>{{ room()!.system || '—' }}</strong>
+            </div>
+          </div>
+
+          <div class="list-section">
+            <div class="list-section-head">
+              <div class="card-icon-wrap"><i class="pi pi-info-circle card-icon"></i></div>
+              <span class="section-title">Metadata</span>
+            </div>
+            <div class="list-row">
+              <span>Owner</span><strong>{{ room()!.owner }}</strong>
+            </div>
+            <div class="list-row">
+              <span>Playhouse</span><strong>{{ room()!.playhouse }}</strong>
+            </div>
+            <div class="list-row">
+              <span>Age</span><strong>{{ ageLabel() }}</strong>
+            </div>
+            <div class="list-row">
+              <span>Ephemeral</span><strong>{{ room()!.ephemeral ? 'yes' : 'no' }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<app-playroom-actions-host #roomActions (deleted)="onDeleted()" />
