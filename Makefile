@@ -1,5 +1,8 @@
+-include .env.local
+
 BINARY ?= acloud-playrooms
 LOCAL_ACLOUD ?= ../acloud/bin/acloud
+LOCAL_ACLOUD_ABS := $(abspath $(LOCAL_ACLOUD))
 
 # The application version is written down once, in build/config.yml, which is
 # also what Wails reads when it packages the app.
@@ -28,15 +31,15 @@ tools:
 	fi
 
 dev: tools
-	"$(WAILS3)" dev
+	"$(WAILS3)" dev -config ./build/config.yml
 
 dev-local: tools
-	@if [ ! -x "$(LOCAL_ACLOUD)" ]; then \
-		echo "Local acloud binary not found or not executable: $(LOCAL_ACLOUD)"; \
+	@if [ ! -x "$(LOCAL_ACLOUD_ABS)" ]; then \
+		echo "Local acloud binary not found or not executable: $(LOCAL_ACLOUD_ABS)"; \
 		echo "Build it first in your acloud checkout, or pass LOCAL_ACLOUD=<your-path-to-acloud>/bin/acloud"; \
 		exit 1; \
 	fi
-	ACLOUD_BINARY="$(LOCAL_ACLOUD)" "$(WAILS3)" dev
+	ACLOUD_BINARY="$(LOCAL_ACLOUD_ABS)" "$(WAILS3)" dev -config ./build/config.yml
 
 build: tools
 	"$(WAILS3)" task common:build:frontend BUILD_FLAGS="-tags gui"

@@ -1,3 +1,7 @@
+# Local developer overrides
+.env
+.env.local
+
 # Local editor and OS state
 .idea/
 .vscode/

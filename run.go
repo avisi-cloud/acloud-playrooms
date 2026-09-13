@@ -13,17 +13,11 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-// The runtime icon, also used when launching without an app bundle.
-//
-//go:embed build/appicon.png
-var appIcon []byte
-
 // RunDesktopApplication blocks until the app exits and must run on the main goroutine.
 func RunDesktopApplication() error {
 	app := application.New(application.Options{
 		Name:        "Acloud Playrooms",
 		Description: "Acloud Playrooms",
-		Icon:        appIcon,
 		Services: []application.Service{
 			application.NewService(&App{}),
 		},
