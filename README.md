@@ -49,7 +49,13 @@ acloud auth status
 
 ## Installing Acloud Playrooms
 
-For the demo phase, the simplest distribution path is a GitHub Release from this repository. Users can download the macOS app archive, move `Acloud Playrooms.app` to Applications and open it.
+For the demo phase, the simplest distribution path is a GitHub Release:
+
+```text
+https://github.com/avisi-cloud/acloud-playrooms/releases/latest
+```
+
+Users can download the macOS app archive, move `Acloud Playrooms.app` to Applications and open it.
 
 A Homebrew cask can be added later for a cleaner install, upgrade and uninstall flow:
 
@@ -73,7 +79,16 @@ For development against a sibling local `acloud` checkout built at `../acloud/bi
 make dev-local
 ```
 
-You can point at any other local CLI build with:
+`make dev-local` passes the CLI path to the app as an absolute path, because macOS launches the `.app` bundle from a different working directory.
+
+If your local `acloud` checkout lives somewhere else, copy `.env.example` to `.env.local` and set your path there:
+
+```sh
+cp .env.example .env.local
+# edit LOCAL_ACLOUD in .env.local
+```
+
+You can also point at any other local CLI build for a single run with:
 
 ```sh
 make dev-local LOCAL_ACLOUD=<your-path-to-acloud>/bin/acloud

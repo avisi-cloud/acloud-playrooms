@@ -173,15 +173,17 @@ tasks:
       - wails3 generate bindings -f '{{.BUILD_FLAGS | default "-tags gui"}}' -clean=true{{if eq .OBFUSCATED "true"}} -obfuscated{{end}}
 
   generate:icons:
-    summary: Generates the native Mac assets from the Icon Composer bundle.
+    summary: Generates native icon assets.
     dir: build
     sources:
       - "appicon.png"
       - "appicon.icon/**/*"
     generates:
       - "darwin/icons.icns"
+      - "windows/icon.ico"
     cmds:
-      - wails3 generate icons -input appicon.png -macfilename darwin/icons.icns -iconcomposerinput appicon.icon -macassetdir darwin
+      - mkdir -p windows
+      - wails3 generate icons -input appicon.png -macfilename darwin/icons.icns -windowsfilename windows/icon.ico -iconcomposerinput appicon.icon -macassetdir darwin
 
   dev:frontend:
     summary: Runs the frontend in development mode
