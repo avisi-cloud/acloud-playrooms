@@ -52,7 +52,7 @@ acloud auth status
 For the demo phase, the simplest distribution path is a GitHub Release:
 
 ```text
-https://github.com/avisi-cloud/acloud-playrooms/releases/latest
+https://github.com/avisi-cloud/acloud-playrooms/releases
 ```
 
 Users can download the macOS app archive, move `Acloud Playrooms.app` to Applications and open it.
