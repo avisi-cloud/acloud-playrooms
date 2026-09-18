@@ -41,8 +41,10 @@ the actual download archive without uploading anything.
 
 ## Pull request titles
 
-Use a Conventional Commit title and squash-merge. Release Please reads the
-resulting commit to prepare the next version and changelog:
+PR titles are not enforced by CI. For automated releases, use a Conventional
+Commit message when squash-merging; you can edit it at merge time without
+renaming the PR. Release Please reads that resulting commit to prepare the next
+version and changelog:
 
 | Title                                              | Meaning                |
 | -------------------------------------------------- | ---------------------- |

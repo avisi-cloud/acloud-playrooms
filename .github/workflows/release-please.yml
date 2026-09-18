@@ -17,15 +17,22 @@ concurrency:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - name: Check release automation credentials
-        env:
-          RELEASE_PLEASE_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
-        run: |
-          if [ -z "$RELEASE_PLEASE_TOKEN" ]; then
-            echo 'Set RELEASE_PLEASE_TOKEN as described in doc/RELEASING.md.' >&2
-            exit 1
-          fi
       - uses: googleapis/release-please-action@v4
+        id: release
         with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.release-please.outputs.tag_name }}
+    secrets:
+      HOMEBREW_TOOLS_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TOOLS_GITHUB_TOKEN }}

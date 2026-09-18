@@ -1,5 +1,3 @@
-<div align="center">
-
 # Acloud Playrooms
 
 **Your Acloud development environments, in a Mac app.**
@@ -10,8 +8,6 @@
 ![macOS: Intel and Apple Silicon](https://img.shields.io/badge/macOS-Intel_%2B_Apple_Silicon-black)
 
 [Get started](#get-started) · [How it works](#how-it-works) · [Develop](#develop) · [Release](doc/RELEASING.md) · [Contribute](CONTRIBUTING.md)
-
-</div>
 
 ![Acloud Playrooms showing development environments and their status](assets/images/playrooms.png)
 
@@ -222,11 +218,13 @@ working directory.
 
 Merge a fix or feature, then review and merge the release PR created by
 **Release Please**. The pipeline builds a universal Mac app with Wails, packages
-it with GoReleaser, verifies it, uploads it to GitHub Releases and updates Homebrew.
+it with GoReleaser, verifies it and uploads it to GitHub Releases. Homebrew updates
+are enabled when the optional Homebrew credential is configured.
 **Renovate** prepares dependency update PRs for review.
 
 Maintainers: complete the [one-time GitHub setup](doc/RELEASING.md#one-time-github-setup)
-before the first release. Contributors: use [Conventional Commit PR titles](CONTRIBUTING.md#pull-request-titles).
+before the first release. Contributors: see the [squash-commit guidance](CONTRIBUTING.md#pull-request-titles)
+for automated releases; PR titles are not enforced.
 
 ## Go deeper
 
