@@ -30,8 +30,10 @@ flowchart TD
    committing the file does not activate the app.
 3. Enable **Allow GitHub Actions to create and approve pull requests** under
    **Settings > Actions > General**. An organisation admin may need to allow this.
-4. Require the `Conventional Commit title`, `Frontend checks` and `macOS checks and release rehearsal` checks
+4. Require the `Frontend checks` and `macOS checks and release rehearsal` checks
    in the branch rules for `main`.
+   Remove `Conventional Commit title` from required checks if previously configured;
+   PR titles are no longer checked by a workflow.
 5. Optionally configure the Homebrew secret below in
    **Settings > Secrets and variables > Actions**. This can be done later.
 

@@ -223,7 +223,8 @@ are enabled when the optional Homebrew credential is configured.
 **Renovate** prepares dependency update PRs for review.
 
 Maintainers: complete the [one-time GitHub setup](doc/RELEASING.md#one-time-github-setup)
-before the first release. Contributors: use [Conventional Commit PR titles](CONTRIBUTING.md#pull-request-titles).
+before the first release. Contributors: see the [squash-commit guidance](CONTRIBUTING.md#pull-request-titles)
+for automated releases; PR titles are not enforced.
 
 ## Go deeper
 
