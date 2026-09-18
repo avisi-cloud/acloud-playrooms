@@ -1,7 +1,8 @@
 # Releases and repository setup
 
 The normal release is **merge changes, review the generated release PR, merge it**.
-GitHub builds the application, attaches the download, and updates Homebrew.
+GitHub builds the application and attaches the download. It also updates Homebrew
+when the optional Homebrew credential is configured.
 No developer needs to build or upload the production app by hand.
 
 ```mermaid
@@ -10,12 +11,14 @@ flowchart TD
     B --> C[Review version and changelog]
     C --> D[Merge the release PR]
     D --> E[Release Please creates a tag and GitHub Release]
-    E --> F[Run formatting, lint, build and tests]
+    E --> F[Directly call publishing workflow: checks, build and tests]
     F --> G[Wails builds Intel and Apple Silicon into one app]
     G --> H[GoReleaser creates the ZIP and checksums]
     H --> I[Verify the extracted app and generate the cask]
     I --> J[Upload release files]
-    J --> K[Update avisi-cloud/homebrew-tools]
+    J --> K{Homebrew credential configured?}
+    K -->|Yes| L[Update avisi-cloud/homebrew-tools]
+    K -->|No| M["Skip Homebrew; GitHub release is ready"]
 ```
 
 ## One-time GitHub setup
@@ -25,29 +28,37 @@ flowchart TD
 2. Install or enable the [Renovate GitHub app](https://github.com/apps/renovate)
    for this repository. `renovate.json` controls dependency update PRs; merely
    committing the file does not activate the app.
-3. Add the two Actions secrets below in **Settings > Secrets and variables > Actions**.
-4. Allow GitHub Actions to create pull requests under **Settings > Actions > General**
-   if required by the organisation's settings.
-5. Require the `Conventional Commit title`, `Frontend checks` and `macOS checks and release rehearsal` checks
+3. Enable **Allow GitHub Actions to create and approve pull requests** under
+   **Settings > Actions > General**. An organisation admin may need to allow this.
+4. Require the `Conventional Commit title`, `Frontend checks` and `macOS checks and release rehearsal` checks
    in the branch rules for `main`.
+5. Optionally configure the Homebrew secret below in
+   **Settings > Secrets and variables > Actions**. This can be done later.
 
-| Secret                        | Repository access              | Fine-grained token permissions                 |
-| ----------------------------- | ------------------------------ | ---------------------------------------------- |
-| `RELEASE_PLEASE_TOKEN`        | `avisi-cloud/acloud-playrooms` | Contents, pull requests and issues: read/write |
-| `HOMEBREW_TOOLS_GITHUB_TOKEN` | `avisi-cloud/homebrew-tools`   | Contents: read/write                           |
+| Secret                        | Repository access            | Fine-grained token permissions |
+| ----------------------------- | ---------------------------- | ------------------------------ |
+| `HOMEBREW_TOOLS_GITHUB_TOKEN` | `avisi-cloud/homebrew-tools` | Contents: read/write           |
 
-Use an organisation-approved automation account for these tokens. The Homebrew
+Use an organisation-approved automation account for the Homebrew token. The
 secret has the same name as in `acloud-toolkit`. Organisation policies may require
 approval of the tokens or permission for the automation account to push to the tap.
 
-Release Please deliberately uses its own token: PRs and tags created with the
-default `GITHUB_TOKEN` do not trigger the follow-up workflows. A personal access
-token makes both the release PR checks and tag-triggered build run normally.
-See [Release Please's credential documentation](https://github.com/googleapis/release-please-action#github-credentials).
+Release Please and release uploads use GitHub's automatically provided
+`GITHUB_TOKEN`. No `RELEASE_PLEASE_TOKEN` or personal release token is needed.
+When Release Please creates a release, its dependent job calls the reusable
+publishing workflow directly with the new tag. This does not rely on the tag
+starting another workflow, which GitHub suppresses for built-in-token pushes.
+
+On a generated release PR, use **Approve workflows to run** if GitHub requests
+approval, then wait for the required checks before merging. See
+[GitHub's workflow-trigger rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
 
 The publishing job uses the built-in `GITHUB_TOKEN` for release uploads and the
-separate Homebrew token only when checking out and updating the tap. Neither
-secret is available to pull request builds.
+separate Homebrew token only when checking out and updating the tap. Without it,
+the ZIP, checksums and generated cask are still published to GitHub; the workflow
+summary notes that the tap update was skipped. Add the secret later to enable
+tap updates for subsequent releases. A configured but invalid token still fails
+the Homebrew step so credential problems are not silently ignored.
 
 ## What each tool does
 
@@ -106,7 +117,9 @@ formatter, linter, production build and tests.
 Open **Actions > Publish release > Run workflow** and enter an existing stable
 tag, for example `v0.28.1`. The job checks out that tag, repeats validation, and
 replaces its release assets. It updates the Homebrew cask only when its content
-changes. The GitHub Release must already exist; Release Please creates it.
+changes and the Homebrew credential is configured. The GitHub Release must already
+exist; Release Please creates it. This also lets you publish an existing release
+to Homebrew after adding the credential.
 
 A release becomes visible before the build completes, so a new release may
 briefly have no downloads. If packaging or upload fails, retry that tag after
