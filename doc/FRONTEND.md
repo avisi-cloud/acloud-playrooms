@@ -1,6 +1,6 @@
 # The frontend
 
-The Angular application in `gui/frontend`. Angular 22 · TypeScript 6 ·
+The Angular application in `frontend/`. Angular 22 · TypeScript 6 ·
 PrimeNG 21 with an Avisi Aura preset · PrimeIcons · Wails v3 bindings · Vitest ·
 ESLint with angular-eslint · Prettier.
 
@@ -11,11 +11,11 @@ commands reach the CLI, see [`ARCHITECTURE.md`](ARCHITECTURE.md).
 npm run dev     # ng serve on 127.0.0.1:4200
 npm run build
 npm test
-npm run check   # everything the pipeline should run: format, lint, build, test
+npm run check   # the same formatting, lint, build and tests as GitHub
 ```
 
 The browser dev server is useful for layout work, but anything that calls the
-backend needs the real app (`wails3 dev` from `gui`).
+backend needs the real app (`make dev` from the repository root).
 
 ## Structure
 
@@ -45,12 +45,12 @@ src/app/
 
 `/` redirects to `/rooms`.
 
-| Route | Screen |
-|---|---|
-| `/playhouse` | playhouse selection |
-| `/rooms` | playroom list (guarded) |
+| Route          | Screen                    |
+| -------------- | ------------------------- |
+| `/playhouse`   | playhouse selection       |
+| `/rooms`       | playroom list (guarded)   |
 | `/rooms/:name` | playroom detail (guarded) |
-| `/settings` | defaults |
+| `/settings`    | defaults                  |
 
 `core/guards/playhouse-guard.ts` sends the user to `/playhouse` when no
 playhouse is selected and the backend has no cached one.
@@ -69,7 +69,7 @@ is left off the command line, so the CLI's own default applies.
 Regenerate after changing any exported Go method or input struct:
 
 ```sh
-cd gui && wails3 generate bindings -f '-tags gui' -clean=true
+make build
 ```
 
 Never edit `bindings/` by hand.
@@ -81,7 +81,7 @@ command and its real output:
 
 ```ts
 let runId = '';
-await this.console.run(`Creating "${name}"`, opId => {
+await this.console.run(`Creating "${name}"`, (opId) => {
   runId = opId;
   this.notify.toast(`Creating "${name}" ...`, 'busy', opId);
   return wailsApi.createPlayroom(opId, input);
@@ -162,7 +162,7 @@ than raising its own toast, so the shell stays the only thing that talks to the
 user.
 
 `core/services/acloud-session.ts` owns what the GUI knows about the acloud it is
-running inside — version, compatibility notice, whether tailscale and ssh are on
+driving — version, compatibility notice, whether tailscale and ssh are on
 the `PATH` — and who is signed in to it. The two halves of an interactive login
 are deliberately separate: `openLoginInTerminal()` returns as soon as the
 terminal is up, and `waitForCredentialsToAppear()` is the half that knows
@@ -222,7 +222,7 @@ argument: both commands take the value directly. The GUI renders the list and
 passes the choice. See [`DECISIONS.md`](DECISIONS.md).
 
 Both go through `ScopeService`, which runs the command, clears everything that
-belonged to the scope being left, and re-reads context *and* organisation (a
+belonged to the scope being left, and re-reads context _and_ organisation (a
 context carries its own organisation, so switching one moves the other). `app.ts`
 does the part the user sees: the toast, and the return to playhouse selection.
 
@@ -256,7 +256,7 @@ being provisioned when nobody knew that.
 Rooms reload every 10 seconds while any room is in a transitional state. A tick
 that arrives while the previous read is still running is dropped rather than
 queued, so a slow list cannot stack subprocesses behind itself. A read the
-*user* caused is repeated instead of dropped: it may be for a different
+_user_ caused is repeated instead of dropped: it may be for a different
 playhouse than the one being fetched, and dropping it left the new playhouse
 showing nothing at all.
 
@@ -447,11 +447,11 @@ model to be either wired to a control or listed as deliberately unwired, with a
 reason. The models are generated from the Go structs, so a flag added on the Go
 side fails this test until someone gives it a control or writes down why not.
 
-It is the frontend half of the pair described in
-[`ARCHITECTURE.md`](ARCHITECTURE.md). The Go test proves the argument builders
-cover the CLI; this one proves the UI covers the argument builders.
+Go argument tests check serialization; this test accounts for the input fields
+exposed by those builders. Neither checks against the private CLI command tree
+in this standalone repository. See [`ARCHITECTURE.md`](ARCHITECTURE.md#coverage-and-its-limits).
 
-**What neither test can see** is whether anything opens the control. The Play
+**What these tests cannot see** is whether anything opens the control. The Play
 dialog wired all fifteen of its fields, passed this test, and sat unreachable in
 a shipping build because the button that opened it had been removed. If you add
 a screen, add the way in at the same time.

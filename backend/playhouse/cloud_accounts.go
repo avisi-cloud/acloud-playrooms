@@ -14,17 +14,7 @@ type CloudAccountEntry struct {
 	Identity    string
 	DisplayName string
 	Provider    string
-	Regions     string
-}
-
-// cliCloudAccountEntry is one row of `acloud cloud-accounts get -o json`, which
-// uses snake_case keys. It is converted to CloudAccountEntry so the frontend
-// keeps its own key names.
-type cliCloudAccountEntry struct {
-	Identity    string `json:"identity"`
-	DisplayName string `json:"display_name"`
-	Provider    string `json:"provider"`
-	Regions     string `json:"regions"`
+	RegionSlugs []string
 }
 
 // ListCloudAccounts runs `acloud cloud-accounts get -o json` and decodes it.
@@ -33,13 +23,9 @@ func ListCloudAccounts(ctx context.Context) ([]CloudAccountEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	var rows []cliCloudAccountEntry
-	if err := json.Unmarshal([]byte(result.Stdout), &rows); err != nil {
+	var entries []CloudAccountEntry
+	if err := json.Unmarshal([]byte(result.Stdout), &entries); err != nil {
 		return nil, fmt.Errorf("parse cloud-accounts output: %w", err)
-	}
-	entries := make([]CloudAccountEntry, 0, len(rows))
-	for _, row := range rows {
-		entries = append(entries, CloudAccountEntry(row))
 	}
 	return entries, nil
 }

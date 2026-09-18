@@ -1,27 +1,149 @@
+<div align="center">
+
 # Acloud Playrooms
 
-Acloud Playrooms is a desktop interface for creating, managing and connecting to AI playrooms on Acloud. It gives users a visual flow for the same playhouse and playroom actions that are available in the `acloud` CLI, while the private `acloud` CLI remains the source of truth for platform behaviour.
+**Your Acloud development environments, in a Mac app.**
 
-The app is built with Wails 3 and Angular. It is intended to live as a small public companion project around the private Acloud CLI.
+[![Checks](https://github.com/avisi-cloud/acloud-playrooms/actions/workflows/ci.yml/badge.svg)](https://github.com/avisi-cloud/acloud-playrooms/actions/workflows/ci.yml)
+[![Latest release](https://img.shields.io/github/v/release/avisi-cloud/acloud-playrooms)](https://github.com/avisi-cloud/acloud-playrooms/releases/latest)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
+![macOS: Intel and Apple Silicon](https://img.shields.io/badge/macOS-Intel_%2B_Apple_Silicon-black)
 
-![Playrooms overview](assets/images/playrooms.png)
+[Get started](#get-started) · [How it works](#how-it-works) · [Develop](#develop) · [Release](doc/RELEASING.md) · [Contribute](CONTRIBUTING.md)
 
-![Playhouse selection](assets/images/playhouse.png)
+</div>
 
-## What it does
+![Acloud Playrooms showing development environments and their status](assets/images/playrooms.png)
 
-Acloud Playrooms helps users:
+## What is this?
 
-- select a playhouse
-- create a playroom with an AI coding image such as Codex, Claude Code or OpenCode
-- view existing playrooms
-- open, connect to, update and delete playrooms
-- inspect the CLI commands the app is about to run
-- follow command output in the activity log
+Imagine having a separate computer for a coding task, already equipped with the
+tools you need. It runs in the cloud, so you can connect to it from your Mac.
+In Acloud, that workspace is called a **playroom**.
 
-The GUI is deliberately thin. It turns user actions into `acloud` commands, runs those commands locally, streams output into the app and reads JSON responses where the UI needs structured data.
+Acloud Playrooms is the app you use to create those workspaces, see which ones
+are running, and connect to them. Choose a workspace image with tools such as
+Codex, Claude Code or OpenCode, and manage it from one window.
 
-Example commands the app may run:
+| A word you will see | What it means                                        |
+| ------------------- | ---------------------------------------------------- |
+| **Playroom**        | Your cloud development workspace                     |
+| **Playhouse**       | The environment that hosts a collection of playrooms |
+| **Acloud CLI**      | The command-line program that does the actual work   |
+| **This app**        | A visual interface that runs those commands for you  |
+
+> [!IMPORTANT]
+> You need an Acloud account with access to a playhouse and the `acloud` CLI.
+> The app is open source; access to Acloud infrastructure is separate.
+
+## From an idea to a workspace
+
+```mermaid
+flowchart LR
+    A[Choose a playhouse] --> B[Create a playroom]
+    B --> C[Choose your coding tools]
+    C --> D[Connect and work]
+    D --> E[Stop or delete when finished]
+```
+
+- **Create** a workspace with an image, resources and configuration of your choice.
+- **See** your playrooms and their current status in one place.
+- **Connect** through your terminal, or open the tools the workspace exposes.
+- **Manage** existing workspaces: start, stop, edit and delete.
+- **Inspect** the command before a form runs it, and follow output in the activity log.
+- **Switch** between Acloud contexts, organisations and playhouses.
+
+<details>
+<summary><strong>See the playhouse selection screen</strong></summary>
+
+![Acloud Playrooms playhouse selection](assets/images/playhouse.png)
+
+</details>
+
+## Get started
+
+### 1. Install and sign in to Acloud
+
+On macOS with [Homebrew](https://brew.sh) installed:
+
+```sh
+brew tap avisi-cloud/tools
+brew install --cask avisi-cloud/tools/acloud
+acloud auth login
+```
+
+Already using Acloud? Check your existing installation with `acloud version`
+and `acloud auth status`.
+
+### 2. Install Acloud Playrooms
+
+Once the first automated release has been published to the Homebrew tap:
+
+```sh
+brew install --cask avisi-cloud/tools/acloud-playrooms
+```
+
+Or download the universal macOS ZIP from [GitHub Releases](https://github.com/avisi-cloud/acloud-playrooms/releases),
+unzip it, and move **Acloud Playrooms.app** into **Applications**.
+The same download supports Apple Silicon and Intel Macs running macOS 12 or later.
+
+> [!NOTE]
+> Builds are currently ad-hoc signed, not Apple-notarized. The Homebrew cask
+> removes the download quarantine flag for this app. Direct downloads may need
+> approval in macOS Privacy & Security. [Details and signing plans](doc/RELEASING.md#macos-signing-and-quarantine).
+
+### 3. Open the app
+
+Open **Acloud Playrooms** from Applications, choose your playhouse, and create
+or select a playroom. Connecting opens your selected terminal.
+
+Update a Homebrew installation with:
+
+```sh
+brew upgrade --cask avisi-cloud/tools/acloud-playrooms
+```
+
+<details>
+<summary><strong>Something is not working?</strong></summary>
+
+| What you see                          | What to check                                                                                            |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| The app cannot find Acloud            | Run `acloud version` in your terminal. Install the CLI if it is missing.                                 |
+| You are not signed in                 | Run `acloud auth login`, then return to the app.                                                         |
+| No playhouses appear                  | Check the selected context and organisation, and your access to them.                                    |
+| A command fails                       | Open the activity log for the CLI's output and error details.                                            |
+| A direct download is blocked by macOS | Check the release source, then follow [Apple's instructions](https://support.apple.com/en-us/102445).    |
+| Homebrew cannot find the cask         | The first automated release may not have been published yet. Check GitHub Releases or build from source. |
+
+For reproducible bugs, [open an issue](https://github.com/avisi-cloud/acloud-playrooms/issues)
+with the app and CLI versions, what you expected, and what happened. Remove
+credentials and private infrastructure details from logs and screenshots.
+
+</details>
+
+## How it works
+
+The app builds the same command you could type yourself and runs your installed
+`acloud` program. The CLI remains responsible for what happens on the platform.
+
+```mermaid
+flowchart LR
+    A[You] --> B[Angular interface]
+    B --> C[Go and Wails]
+    C -->|Runs commands| D[Installed acloud CLI]
+    D --> E[Acloud platform]
+    D -->|Results and command output| C
+    C --> B
+```
+
+This repository contains the public desktop application. It does not contain
+the private CLI, cloud credentials or a second implementation of Acloud.
+Building and testing it does not require the private CLI source.
+
+<details>
+<summary><strong>For developers: the command contract</strong></summary>
+
+For example, the GUI can run:
 
 ```sh
 acloud playhouse list -o json
@@ -29,128 +151,102 @@ acloud playroom create demo --playhouse playhouse-demo --image opencode
 acloud playroom connect demo --playhouse playhouse-demo
 ```
 
-## Requirements
+Go serializes form values into arguments. The same arguments produce the
+command preview, with sensitive values redacted. A subprocess runner captures
+stdout and stderr, streams user-initiated operations, and supports cancellation.
+Reads use JSON output where available. Interactive commands open a real terminal.
 
-Acloud Playrooms requires the `acloud` CLI to be installed and authenticated on the user’s machine. The GUI does not replace the CLI; it sits on top of it.
+The app uses **Wails 3**, **Go**, **Angular**, and **PrimeNG**. macOS is the
+supported desktop platform; terminal integration for other operating systems
+is not implemented.
 
-On macOS, install the CLI with Homebrew:
+The private CLI can provide `acloud playhouse interface` as a launcher for the
+installed application. The GUI remains a separate application and Go module.
 
-```sh
-brew tap avisi-cloud/tools
-brew install --cask avisi-cloud/tools/acloud
-```
+Read [ARCHITECTURE.md](doc/ARCHITECTURE.md) for the rules behind this boundary.
 
-Then confirm the CLI works:
+</details>
 
-```sh
-acloud version
-acloud auth status
-```
+## Develop
 
-## Installing Acloud Playrooms
-
-For the demo phase, the simplest distribution path is a GitHub Release:
-
-```text
-https://github.com/avisi-cloud/acloud-playrooms/releases
-```
-
-Users can download the macOS app archive, move `Acloud Playrooms.app` to Applications and open it.
-
-A Homebrew cask can be added later for a cleaner install, upgrade and uninstall flow:
+You need macOS, Xcode Command Line Tools, Go matching `go.mod`, and Node.js 24
+(also recorded in `.nvmrc`). Wails is installed at the version used by the app.
 
 ```sh
-brew install --cask avisi-cloud/tools/acloud-playrooms
-```
-
-Homebrew is convenient, but it is not required for the app to work. A direct GitHub Release download is enough as long as the user also has the private `acloud` CLI installed.
-
-## Running from source
-
-For development against the `acloud` binary on your `PATH`:
-
-```sh
+git clone https://github.com/avisi-cloud/acloud-playrooms.git
+cd acloud-playrooms
+npm --prefix frontend ci
 make dev
 ```
 
-For development against a sibling local `acloud` checkout built at `../acloud/bin/acloud`:
+| Command                 | Result                                                                           |
+| ----------------------- | -------------------------------------------------------------------------------- |
+| `make dev`              | Start the app with live development                                              |
+| `make dev-local`        | Use the CLI built at `../acloud/bin/acloud`                                      |
+| `make build`            | Build the app for your Mac in `bin/`                                             |
+| `make check`            | Check Go formatting, frontend formatting/lint/build/tests, Go vet and race tests |
+| `make package`          | Build a universal Mac application                                                |
+| `make release-snapshot` | Build and verify release files locally, without publishing                       |
+
+Run `make build` before `make check` on a fresh checkout so generated bindings
+are current. Go GUI tests embed the frontend build, which `make check` produces.
+
+<details>
+<summary><strong>Use a local or custom acloud binary</strong></summary>
+
+Build the CLI in your sibling `acloud` checkout, then run:
 
 ```sh
 make dev-local
 ```
 
-`make dev-local` passes the CLI path to the app as an absolute path, because macOS launches the `.app` bundle from a different working directory.
-
-If your local `acloud` checkout lives somewhere else, copy `.env.example` to `.env.local` and set your path there:
+For a different location:
 
 ```sh
-cp .env.example .env.local
-# edit LOCAL_ACLOUD in .env.local
+make dev-local LOCAL_ACLOUD=/absolute/path/to/acloud
 ```
 
-You can also point at any other local CLI build for a single run with:
+Or copy `.env.example` to `.env.local` and set `LOCAL_ACLOUD` there.
+`.env.local` is ignored by Git. The application also accepts `ACLOUD_BINARY`:
 
 ```sh
-make dev-local LOCAL_ACLOUD=<your-path-to-acloud>/bin/acloud
+ACLOUD_BINARY=/absolute/path/to/acloud make dev
 ```
 
-The app also honors `ACLOUD_BINARY` directly:
+Use an absolute path because macOS launches app bundles from a different
+working directory.
 
-```sh
-ACLOUD_BINARY=<your-path-to-acloud>/bin/acloud make dev
-```
+</details>
 
-For a local production build:
+## Releases and maintenance
 
-```sh
-make build
-```
+Merge a fix or feature, then review and merge the release PR created by
+**Release Please**. The pipeline builds a universal Mac app with Wails, packages
+it with GoReleaser, verifies it, uploads it to GitHub Releases and updates Homebrew.
+**Renovate** prepares dependency update PRs for review.
 
-The build writes:
+Maintainers: complete the [one-time GitHub setup](doc/RELEASING.md#one-time-github-setup)
+before the first release. Contributors: use [Conventional Commit PR titles](CONTRIBUTING.md#pull-request-titles).
 
-```text
-bin/acloud-playrooms
-bin/Acloud Playrooms.app
-```
+## Go deeper
 
-## Checks
+| I want to...                         | Read                                |
+| ------------------------------------ | ----------------------------------- |
+| Make my first contribution           | [Contributing](CONTRIBUTING.md)     |
+| Understand the architectural rules   | [Architecture](doc/ARCHITECTURE.md) |
+| Find the command runner or Go code   | [Backend guide](doc/BACKEND.md)     |
+| Work on a screen or frontend state   | [Frontend guide](doc/FRONTEND.md)   |
+| Understand past choices              | [Decisions](doc/DECISIONS.md)       |
+| Set up releases, Homebrew or signing | [Release guide](doc/RELEASING.md)   |
 
-Run the backend and frontend tests with:
+## License and ownership
 
-```sh
-make test
-cd frontend && npm run check
-```
+Copyright 2026 Avisi Cloud. Licensed under [Apache-2.0](LICENSE).
 
-If `frontend/dist` is missing, run `cd frontend && npm run build` first, or use `make build`, which generates bindings, builds the frontend and compiles the desktop app.
+You may use, modify and redistribute the code, including commercially, under
+the license's terms. Copyright and required attribution notices remain in place.
+Avisi and Acloud trademarks are not licensed for use as your own branding.
+See [NOTICE](NOTICE) and [the license's trademark terms](https://www.apache.org/licenses/LICENSE-2.0#trademarks).
 
-## Public/private boundary
-
-This repository may contain:
-
-- UI code and Wails backend code
-- command argument builders
-- JSON DTOs matching `acloud -o json` output
-- subprocess execution and terminal hand-off logic
-- demo-phase compatibility checks and small convenience lists
-
-This repository should not contain:
-
-- imports from the private `acloud` module
-- direct Acloud API or Kubernetes behaviour copied from the CLI
-- private implementation details that belong in `acloud`
-- secrets, credentials or private release tokens
-
-When the GUI needs data, prefer an existing `acloud ... -o json` command. If the CLI does not expose the data yet, either keep a small GUI-side convenience list for the demo phase or add a narrow JSON command to private `acloud` later.
-
-## Relationship with `acloud playhouse interface`
-
-The private `acloud` CLI can keep the entry point:
-
-```sh
-acloud playhouse interface
-```
-
-That command should launch the installed Acloud Playrooms app when it is available. If the app is missing, the CLI can print install instructions instead of embedding the GUI directly.
-
-This keeps the public GUI easy to remove or replace later, while preserving a simple command for users who discover the feature through `acloud`.
+This license covers this repository. The separately installed Acloud CLI and
+access to the Acloud service have their own terms.

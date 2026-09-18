@@ -171,7 +171,7 @@
               "
               (onBlur)="touched = true"
               appendTo="body"
-              filterBy="DisplayName,Provider,Regions"
+              filterBy="DisplayName,Provider,RegionSlugs"
               [style]="{ width: '100%' }"
             >
               <ng-template let-account pTemplate="item">
@@ -179,7 +179,9 @@
                   <span class="ca-name">{{ account.DisplayName }}</span>
                   <span class="ca-meta"
                     >{{ account.Provider
-                    }}{{ account.Regions ? ' · ' + account.Regions : '' }}</span
+                    }}{{
+                      account.RegionSlugs?.length ? ' · ' + account.RegionSlugs.join(', ') : ''
+                    }}</span
                   >
                 </div>
               </ng-template>

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits"],
+  "timezone": "Europe/Amsterdam",
+  "schedule": ["before 9am on monday"],
+  "enabledManagers": ["gomod", "npm", "github-actions", "nvm"],
+  "prConcurrentLimit": 5,
+  "automerge": false,
+  "packageRules": [
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["/^@angular//", "angular-eslint"],
+      "groupName": "Angular"
+    },
+    {
+      "matchManagers": ["npm"],
+      "matchPackageNames": ["primeng", "primeicons", "@primeuix/themes"],
+      "groupName": "PrimeNG"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    }
+  ]
+}

@@ -1,7 +1,6 @@
 # GUI decisions
 
-> Public split note: this document was copied from the embedded GUI prototype. The standalone app now shells out to the installed `acloud` binary instead of compiling private `acloud` packages into itself. Some detailed wording below still describes the old embedded design and should be rewritten as the public repo settles.
-
+> Historical context: entries dated before the public split describe the embedded GUI prototype. This standalone app executes the installed CLI and does not import private CLI packages. Read [ARCHITECTURE.md](ARCHITECTURE.md) for the current contract; older decisions remain here to preserve their reasoning.
 
 Decisions that shaped the GUI, and the ones still open. Each entry says what was
 chosen and why, so the reasoning survives the person who had it.
@@ -10,19 +9,20 @@ Mechanics live in [`ARCHITECTURE.md`](ARCHITECTURE.md); this file is about the
 choices behind them. Most entries exist because something was tried and did not
 work, so an entry is usually cheaper to read than the mistake is to repeat.
 
-**Open questions come first.** Everything under *Settled* is decided — if one
+**Open questions come first.** Everything under _Settled_ is decided — if one
 looks wrong, raise it rather than quietly changing course, and if you do change
 it, update the entry.
 
 ## Contents
 
 **Open — revisit these**
-- [The GUI does not run in CI](#the-gui-does-not-run-in-ci)
+
 - [Embedded terminal for interactive commands](#embedded-terminal-for-interactive-commands)
 - [Root flags](#root-flags)
 - [Concurrency](#concurrency)
 
 **Settled**
+
 - [The GUI re-reads the CLI config on every lookup](#the-gui-re-reads-the-cli-config-on-every-lookup--2026-09-12)
 - [Windows packaging removed; macOS only in the tree as well as the prose](#windows-packaging-removed-macos-only-in-the-tree-as-well-as-the-prose--2026-09-12)
 - [The GUI names the acloud version it was verified against](#the-gui-names-the-acloud-version-it-was-verified-against--2026-09-12)
@@ -44,33 +44,6 @@ it, update the entry.
 ---
 
 ## Open — revisit these
-
-### The GUI does not run in CI
-
-**Status: known gap, deliberately left open 2026-09-12.**
-
-Nothing in `.gitlab-ci.yml` reaches this module. `gui/` is a separate Go module,
-so the root pipeline's `go test ./...` returns no GUI packages; `make test`,
-`make fmt`, `make lint` and `make vet` all use `go list ./...` from the root and
-miss it the same way; `.reviewdog.yml` lints only `./pkg/...`; and the frontend's
-tests, linter and formatter run nowhere at all.
-
-That matters here more than it would elsewhere, because the whole strategy for
-keeping this GUI honest as the CLI moves is *tests*. The parity tests, the guard
-alias test, `input-coverage.spec.ts` — everything described under **Staying in
-step with the CLI** in [`ARCHITECTURE.md`](ARCHITECTURE.md) — only fails for
-someone who remembers to run it. A colleague can add a flag to `playroom create`
-and see a green pipeline.
-
-The fix is a `gui:` job running the block under **Checks** in
-[`../README.md`](../README.md), plus extending `.reviewdog.yml` past `./pkg/...`.
-Both touch the root of the repository, which is why they are recorded here
-rather than done.
-
-Two things partly cover the gap in the meantime, and neither is a substitute:
-the checks are documented in one place and are one command each, and the
-version notice below tells a *user* when the GUI may be behind the CLI it is
-running inside.
 
 ### Embedded terminal for interactive commands
 
@@ -104,7 +77,7 @@ goes, but two concurrent writes still race on `~/.acloud.yaml`. Mutations are
 not currently serialized.
 
 **Where the fix has to live, checked 2026-09-12.** Not here. Because every
-mutation is a subprocess, the racing parties are *processes*, not goroutines —
+mutation is a subprocess, the racing parties are _processes_, not goroutines —
 so a mutex in `App` would only stop the GUI racing itself, and would do nothing
 about the user running `acloud config use-organisation` in their terminal at the
 same moment. Worth having as a cheap mitigation, but it is not the fix.
@@ -131,6 +104,25 @@ this is reachable from the CLI alone by scripting two commands in parallel.
 
 ## Settled
 
+### Public GitHub checks and automated releases - 2026-09-18
+
+GitHub now runs the standalone app's formatter, linter, frontend build and tests,
+Go vet and race tests, generated-binding check, and universal macOS release
+rehearsal. This closes the CI gap recorded for the embedded prototype.
+
+The public test suite does not import the private CLI or run its former Cobra
+parity tests. Argument serialization and frontend input coverage remain checked;
+compatibility with the CLI still needs verification.
+
+Release Please prepares version and changelog PRs. Merging one creates the tag
+that triggers Wails packaging, GoReleaser archiving, verification, GitHub uploads
+and a Homebrew cask update. Renovate proposes dependency updates without merging
+them. The repository uses Apache-2.0, matching acloud-toolkit.
+
+The app is currently ad-hoc signed. The Homebrew cask removes quarantine from
+this app only; Developer ID signing and notarization remain a future step.
+See [RELEASING.md](RELEASING.md) for setup and the exact release flow.
+
 ### The GUI re-reads the CLI config on every lookup — 2026-09-12
 
 `backend/local` calls `contextmanager.Init()` before each read, behind a mutex.
@@ -143,7 +135,7 @@ runs is a subprocess that writes it — organisation switches, context switches,
 saved defaults — as is the user's own terminal. The `auth login` hand-off
 depends entirely on noticing a change: it opens a terminal, the CLI stores a
 credential, and the GUI polls `IsLoggedIn` to find out it worked. Against a
-startup snapshot that poll could never return true, so a *successful* login ran
+startup snapshot that poll could never return true, so a _successful_ login ran
 the full two-minute timeout and then reported "Still not signed in".
 
 **`CurrentContext()` exits the process when no context is set.** It prints to
@@ -156,7 +148,7 @@ now checks `HasCurrentContext()` first, which is pure.
 Both are pinned by tests in `backend/local/session_test.go`, which point the CLI
 at a temporary file through `ACLOUDCONFIG` and never run a command.
 
-**What is not fixed:** a *malformed* config — one naming an api or user that is
+**What is not fixed:** a _malformed_ config — one naming an api or user that is
 not there — still reaches an `os.Exit` deeper inside `GetContext`. Closing that
 means the CLI's config code returning errors instead of exiting, which is a
 change in the root module. Library code that exits the process is the real
@@ -192,7 +184,7 @@ running acloud is newer, the sidebar says so under the version number.
 
 The reasoning is the gap above. The standalone GUI drives the installed acloud binary, so it
 always runs the exact CLI it will invoke — there is no version skew in the
-subprocess. What there *can* be is skew between the CLI and the screens: bump
+subprocess. What there _can_ be is skew between the CLI and the screens: bump
 the release, rebuild, and a flag added in between has no control anywhere in the
 UI. The parity tests exist precisely to catch that, but until they run in CI
 they only catch it for whoever ran them. This is the backstop that reaches the
@@ -220,7 +212,7 @@ anything.
 Two separate things had to be true for a user's `playroom config` defaults to
 reach a GUI-created playroom, and for a while only one of them was.
 
-**Commands run for real.** They used to be *detached* cobra subcommands, so the
+**Commands run for real.** They used to be _detached_ cobra subcommands, so the
 parent hook applying configured defaults never fired. Subprocess invocation
 fixed that in the rework.
 
@@ -233,7 +225,7 @@ kept only as the fallback for a CLI that does not know a key.
 
 `--read-only`, `--privileged` and `--forward-agent` are still sent explicitly —
 that is deliberate and unchanged, since the GUI renders each as a definite
-toggle. The difference is that the toggle now *starts* where the user's config
+toggle. The difference is that the toggle now _starts_ where the user's config
 says it should.
 
 ### The CLI is the only source of truth — 2026-08-14
@@ -242,7 +234,7 @@ The GUI runs real acloud commands rather than reimplementing them. See
 [`ARCHITECTURE.md`](ARCHITECTURE.md) for the mechanism.
 
 The alternative — calling the same Go packages the commands call — was what the
-GUI did before, and it drifted invisibly: because it executed *detached* cobra
+GUI did before, and it drifted invisibly: because it executed _detached_ cobra
 subcommands, the parent hook that applies `playroom config` defaults never ran,
 so the GUI's own Defaults screen had no effect on the playrooms it created.
 Nothing in the code said so. Running the real command makes that class of bug
@@ -251,7 +243,7 @@ structurally impossible.
 ### Status may refresh directly; listings may not — 2026-08-21
 
 An amendment to the rule above, because the original wording forbade something
-worth allowing. It said anything *a CLI command already covers* must go through
+worth allowing. It said anything _a CLI command already covers_ must go through
 the CLI — and a playroom's status is covered by `playroom list`, so keeping a
 red/green indicator current meant re-running that whole command on a timer.
 
@@ -264,8 +256,8 @@ versus **how a known thing is doing right now**. The CLI owns the first
 absolutely — which playrooms are there, how they are configured, who owns them.
 The second may take a direct path once the CLI has already established the row.
 
-The test, when it is not obvious: *could this call, on its own, make the GUI show
-a playroom that is not there, or hide one that is?* If yes, it is a listing, and
+The test, when it is not obvious: _could this call, on its own, make the GUI show
+a playroom that is not there, or hide one that is?_ If yes, it is a listing, and
 it belongs behind the CLI.
 
 Two conditions keep this from becoming the hole that swallows the rule. A direct
@@ -352,7 +344,7 @@ that runs.
 `config use-organisation` and `config use-context` show an fzf picker when run
 in a terminal, which looked at first like something the GUI could not do.
 
-It isn't. fzf is only how those commands *obtain an argument*: both take the
+It isn't. fzf is only how those commands _obtain an argument_: both take the
 value directly (`cobra.RangeArgs(0, 1)`), and the picker is reached only when no
 argument was given **and** stdout is a TTY. So the GUI renders the list and
 passes the choice — `acloud config use-organisation avisi` — and the picker

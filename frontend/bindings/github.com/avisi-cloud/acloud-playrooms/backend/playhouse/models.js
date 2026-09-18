@@ -37,12 +37,12 @@ export class CloudAccountEntry {
              */
             this["Provider"] = "";
         }
-        if (!("Regions" in $$source)) {
+        if (!("RegionSlugs" in $$source)) {
             /**
              * @member
-             * @type {string}
+             * @type {string[]}
              */
-            this["Regions"] = "";
+            this["RegionSlugs"] = [];
         }
 
         Object.assign(this, $$source);
@@ -54,7 +54,11 @@ export class CloudAccountEntry {
      * @returns {CloudAccountEntry}
      */
     static createFrom($$source = {}) {
+        const $$createField3_0 = $$createType0;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("RegionSlugs" in $$parsedSource) {
+            $$parsedSource["RegionSlugs"] = $$createField3_0($$parsedSource["RegionSlugs"]);
+        }
         return new CloudAccountEntry(/** @type {Partial<CloudAccountEntry>} */($$parsedSource));
     }
 }
@@ -374,3 +378,6 @@ export class PlayhouseEntry {
         return new PlayhouseEntry(/** @type {Partial<PlayhouseEntry>} */($$parsedSource));
     }
 }
+
+// Private type creation functions
+const $$createType0 = $Create.Array($Create.Any);
