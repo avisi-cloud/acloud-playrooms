@@ -20,7 +20,7 @@ export interface CloudAccountEntry {
   Identity: string;
   DisplayName: string;
   Provider: string;
-  Regions: string;
+  RegionSlugs: string[];
 }
 
 /**

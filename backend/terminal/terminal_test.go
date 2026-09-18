@@ -2,12 +2,25 @@ package terminal
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
 
 // Nothing here opens a terminal or runs acloud: the hand-off is one variable,
 // swapped for a recorder, so the tests assert what would have been launched.
+
+func useFakeAcloudOnPath(t *testing.T) {
+	t.Helper()
+	directory := t.TempDir()
+	// Executable lookup is real, but the recorded hand-off must never run this.
+	if err := os.WriteFile(filepath.Join(directory, "acloud"), []byte("#!/bin/sh\nexit 1\n"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("PATH", directory)
+	t.Setenv("ACLOUD_BINARY", "")
+}
 
 // recordHandOff replaces the launch with a recorder for one test.
 func recordHandOff(t *testing.T) *struct {
@@ -35,6 +48,7 @@ func recordHandOff(t *testing.T) *struct {
 }
 
 func TestOpenHandsTheCommandToTheChosenEmulator(t *testing.T) {
+	useFakeAcloudOnPath(t)
 	recorder := recordHandOff(t)
 
 	if err := Open(ITerm, []string{"playroom", "connect", "demo"}); err != nil {
@@ -69,6 +83,7 @@ func TestOpenRefusesAnEmptyCommand(t *testing.T) {
 
 // A terminal that is not installed has to surface as a real error.
 func TestOpenReportsAFailedLaunch(t *testing.T) {
+	useFakeAcloudOnPath(t)
 	recorder := recordHandOff(t)
 	recorder.err = errors.New("could not open Ghostty: does not exist")
 
@@ -84,6 +99,7 @@ func TestOpenReportsAFailedLaunch(t *testing.T) {
 
 // An argument with a space has to survive the shell the terminal runs it in.
 func TestCommandLineQuotesArgumentsTheShellWouldResplit(t *testing.T) {
+	useFakeAcloudOnPath(t)
 	line, err := commandLine([]string{"playroom", "open", "my room", "--editor", "vscode"})
 	if err != nil {
 		t.Fatalf("commandLine() = %v", err)
@@ -92,13 +108,14 @@ func TestCommandLineQuotesArgumentsTheShellWouldResplit(t *testing.T) {
 	if !strings.Contains(line, `"my room"`) && !strings.Contains(line, `'my room'`) {
 		t.Errorf("command line = %q, want the spaced argument quoted", line)
 	}
-	if !strings.HasPrefix(line, "acloud ") && !strings.Contains(line, "acloud") {
+	if !strings.HasPrefix(line, "acloud ") {
 		t.Errorf("command line = %q, want it to invoke acloud", line)
 	}
 }
 
 // The emulator is a GUI concept; acloud has never heard of iTerm.
 func TestTheEmulatorChoiceNeverReachesTheCommandLine(t *testing.T) {
+	useFakeAcloudOnPath(t)
 	recorder := recordHandOff(t)
 
 	for _, emulator := range []Emulator{Default, ITerm, Ghostty, TerminalApp} {

@@ -9,11 +9,14 @@
     "build": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "test:ci": "ng test --watch=false",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write \"src/**/*.{ts,html,css}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,css}\"",
-    "check": "npm run format:check && npm run lint && npm run build && npm test"
+    "format:repo": "prettier --config .prettierrc --write \"../{README,CONTRIBUTING}.md\" \"../doc/*.md\" \"../.github/**/*.yml\" \"../*.json\" \"../.*.json\" ../.goreleaser.yaml \"../scripts/*.mjs\"",
+    "format:repo:check": "prettier --config .prettierrc --check \"../{README,CONTRIBUTING}.md\" \"../doc/*.md\" \"../.github/**/*.yml\" \"../*.json\" \"../.*.json\" ../.goreleaser.yaml \"../scripts/*.mjs\"",
+    "check": "npm run format:check && npm run format:repo:check && npm run lint && npm run build && npm run test:ci"
   },
   "private": true,
   "packageManager": "npm@11.12.1",

@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+project_name: acloud-playrooms
+
+# Wails builds both native architectures, combines them, and signs the .app.
+# GoReleaser OSS then archives and publishes that complete bundle.
+before:
+  hooks:
+    - make package VERSION={{ .Version }}
+
+builds:
+  - skip: true
+
+archives:
+  - id: macos-app
+    meta: true
+    formats: [zip]
+    name_template: '{{ .ProjectName }}_{{ .Version }}_darwin_universal'
+    files:
+      - src: bin/Acloud Playrooms.app
+        dst: Acloud Playrooms.app
+      - README.md
+      - LICENSE
+      - NOTICE
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  disable: true
+
+release:
+  github:
+    owner: avisi-cloud
+    name: acloud-playrooms
+  # Release Please owns the release notes; reruns only replace build artifacts.
+  mode: keep-existing

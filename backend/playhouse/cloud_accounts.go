@@ -14,7 +14,7 @@ type CloudAccountEntry struct {
 	Identity    string
 	DisplayName string
 	Provider    string
-	Regions     string
+	RegionSlugs []string
 }
 
 // ListCloudAccounts runs `acloud cloud-accounts get -o json` and decodes it.

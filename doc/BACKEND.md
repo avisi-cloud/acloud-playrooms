@@ -1,9 +1,6 @@
 # The backend
 
-> Public split note: this document was copied from the embedded GUI prototype. The standalone app now shells out to the installed `acloud` binary instead of compiling private `acloud` packages into itself. Some detailed wording below still describes the old embedded design and should be rewritten as the public repo settles.
-
-
-The Go in `gui/backend`. It turns what a user filled in on a screen into an
+The Go in `backend/`. It turns what a user filled in on a screen into an
 `acloud` command line, runs it, and reports what happened.
 
 [`ARCHITECTURE.md`](ARCHITECTURE.md) is the rulebook — what the GUI is and is
@@ -43,8 +40,8 @@ arguments, not what any of them mean. That is what keeps it testable against a
 fake binary, and what stops command-specific behaviour leaking into the runner.
 
 **`backend` never imports Wails and never executes the root Cobra tree.**
-Backend packages build and test headless. `gui/main` owns application wiring;
-the root CLI module has no dependency on `gui`. The UI event sink is injected
+Backend packages build and test headless. `main/` owns application wiring;
+this module has no dependency on the private CLI source. The UI event sink is injected
 through `Emitter`, keeping command execution independent of the toolkit.
 
 ## `cli` — the engine
@@ -57,16 +54,16 @@ builders: **a flag is forwarded only when the GUI actually set it**, so the
 command applies its own default — including anything the user configured with
 `playroom config`.
 
-| Method | Emits | Use for |
-|---|---|---|
-| `Positional(v)` | `v`, even when blank | required positionals — dropping a blank one shifts every later argument into the wrong slot, so it goes through and the command rejects it |
-| `OptionalPositional(v)` | `v` when non-blank | positionals with a command-side default |
-| `Str(flag, v)` | `--flag v` when non-blank | ordinary string flags |
-| `Repeat(flag, vs)` | one `--flag v` per non-blank value | `--env`, `--git`, `--copy`, `--port` |
-| `Int(flag, n)` | `--flag n` when `n > 0` | counts; zero means "not set" |
-| `Flag(flag, b)` | bare `--flag` when true | presence-only booleans: `--ephemeral`, `--no-wait`, `--force` |
-| `Explicit(flag, b)` | `--flag=true` / `--flag=false`, always | booleans whose CLI default is true, or that the command reads through `flag.Changed` |
-| `Add(v...)` | verbatim | escape hatch — `--yes`, `-o json`, everything past `--` |
+| Method                  | Emits                                  | Use for                                                                                                                                    |
+| ----------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `Positional(v)`         | `v`, even when blank                   | required positionals — dropping a blank one shifts every later argument into the wrong slot, so it goes through and the command rejects it |
+| `OptionalPositional(v)` | `v` when non-blank                     | positionals with a command-side default                                                                                                    |
+| `Str(flag, v)`          | `--flag v` when non-blank              | ordinary string flags                                                                                                                      |
+| `Repeat(flag, vs)`      | one `--flag v` per non-blank value     | `--env`, `--git`, `--copy`, `--port`                                                                                                       |
+| `Int(flag, n)`          | `--flag n` when `n > 0`                | counts; zero means "not set"                                                                                                               |
+| `Flag(flag, b)`         | bare `--flag` when true                | presence-only booleans: `--ephemeral`, `--no-wait`, `--force`                                                                              |
+| `Explicit(flag, b)`     | `--flag=true` / `--flag=false`, always | booleans whose CLI default is true, or that the command reads through `flag.Changed`                                                       |
+| `Add(v...)`             | verbatim                               | escape hatch — `--yes`, `-o json`, everything past `--`                                                                                    |
 
 `Explicit` is the interesting one. Only `--read-only`, `--privileged` and
 `--forward-agent` use it. All three can be defaulted to true through `playroom
@@ -75,14 +72,15 @@ omitting it cannot express "the user deliberately left it on". A definite toggle
 in the UI has to send a definite value.
 
 `CommandArguments` is pure serialization — no defaults, no validation, no behaviour. That is
-what makes the parity test possible.
+what makes the argument tests straightforward.
 
 ### Running it
 
 `Runner.Run(ctx, arguments, Options)` executes `acloud <arguments...>` and waits.
 
-The binary is resolved from `PATH` with `exec.LookPath("acloud")`, once per Runner. Tests point it
-somewhere else with `WithExecutable`.
+The binary is resolved once per Runner, using `ACLOUD_BINARY` when set and
+otherwise `exec.LookPath("acloud")`. Tests point it at a fake program with
+`WithExecutable`.
 
 ```go
 type Options struct {
@@ -130,7 +128,7 @@ shows "cancelled", not "failed".
 `boundedBuffer` (in `output.go`) is a bounded, never-failing `io.Writer`. Two limits
 matter:
 
-- **4 MiB per stream.** It keeps the *head*, so captured JSON stays parseable.
+- **4 MiB per stream.** It keeps the _head_, so captured JSON stays parseable.
   Writes past the ceiling are dropped rather than erroring — failing a command
   because of our own buffer limit would be worse than losing trailing output.
 - **1 MiB per line** for the streaming scanner. bufio's 64 KiB default is too
@@ -169,7 +167,7 @@ The values double as the Wails event names the frontend subscribes to.
 
 The emitter is an injected function, not a Wails call. That is the seam that
 keeps this package headless: the runner is testable without a running
-application, a CLI-only build never drags the GUI toolkit in, and `gui/events.go`
+application, a CLI-only build never drags the GUI toolkit in, and `events.go`
 supplies the real one at startup.
 
 ### Redaction
@@ -177,13 +175,13 @@ supplies the real one at startup.
 `playhouse create` takes a Tailscale OAuth secret on its command line, and the
 GUI shows commands verbatim. Two mechanisms cover the two ways it could leak:
 
-- **`redactArguments`** blanks the value of any flag whose *name* contains `secret`,
+- **`redactArguments`** blanks the value of any flag whose _name_ contains `secret`,
   `token`, `password` or `passwd`. Matching is by substring, so a credential
   flag added to the CLI later is redacted by default instead of leaking until
   someone remembers this file.
 - **`RedactText`** blanks any credential appearing verbatim in free text, given
   the arguments it was passed on. This one is needed because a command that
-  *rejects* a credential quotes it back: cobra's own parse failure is
+  _rejects_ a credential quotes it back: cobra's own parse failure is
   `invalid argument "…" for "--tailscale-oauth-client-secret" flag`. The secret
   reaches the user through stderr, not through the arguments. Very short values
   are skipped, since blanking a three-character string would corrupt unrelated
@@ -196,13 +194,12 @@ messages. `Run` always executes the real arguments.
 
 `rejectArgumentsTheGUIMustNeverRun` refuses two argument lists: an empty one,
 and `playhouse interface` behind any of its aliases (`playhouse`, `playhouses`,
-`ph`, `house`). The GUI re-executes
-its own binary, and that binary opens the GUI when told to — so that is the one
-command that could recurse into a second window.
+`ph`, `house`). The installed CLI may launch this app for that command, so executing it from
+the GUI could open another window.
 
-The alias list is duplicated rather than imported, to keep the runner
-command-agnostic. `TestGuardAliases` asserts the copy still matches the real
-command.
+The aliases are maintained locally to avoid importing private CLI code.
+Runner tests exercise the guard; there is no public test against the private
+command tree.
 
 ### Previews
 
@@ -272,7 +269,7 @@ Reads are the same shape with a decode on the end — `List` runs
 
 `config use-organisation` and `config use-context` look interactive, but fzf is
 only how they obtain an argument when they have a terminal. Both accept the
-value directly, and the picker is reached only when no argument was given *and*
+value directly, and the picker is reached only when no argument was given _and_
 stdout is a TTY.
 
 So this package lists (`-o json`), and passes the choice as a positional. There
@@ -302,7 +299,7 @@ surface as a real error.
 
 **The command line prefers the bare name `acloud`**, so the user sees the
 command they would have typed, and falls back to the absolute path of the
-running binary when acloud is not on `PATH` — the normal case for someone who
+configured CLI binary when acloud is not on `PATH` — the normal case for someone who
 only launches the GUI from Finder.
 
 The emulator choice is a GUI concept and is never passed to acloud.
@@ -313,18 +310,19 @@ The emulator choice is a GUI concept and is never passed to acloud.
 The only code here that does not go through a command. It is small on purpose,
 and it lives in one package so the exceptions are easy to count.
 
-| | |
-|---|---|
-| `session.go` | cached playhouse, current user's email, logged-in check, acloud version |
-| `images.go` | the published image aliases, derived from `pkg/playroom`'s own map |
-| `tools.go` | a `$PATH` probe for tailscale and ssh |
-| `theme.go` | the remembered theme — the one write |
+|                    |                                                                                              |
+| ------------------ | -------------------------------------------------------------------------------------------- |
+| `session.go`       | cached playhouse, current user's email, logged-in check, acloud version                      |
+| `images.go`        | a small, locally maintained catalog of image aliases                                         |
+| `tools.go`         | a `$PATH` probe for tailscale and ssh                                                        |
+| `theme.go`         | the remembered theme — the one write                                                         |
 | `compatibility.go` | the acloud release these screens were verified against, and whether the running one is newer |
 
-Every one but the theme is a read of a constant, of the config file the CLI
-itself writes, or of `$PATH`. `ListImages` derives from `playroompkg.ImageAliases()`
-rather than a second list kept in step by hand, so a new flavour appears in the
-picker without anyone editing this package.
+The config helpers read the CLI's YAML file on each lookup; they do not import
+private config packages or retain a startup snapshot. The version helper runs
+`acloud version`, tool probes inspect `PATH`, and image aliases are maintained
+locally as a convenience. Custom image references are also accepted.
+Only the remembered GUI theme is written here.
 
 The theme is written because the native window background must be chosen in Go
 before any JavaScript runs; the frontend's localStorage copy is too late. It
@@ -345,28 +343,26 @@ adding anything.
 
 ## Tests
 
-Four layers, each proving something different:
+The tests cover the public GUI contract without importing the private CLI:
 
 **`arguments_test.go`** (per command package) — table tests over the builders. A bare
 input emits the minimum, a fully-populated one emits everything, blanks are
 dropped. These are the fastest way to pin down what a command should send.
 
-**`parity_test.go`** — walks the real cobra tree and fails when the GUI drifts
-in either direction: a flag the command accepts that the GUI never sends, or a
-flag the GUI sends that the command does not accept. Deliberate omissions go in
-the `skip` map **with a reason**.
+**CLI parity is not checked here.** The embedded prototype walked the private
+Cobra tree, but those tests are not present after the public split. Verify
+supported flags against the CLI when changing a command.
 
 **`runner_test.go`** — drives a fake binary through `WithExecutable`, covering
 exit codes, streaming, cancellation and the kill delay without needing a real
 acloud.
 
-**`clitest/`** — `AssertFlagParity` and `FindCommand`, shared by both command
-packages so there are not two copies drifting apart. It is test support living
-in a normal package for that reason alone.
+**`clitest/`** retains the prototype's `AssertFlagParity` and `FindCommand`
+helpers. No current test supplies the private command tree to them.
 
 **`terminal_test.go`** — the hand-off, without opening a terminal. `handOff` is
 a package-level variable holding the real launcher, swapped for a recorder so a
-test can assert *what would have been opened*. Same seam as `WithExecutable` on
+test can assert _what would have been opened_. Same seam as `WithExecutable` on
 the runner, and as `ConfigReader`/`ConfigWriter` in the CLI's own config code.
 
 **`local/session_test.go`** — the config lookups, against a temporary file. The
@@ -377,20 +373,19 @@ developer's real `~/.acloud.yaml` is never read or written.
 
 No test here runs acloud, reaches a cluster, or opens a window, and that is a
 property of the design rather than a rule anyone has to remember. The GUI's job
-is to *build a command*, and building one is a pure function — so the tests that
+is to _build a command_, and building one is a pure function — so the tests that
 matter are assertions about arguments. `buildCreateArguments` returns a
 `[]string` and runs nothing, which is why `arguments_test.go` can pin exactly what
 `playroom create` would send without a playhouse existing anywhere.
 
 Where something genuinely has to execute, it executes against a stand-in:
 
-| what is under test | how it avoids doing the real thing |
-|---|---|
-| argument builders | pure functions — nothing to avoid |
-| `Runner.Run` | `WithExecutable` points it at a fake binary |
-| `terminal.Open` | `handOff` swapped for a recorder |
-| `local` config reads | `ACLOUDCONFIG` points at a temp file |
-| parity tests | walk the cobra tree in memory; never call `RunE` |
+| what is under test   | how it avoids doing the real thing          |
+| -------------------- | ------------------------------------------- |
+| argument builders    | pure functions — nothing to avoid           |
+| `Runner.Run`         | `WithExecutable` points it at a fake binary |
+| `terminal.Open`      | `handOff` swapped for a recorder            |
+| `local` config reads | `ACLOUDCONFIG` points at a temp file        |
 
 If you find yourself needing a real playroom to test something, that is usually
 the signal that behaviour has leaked out of the CLI and into the GUI — which is
@@ -436,16 +431,16 @@ The full rule, including its TypeScript half, is in
    the argument builder. Copy the shape above.
 2. `Preview<Name>` in that package's `preview.go` — but only if the UI has a
    surface to show it on. Start and stop have none, so they have none.
-3. A method on `App` in `gui/app_playroom.go` or `app_playhouse.go`. Keep it a
+3. A method on `App` in `app_playroom.go` or `app_playhouse.go`. Keep it a
    one-liner; behaviour belongs in the backend, and the backend defers to the
    CLI.
 4. Regenerate bindings:
-   `cd gui && wails3 generate bindings -f '-tags gui' -clean=true`.
+   `make build`.
 5. Wire the UI, and give it a way in — a button, a menu entry, a route.
-6. Table test in `arguments_test.go`, and a case in `parity_test.go`.
+6. Table test in `arguments_test.go`, and verification against the supported CLI.
 7. Account for every field in `input-coverage.spec.ts`.
 
-Adding a *flag* to an existing command is shorter; that checklist is in
+Adding a _flag_ to an existing command is shorter; that checklist is in
 [ARCHITECTURE.md](ARCHITECTURE.md#adding-a-cli-flag).
 
 Step 5 is the one that is easy to skip and impossible for the tests to catch.

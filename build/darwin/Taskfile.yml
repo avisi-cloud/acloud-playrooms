@@ -91,7 +91,8 @@ tasks:
 
   build:universal:
     summary: Builds darwin universal binary (arm64 + amd64)
-    deps:
+    # These builds share npm dependencies, bindings and frontend output.
+    cmds:
       - task: build
         vars:
           ARCH: amd64
@@ -100,7 +101,6 @@ tasks:
         vars:
           ARCH: arm64
           OUTPUT: "{{.BIN_DIR}}/{{.APP_NAME}}-arm64"
-    cmds:
       - task: '{{if eq OS "darwin"}}build:universal:lipo:native{{else}}build:universal:lipo:go{{end}}'
 
   build:universal:lipo:native:
@@ -144,6 +144,11 @@ tasks:
         fi
       - cp "{{.SOURCE_BINARY | default (printf "%s/%s" .BIN_DIR .APP_NAME)}}" "{{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/MacOS/{{.APP_NAME}}"
       - cp build/darwin/Info.plist "{{.BIN_DIR}}/{{.APP_NAME}}.app/Contents"
+      - |
+        if [ -n "{{.VERSION}}" ]; then
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString {{.VERSION}}" "{{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Info.plist"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion {{.VERSION}}" "{{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Info.plist"
+        fi
       - task: '{{if eq OS "darwin"}}codesign:adhoc{{else}}codesign:skip{{end}}'
 
   codesign:adhoc:
