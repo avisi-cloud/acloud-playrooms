@@ -34,7 +34,7 @@ dev: tools
 	"$(WAILS3)" dev -config ./build/config.yml
 
 dev-local: tools
-	@if [ ! -x "$(LOCAL_ACLOUD_ABS)" ]; then \
+	@if [ ! -f "$(LOCAL_ACLOUD_ABS)" ] || [ ! -x "$(LOCAL_ACLOUD_ABS)" ]; then \
 		echo "Local acloud binary not found or not executable: $(LOCAL_ACLOUD_ABS)"; \
 		echo "Build it first in your acloud checkout, or pass LOCAL_ACLOUD=<your-path-to-acloud>/bin/acloud"; \
 		exit 1; \
