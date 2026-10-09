@@ -38,6 +38,12 @@ interface DefaultViewRow extends DefaultRow {
   overridden: boolean;
 }
 
+/**
+ * The value acloud reads as "leave this request or limit unset". Accepted by
+ * create, play, update and `config set` since 0.35.0.
+ */
+const RESOURCE_NONE = 'none';
+
 /** One registry owns grouping, control kind and options for every known key. */
 export const DEFAULT_FIELDS: DefaultField[] = [
   { key: 'image', group: 'Resources', kind: 'select', dynamicOptions: 'images' },
@@ -51,25 +57,25 @@ export const DEFAULT_FIELDS: DefaultField[] = [
     key: 'cpu-request',
     group: 'Resources',
     kind: 'slider',
-    options: ['100m', '250m', '500m', '1', '2', '4', '8'],
+    options: ['none', '100m', '250m', '500m', '1', '2', '4', '8'],
   },
   {
     key: 'cpu-limit',
     group: 'Resources',
     kind: 'slider',
-    options: ['250m', '500m', '1', '2', '4', '8', '16'],
+    options: ['none', '250m', '500m', '1', '2', '4', '8', '16'],
   },
   {
     key: 'memory-request',
     group: 'Resources',
     kind: 'slider',
-    options: ['512Mi', '1Gi', '2Gi', '4Gi', '8Gi', '16Gi'],
+    options: ['none', '512Mi', '1Gi', '2Gi', '4Gi', '8Gi', '16Gi'],
   },
   {
     key: 'memory-limit',
     group: 'Resources',
     kind: 'slider',
-    options: ['512Mi', '1Gi', '2Gi', '4Gi', '8Gi', '16Gi'],
+    options: ['none', '512Mi', '1Gi', '2Gi', '4Gi', '8Gi', '16Gi'],
   },
   { key: 'user', group: 'Connection', kind: 'text' },
   { key: 'ssh-key', group: 'Connection', kind: 'text' },
@@ -152,6 +158,31 @@ export class DefaultsPageComponent implements OnInit {
       label,
       rows: rows.filter((row) => row.field.group === label),
     })).filter((group) => group.rows.length > 0);
+  });
+
+  /**
+   * The combinations acloud refuses, caught here rather than at the next
+   * create. `config set cpu-request none` is accepted on its own, but a request
+   * of `none` against a numeric limit fails every later create and play, since
+   * Kubernetes defaults a missing request to the limit and would reserve the
+   * whole thing. The command can only complain when it runs; this screen is
+   * where the pair is actually being chosen.
+   */
+  readonly resourceWarnings = computed<string[]>(() => {
+    const draftFor = (key: string) =>
+      (this.rows().find((row) => row.Key === key)?.draft ?? '').trim().toLowerCase();
+    const warnings: string[] = [];
+    for (const resource of ['cpu', 'memory'] as const) {
+      const limit = draftFor(`${resource}-limit`);
+      if (draftFor(`${resource}-request`) === RESOURCE_NONE && limit !== RESOURCE_NONE && limit) {
+        warnings.push(
+          `${resource}-request is none while ${resource}-limit is ${limit}. ` +
+            `Kubernetes would reserve the full limit, so acloud refuses this pair: ` +
+            `set ${resource}-limit to none as well, or give ${resource}-request a value.`,
+        );
+      }
+    }
+    return warnings;
   });
 
   async ngOnInit(): Promise<void> {

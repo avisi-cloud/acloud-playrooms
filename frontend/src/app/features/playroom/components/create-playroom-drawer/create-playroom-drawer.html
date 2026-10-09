@@ -101,6 +101,11 @@
               ><input pInputText class="w-full" [(ngModel)]="form.memLim" />
             </div>
           </div>
+          <small class="field-hint"
+            >Type <code>none</code> to leave a request or limit unset. A request of
+            <code>none</code> needs its limit unset too, or Kubernetes reserves the whole
+            limit.</small
+          >
         }
         @case ('forwarding') {
           <div class="step-head">

@@ -65,6 +65,11 @@
         ><input pInputText class="w-full" [(ngModel)]="form.memLim" />
       </div>
     </div>
+    <small class="field-hint"
+      >Type <code>none</code> to unset a request or limit — useful for a privileged playroom, which
+      has its node to itself. A request of <code>none</code> needs its limit unset too, or
+      Kubernetes reserves the whole limit.</small
+    >
   </section>
 
   <section class="update-card">
@@ -118,6 +123,23 @@
             [grouped]="false"
           />
         }
+      </div>
+    }
+  </section>
+
+  <section class="update-card">
+    <div class="update-card-head">Connectivity</div>
+    <label class="toggle-line"
+      ><span>Move onto the tailnet<small class="flag-ref">--exposure tailscale</small></span
+      ><p-toggleswitch [(ngModel)]="form.moveToTailscale"
+    /></label>
+    @if (form.moveToTailscale) {
+      <div class="toggle-children">
+        <small class="field-hint"
+          >Changes the SSH service only, so it applies without restarting the playroom, and the old
+          NodePorts are released. The playhouse must have Tailscale enabled. A playroom already on
+          the tailnet is left alone.</small
+        >
       </div>
     }
   </section>

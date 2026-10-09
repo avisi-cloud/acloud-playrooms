@@ -67,6 +67,16 @@
       </div>
     } @else {
       <div class="settings-column">
+        @if (resourceWarnings().length > 0) {
+          <div class="resource-warning" role="alert">
+            <i class="pi pi-exclamation-triangle"></i>
+            <div>
+              @for (warning of resourceWarnings(); track warning) {
+                <p>{{ warning }}</p>
+              }
+            </div>
+          </div>
+        }
         @for (group of groups(); track group.label) {
           <section class="defaults-group">
             <div class="group-label">{{ group.label }}</div>

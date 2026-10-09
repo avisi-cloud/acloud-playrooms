@@ -40,6 +40,7 @@ const WIRED: Record<string, string[]> = {
     'CPULimit',
     'MemRequest',
     'MemLimit',
+    'Exposure',
     'ChangeReadOnly',
     'ReadOnly',
     'ChangePorts',

@@ -80,6 +80,8 @@ export interface UpdateForm {
   changePorts: boolean;
   clearPorts: boolean;
   ports: string[];
+  /** Moves a nodeport or portforward room onto the tailnet; see the drawer. */
+  moveToTailscale: boolean;
   noWait: boolean;
   waitTimeout: string;
 }
