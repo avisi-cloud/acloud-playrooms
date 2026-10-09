@@ -7,5 +7,6 @@ export {
     CreateInput,
     DeleteInput,
     EnvironmentEntry,
-    PlayhouseEntry
+    PlayhouseEntry,
+    UpdateInput
 } from "./models.js";

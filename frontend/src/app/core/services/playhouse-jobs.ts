@@ -1,7 +1,12 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { CliConsoleService } from './cli-console';
 import { ToastService } from './toast';
-import { PlayhouseCreateInput, PlayhouseDeleteInput, wailsApi } from './wails-api';
+import {
+  PlayhouseCreateInput,
+  PlayhouseDeleteInput,
+  PlayhouseUpdateInput,
+  wailsApi,
+} from './wails-api';
 
 /**
  * Playhouse creates and deletes that outlive the screen that started them. A
@@ -14,14 +19,22 @@ export class PlayhouseJobsService {
 
   private readonly _provisioning = signal<string[]>([]);
   private readonly _deleting = signal<string[]>([]);
+  private readonly _converging = signal<string[]>([]);
 
   /** Slugs currently being created. */
   readonly provisioning = this._provisioning.asReadonly();
   /** Slugs currently being deleted. */
   readonly deleting = this._deleting.asReadonly();
+  /** Slugs currently being converged by an edit. */
+  readonly converging = this._converging.asReadonly();
 
   /** Whether anything is in flight, i.e. whether the list is worth polling. */
-  readonly busy = computed(() => this._provisioning().length > 0 || this._deleting().length > 0);
+  readonly busy = computed(
+    () =>
+      this._provisioning().length > 0 ||
+      this._deleting().length > 0 ||
+      this._converging().length > 0,
+  );
 
   /**
    * A revision that ticks whenever a job finishes, so a screen can refresh
@@ -32,6 +45,10 @@ export class PlayhouseJobsService {
 
   isDeleting(slug: string): boolean {
     return this._deleting().includes(slug);
+  }
+
+  isConverging(slug: string): boolean {
+    return this._converging().includes(slug);
   }
 
   /** Starts a create and returns immediately; progress goes to the log. */
@@ -88,7 +105,38 @@ export class PlayhouseJobsService {
     );
   }
 
-  /** The shared shape of both jobs: run, report, untrack, announce completion. */
+  /**
+   * Starts a converge and returns immediately. This is `playhouse create` on an
+   * existing playhouse, so it runs the same bootstrap as a creation and takes
+   * minutes rather than seconds; playrooms keep running throughout.
+   */
+  update(slug: string, input: Partial<PlayhouseUpdateInput>): void {
+    if (this._converging().includes(slug)) return;
+    this._converging.update((list) => [...list, slug]);
+    this.notify.show({
+      severity: 'info',
+      summary: 'Updating playhouse',
+      detail: `${slug} is being converged. Playrooms keep running; this can take a few minutes.`,
+      life: 6000,
+    });
+    void this.run(
+      `Updating playhouse "${slug}"`,
+      (operationId) => wailsApi.updatePlayhouse(operationId, input),
+      (operationId) =>
+        this.notify.show({
+          severity: 'success',
+          summary: 'Playhouse updated',
+          detail: `${slug} was converged.`,
+          life: 5000,
+          data: { operationId },
+        }),
+      (operationId, error) =>
+        this.notify.failure(`Could not update playhouse "${slug}"`, error, operationId),
+      () => this._converging.update((list) => list.filter((trackedSlug) => trackedSlug !== slug)),
+    );
+  }
+
+  /** The shared shape of every job: run, report, untrack, announce completion. */
   private async run(
     title: string,
     action: (operationId: string) => Promise<void>,

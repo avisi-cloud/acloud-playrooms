@@ -19,6 +19,7 @@ export type PlayroomListInput = playroomModels.ListInput;
 export type PlayroomDefaultEntry = playroomModels.DefaultEntry;
 export type PlayhouseCreateInput = playhouseModels.CreateInput;
 export type PlayhouseDeleteInput = playhouseModels.DeleteInput;
+export type PlayhouseUpdateInput = playhouseModels.UpdateInput;
 export type PlayhouseEntry = playhouseModels.PlayhouseEntry;
 export type CloudAccountEntry = playhouseModels.CloudAccountEntry;
 export type EnvironmentEntry = playhouseModels.EnvironmentEntry;
@@ -91,6 +92,9 @@ export const wailsApi = {
     app.CreatePlayhouse(operationID, new playhouseInput.CreateInput(input)),
   deletePlayhouse: (operationID: string, input: Partial<PlayhouseDeleteInput>): Promise<void> =>
     app.DeletePlayhouse(operationID, new playhouseInput.DeleteInput(input)),
+  /** Converges an existing playhouse; `playhouse create` is the update command. */
+  updatePlayhouse: (operationID: string, input: Partial<PlayhouseUpdateInput>): Promise<void> =>
+    app.UpdatePlayhouse(operationID, new playhouseInput.UpdateInput(input)),
 
   // Playroom
   listPlayrooms: (input: Partial<PlayroomListInput>): Promise<ListingDto[]> =>
@@ -135,4 +139,6 @@ export const wailsApi = {
     app.PreviewCreatePlayhouse(new playhouseInput.CreateInput(input)),
   previewDeletePlayhouse: (input: Partial<PlayhouseDeleteInput>): Promise<string[]> =>
     app.PreviewDeletePlayhouse(new playhouseInput.DeleteInput(input)),
+  previewUpdatePlayhouse: (input: Partial<PlayhouseUpdateInput>): Promise<string[]> =>
+    app.PreviewUpdatePlayhouse(new playhouseInput.UpdateInput(input)),
 };

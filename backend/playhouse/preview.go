@@ -7,3 +7,4 @@ import "github.com/avisi-cloud/acloud-playrooms/backend/cli"
 
 func PreviewCreate(input CreateInput) []string { return cli.Preview(buildCreateArguments(input)) }
 func PreviewDelete(input DeleteInput) []string { return cli.Preview(buildDeleteArguments(input)) }
+func PreviewUpdate(input UpdateInput) []string { return cli.Preview(buildUpdateArguments(input)) }

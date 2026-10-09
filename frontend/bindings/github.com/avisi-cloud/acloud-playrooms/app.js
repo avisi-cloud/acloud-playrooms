@@ -345,6 +345,16 @@ export function PreviewOpenPlayroomInEditor(input) {
 }
 
 /**
+ * @param {playhouse$0.UpdateInput} input
+ * @returns {$CancellablePromise<string[]>}
+ */
+export function PreviewUpdatePlayhouse(input) {
+    return $Call.ByID(1817471210, input).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType20($result);
+    }));
+}
+
+/**
  * @param {playroom$0.UpdateInput} input
  * @returns {$CancellablePromise<string[]>}
  */
@@ -437,6 +447,18 @@ export function UnsetAllPlayroomDefaults(operationID) {
  */
 export function UnsetPlayroomDefault(operationID, key) {
     return $Call.ByID(1427111362, operationID, key);
+}
+
+/**
+ * UpdatePlayhouse converges an existing playhouse. There is no
+ * `playhouse update`; see backend/playhouse/update.go for why this is a
+ * `playhouse create` re-run and which settings it can actually change.
+ * @param {string} operationID
+ * @param {playhouse$0.UpdateInput} input
+ * @returns {$CancellablePromise<void>}
+ */
+export function UpdatePlayhouse(operationID, input) {
+    return $Call.ByID(3915076420, operationID, input);
 }
 
 /**

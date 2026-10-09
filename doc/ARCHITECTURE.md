@@ -57,6 +57,25 @@ defaults. Definite switches such as `--read-only`, `--privileged` and
 `--forward-agent` use explicit true/false values where configured CLI defaults
 could otherwise override the user's choice.
 
+## Editing a playhouse
+
+There is no `acloud playhouse update`. `playhouse create` is the update: run
+with an existing name it reports "already exists — updating it" and converges
+the playhouse, backfilling missing node pools, re-stamping the playroom pools
+and re-running the bootstrap.
+
+Only three settings change on that path, and the edit drawer offers only those:
+`--exposure` (with the Tailscale credentials, which are stored in-cluster after
+first use) and the two node ceilings, which are written to each pool's
+max-nodes annotation. The node types and node count are taken from the live
+pools by the converge, and the version, update channel and maintenance schedule
+are read only while provisioning a new cluster, so passing them to an existing
+playhouse silently does nothing. The drawer states that rather than leaving it
+to be discovered.
+
+The edit always passes `--no-default`: `create` makes its playhouse the default
+otherwise, and editing one the user is not scoped to would switch them over.
+
 ## Running commands
 
 `backend/cli` resolves the executable and caches it until something changes it:

@@ -1,0 +1,135 @@
+<p-drawer
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event); visible = $event"
+  position="right"
+  [style]="{ width: 'var(--overlay-md)' }"
+  styleClass="av-drawer ph-update-drawer"
+  appendTo="body"
+>
+  <ng-template pTemplate="header">
+    <div class="drawer-head">
+      <div class="drawer-title">Edit playhouse<span class="punt">.</span></div>
+      <div class="drawer-subtitle">
+        <code>{{ playhouse?.Slug }}</code> — re-runs <code>acloud playhouse create</code> to
+        converge it.
+      </div>
+    </div>
+  </ng-template>
+
+  <section class="ph-update-card">
+    <div class="ph-update-card-head">Connectivity</div>
+    <div class="field-group">
+      <label class="field-label">Exposure</label>
+      <p-select
+        [options]="exposureOptions"
+        optionLabel="label"
+        optionValue="id"
+        [(ngModel)]="form.exposure"
+        appendTo="body"
+        [style]="{ width: '100%' }"
+      >
+        <ng-template let-option pTemplate="item">
+          <div class="ca-option">
+            <span class="ca-name">{{ option.label }}</span>
+            <span class="ca-meta">{{ option.hint }}</span>
+          </div>
+        </ng-template>
+      </p-select>
+      <small class="field-hint"
+        >Re-bootstraps how playrooms are reached. Existing playrooms keep their own exposure — move
+        one with the update drawer's tailnet toggle.</small
+      >
+    </div>
+
+    @if (showsTailscaleCredentials()) {
+      <div class="field-group">
+        <label class="field-label">Tailscale OAuth client id</label>
+        <input
+          pInputText
+          class="w-full"
+          [(ngModel)]="form.tailscaleOAuthClientID"
+          spellcheck="false"
+          autocomplete="off"
+        />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Tailscale OAuth client secret</label>
+        <input
+          pInputText
+          class="w-full"
+          type="password"
+          [(ngModel)]="form.tailscaleOAuthClientSecret"
+          autocomplete="off"
+        />
+        <small class="field-hint"
+          >Stored in the cluster on first use, so leave both blank for a playhouse already on
+          Tailscale. Fill them in to switch a playhouse over, or to replace expired
+          credentials.</small
+        >
+      </div>
+    }
+  </section>
+
+  <section class="ph-update-card">
+    <div class="ph-update-card-head">Capacity</div>
+    <div class="field-row">
+      <div class="field-group">
+        <label class="field-label">Max playroom nodes</label>
+        <input
+          pInputText
+          class="w-full"
+          type="number"
+          min="0"
+          [(ngModel)]="form.maxPlayroomNodes"
+        />
+      </div>
+      <div class="field-group">
+        <label class="field-label">Max privileged nodes</label>
+        <input
+          pInputText
+          class="w-full"
+          type="number"
+          min="0"
+          [(ngModel)]="form.maxPrivilegedNodes"
+        />
+      </div>
+    </div>
+    <small class="field-hint"
+      >Zero leaves a ceiling as it is. These set each pool's max-nodes annotation, which is what a
+      scale-up restores.</small
+    >
+  </section>
+
+  <!-- Said plainly, because the omission is the surprising part: a converge
+       takes the node sizes from the live pools, and reads the version and
+       channel only when provisioning a new cluster. -->
+  <section class="ph-update-card ph-update-note">
+    <i class="pi pi-info-circle"></i>
+    <div>
+      Node types, node count, AME version, update channel and maintenance schedule cannot be changed
+      on an existing playhouse. Recreate it, or change the cluster in the Avisi Cloud console.
+    </div>
+  </section>
+
+  <app-command-preview [input]="previewInput()" [previewFn]="previewUpdate" [enabled]="visible" />
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Upgrade only"
+      icon="pi pi-refresh"
+      severity="secondary"
+      [outlined]="true"
+      size="small"
+      title="Converge with no changes: backfill missing node pools and re-run the bootstrap"
+      (click)="submitUpgradeOnly()"
+    />
+    <p-button label="Cancel" severity="secondary" [text]="true" size="small" (click)="close()" />
+    <p-button
+      label="Apply"
+      icon="pi pi-check"
+      size="small"
+      [disabled]="!hasChanges()"
+      (click)="submit()"
+    />
+  </ng-template>
+</p-drawer>

@@ -379,5 +379,84 @@ export class PlayhouseEntry {
     }
 }
 
+/**
+ * UpdateInput is what the GUI sends to converge an existing playhouse. A blank
+ * or zero field is omitted, which leaves that setting as it is.
+ */
+export class UpdateInput {
+    /**
+     * Creates a new UpdateInput instance.
+     * @param {Partial<UpdateInput>} [$$source = {}] - The source object to create the UpdateInput.
+     */
+    constructor($$source = {}) {
+        if (!("Name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Name"] = "";
+        }
+        if (!("Exposure" in $$source)) {
+            /**
+             * Exposure re-bootstraps the playhouse's SSH connectivity. Switching to
+             * tailscale on a playhouse that never had it also needs the credentials
+             * below; they are stored in-cluster, so a later converge can omit them.
+             * @member
+             * @type {string}
+             */
+            this["Exposure"] = "";
+        }
+        if (!("TailscaleOAuthClientID" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["TailscaleOAuthClientID"] = "";
+        }
+        if (!("TailscaleOAuthClientSecret" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["TailscaleOAuthClientSecret"] = "";
+        }
+        if (!("MaxPlayroomNodes" in $$source)) {
+            /**
+             * The ceilings are written to each pool's max-nodes annotation, which is
+             * what a scale-up restores, rather than to the pool's MaxSize.
+             * @member
+             * @type {number}
+             */
+            this["MaxPlayroomNodes"] = 0;
+        }
+        if (!("MaxPrivilegedNodes" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["MaxPrivilegedNodes"] = 0;
+        }
+        if (!("WaitTimeout" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["WaitTimeout"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new UpdateInput instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {UpdateInput}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new UpdateInput(/** @type {Partial<UpdateInput>} */($$parsedSource));
+    }
+}
+
 // Private type creation functions
 const $$createType0 = $Create.Array($Create.Any);

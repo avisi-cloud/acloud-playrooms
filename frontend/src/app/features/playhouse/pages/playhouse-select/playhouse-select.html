@@ -154,6 +154,8 @@
                         <div class="row-actions">
                           @if (isDeleting(playhouse.Slug)) {
                             <i class="pi pi-spin pi-spinner" title="Deleting"></i>
+                          } @else if (jobs.isConverging(playhouse.Slug)) {
+                            <i class="pi pi-spin pi-spinner" title="Updating"></i>
                           } @else {
                             <p-button
                               icon="pi pi-arrow-right"
@@ -163,6 +165,15 @@
                               title="Use playhouse"
                               [attr.aria-label]="'Use playhouse ' + playhouse.Slug"
                               (click)="selectPlayhouse(playhouse.Slug)"
+                            />
+                            <p-button
+                              icon="pi pi-sliders-h"
+                              severity="secondary"
+                              [outlined]="true"
+                              size="small"
+                              title="Edit playhouse"
+                              [attr.aria-label]="'Edit playhouse ' + playhouse.Slug"
+                              (click)="askUpdate(playhouse, $event)"
                             />
                             <p-button
                               icon="pi pi-trash"
@@ -259,6 +270,13 @@
 
 <!-- ── Create wizard ─────────────────────────────────────────────────────── -->
 <app-create-playhouse-drawer [(visible)]="showCreate" (create)="onCreate($event)" />
+
+<!-- ── Edit drawer ───────────────────────────────────────────────────────── -->
+<app-update-playhouse-drawer
+  [(visible)]="showUpdate"
+  [playhouse]="updateTarget"
+  (update)="onUpdate($event)"
+/>
 
 <!-- ── Delete dialog ─────────────────────────────────────────────────────── -->
 <app-confirm-delete-dialog
