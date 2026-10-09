@@ -83,17 +83,22 @@
               <table class="ph-table">
                 <thead>
                   <tr>
+                    <th class="actions-col">Actions</th>
                     <th>Playhouse</th>
                     <th>Status</th>
                     <th>Region</th>
                     <th class="col-version">Version</th>
                     <th class="col-identity">Identity</th>
-                    <th class="actions-col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (slug of provisioningSlugs(); track slug) {
                     <tr class="provisioning-row">
+                      <td class="actions-col">
+                        <div class="row-actions">
+                          <i class="pi pi-spin pi-spinner" title="Provisioning"></i>
+                        </div>
+                      </td>
                       <td>
                         <div class="slug-cell">
                           <div class="slug-text">
@@ -105,11 +110,6 @@
                       <td>-</td>
                       <td class="col-version">-</td>
                       <td class="col-identity"><span class="mono muted">-</span></td>
-                      <td>
-                        <div class="row-actions">
-                          <i class="pi pi-spin pi-spinner" title="Provisioning"></i>
-                        </div>
-                      </td>
                     </tr>
                   }
                   @for (playhouse of playhouses(); track playhouse.Slug) {
@@ -117,6 +117,43 @@
                       [class.selected-row]="playhouse.Slug === state.playhouse()"
                       [class.provisioning-row]="isDeleting(playhouse.Slug)"
                     >
+                      <td class="actions-col">
+                        <div class="row-actions">
+                          @if (isDeleting(playhouse.Slug)) {
+                            <i class="pi pi-spin pi-spinner" title="Deleting"></i>
+                          } @else if (jobs.isConverging(playhouse.Slug)) {
+                            <i class="pi pi-spin pi-spinner" title="Updating"></i>
+                          } @else {
+                            <p-button
+                              icon="pi pi-arrow-right"
+                              severity="secondary"
+                              [outlined]="true"
+                              size="small"
+                              title="Use playhouse"
+                              [attr.aria-label]="'Use playhouse ' + playhouse.Slug"
+                              (click)="selectPlayhouse(playhouse.Slug)"
+                            />
+                            <p-button
+                              icon="pi pi-sliders-h"
+                              severity="secondary"
+                              [outlined]="true"
+                              size="small"
+                              title="Edit playhouse"
+                              [attr.aria-label]="'Edit playhouse ' + playhouse.Slug"
+                              (click)="askUpdate(playhouse, $event)"
+                            />
+                            <p-button
+                              icon="pi pi-trash"
+                              severity="danger"
+                              [outlined]="true"
+                              size="small"
+                              title="Delete playhouse"
+                              [attr.aria-label]="'Delete playhouse ' + playhouse.Slug"
+                              (click)="askDelete(playhouse, $event)"
+                            />
+                          }
+                        </div>
+                      </td>
                       <td>
                         <div class="slug-cell">
                           <div class="slug-text">
@@ -149,32 +186,6 @@
                       <td class="col-version">{{ playhouse.Version || '-' }}</td>
                       <td class="col-identity">
                         <span class="mono muted">{{ playhouse.Identity || '-' }}</span>
-                      </td>
-                      <td>
-                        <div class="row-actions">
-                          @if (isDeleting(playhouse.Slug)) {
-                            <i class="pi pi-spin pi-spinner" title="Deleting"></i>
-                          } @else {
-                            <p-button
-                              icon="pi pi-arrow-right"
-                              severity="secondary"
-                              [outlined]="true"
-                              size="small"
-                              title="Use playhouse"
-                              [attr.aria-label]="'Use playhouse ' + playhouse.Slug"
-                              (click)="selectPlayhouse(playhouse.Slug)"
-                            />
-                            <p-button
-                              icon="pi pi-trash"
-                              severity="danger"
-                              [outlined]="true"
-                              size="small"
-                              title="Delete playhouse"
-                              [attr.aria-label]="'Delete playhouse ' + playhouse.Slug"
-                              (click)="askDelete(playhouse, $event)"
-                            />
-                          }
-                        </div>
                       </td>
                     </tr>
                   }
@@ -259,6 +270,13 @@
 
 <!-- ── Create wizard ─────────────────────────────────────────────────────── -->
 <app-create-playhouse-drawer [(visible)]="showCreate" (create)="onCreate($event)" />
+
+<!-- ── Edit drawer ───────────────────────────────────────────────────────── -->
+<app-update-playhouse-drawer
+  [(visible)]="showUpdate"
+  [playhouse]="updateTarget"
+  (update)="onUpdate($event)"
+/>
 
 <!-- ── Delete dialog ─────────────────────────────────────────────────────── -->
 <app-confirm-delete-dialog

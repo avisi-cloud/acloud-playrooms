@@ -1,0 +1,120 @@
+<section class="binary-card" [class.is-broken]="status() && !found()">
+  <!-- The header is the whole card when acloud works: one line confirming
+       which one, which is all anybody needs until it breaks. -->
+  <button
+    class="binary-summary"
+    type="button"
+    [attr.aria-expanded]="expanded()"
+    aria-controls="acloud-binary-detail"
+    (click)="toggle()"
+  >
+    <i class="pi" [class.pi-chevron-right]="!expanded()" [class.pi-chevron-down]="expanded()"></i>
+    <span class="binary-title">Acloud command</span>
+    <p-tag
+      [value]="stateLabel()"
+      [severity]="stateSeverity()"
+      [rounded]="true"
+      styleClass="source-tag"
+    />
+    @if (found() && status()?.Path) {
+      <code class="binary-path-inline">{{ status()?.Path }}</code>
+    }
+    @if (!found() && status()) {
+      <span class="binary-nudge">Every screen stays empty until this is set</span>
+    }
+  </button>
+
+  @if (expanded()) {
+    <div class="binary-detail" id="acloud-binary-detail">
+      @if (status()?.Message; as message) {
+        <p class="binary-message">{{ message }}</p>
+      }
+
+      @if (pinnedByEnvironment()) {
+        <!-- The environment wins over anything saved here, so offering an edit
+             would be offering something that cannot take effect. -->
+        <p class="binary-message">
+          The <code>ACLOUD_BINARY</code> environment variable decides which acloud runs, so this
+          cannot be changed here. Unset it to choose a path in the app.
+        </p>
+      } @else {
+        <label class="binary-field-label" for="acloud-binary-path">Path to the acloud binary</label>
+        <div class="binary-field">
+          <input
+            pInputText
+            id="acloud-binary-path"
+            class="binary-input"
+            type="text"
+            spellcheck="false"
+            autocapitalize="off"
+            placeholder="/opt/homebrew/bin/acloud"
+            [ngModel]="draft()"
+            (ngModelChange)="draft.set($event)"
+            (keyup.enter)="save()"
+            [disabled]="saving()"
+          />
+          <p-button
+            label="Browse…"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            [disabled]="saving()"
+            (click)="browse()"
+          />
+          <p-button
+            label="Use this"
+            icon="pi pi-check"
+            size="small"
+            [disabled]="!canSave()"
+            [loading]="saving()"
+            (click)="save()"
+          />
+        </div>
+
+        @if (problem(); as failed) {
+          <p class="binary-problem" role="alert">
+            <i class="pi pi-exclamation-circle"></i>
+            <span>{{ failed }}</span>
+          </p>
+        }
+
+        <div class="binary-actions">
+          <p-button
+            label="Check again"
+            icon="pi pi-refresh"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            [loading]="checking()"
+            (click)="refresh()"
+          />
+          @if (hasSavedPath()) {
+            <p-button
+              label="Find it automatically"
+              icon="pi pi-undo"
+              severity="secondary"
+              [text]="true"
+              size="small"
+              [disabled]="saving()"
+              (click)="useAutomatic()"
+            />
+          }
+        </div>
+
+        @if (!found()) {
+          <!-- The common case is an installed acloud the app cannot see, so the
+               terminal command that prints the answer comes before install
+               instructions. -->
+          <p class="binary-hint">
+            Run <code>which acloud</code> in a terminal and paste what it prints. An app opened from
+            Finder does not inherit your shell's PATH, so a working <code>acloud</code> can still be
+            invisible here. No acloud at all?
+            <code>brew install --cask avisi-cloud/tools/acloud</code>
+          </p>
+        } @else if (sourceLabel()) {
+          <p class="binary-hint">Source: {{ sourceLabel() }}</p>
+        }
+      }
+    </div>
+  }
+</section>

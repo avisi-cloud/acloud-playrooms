@@ -25,9 +25,14 @@ type Runner struct {
 	// override replaces the binary to execute. Only tests set it.
 	override string
 
-	resolveOnce sync.Once
-	resolved    string
-	resolveErr  error
+	// The resolved binary is cached so a screenful of commands does not search
+	// the filesystem repeatedly, but it is forgettable rather than resolved
+	// once: saving a path in the settings has to take effect on the next
+	// command, not on the next launch.
+	resolveMutex sync.Mutex
+	resolved     string
+	resolveErr   error
+	hasResolved  bool
 
 	emitMutex sync.RWMutex
 	emitter   Emitter
@@ -215,24 +220,28 @@ func (runner *Runner) unregister(operationID string) {
 	delete(runner.inflight, operationID)
 }
 
-// pathToOwnExecutable resolves the installed acloud binary once per Runner.
+// pathToOwnExecutable resolves the acloud binary, caching the result until
+// something invalidates it. See binary.go for the search order and for why PATH
+// alone is not enough in a Finder-launched app.
 func (runner *Runner) pathToOwnExecutable() (string, error) {
 	if runner.override != "" {
 		return runner.override, nil
 	}
-	runner.resolveOnce.Do(func() {
-		if configured := strings.TrimSpace(os.Getenv(acloudBinaryEnv)); configured != "" {
-			runner.resolved = configured
-			return
-		}
-		path, err := exec.LookPath("acloud")
-		if err != nil {
-			runner.resolveErr = fmt.Errorf("locate acloud on PATH or set %s: %w", acloudBinaryEnv, err)
-			return
-		}
-		runner.resolved = path
-	})
+	runner.resolveMutex.Lock()
+	defer runner.resolveMutex.Unlock()
+	if !runner.hasResolved {
+		runner.resolved, _, runner.resolveErr = resolveBinary()
+		runner.hasResolved = true
+	}
 	return runner.resolved, runner.resolveErr
+}
+
+// forgetResolvedBinary drops the cached path so the next command resolves
+// again. Called after the saved path changes.
+func (runner *Runner) forgetResolvedBinary() {
+	runner.resolveMutex.Lock()
+	defer runner.resolveMutex.Unlock()
+	runner.resolved, runner.resolveErr, runner.hasResolved = "", nil, false
 }
 
 func exitCode(err error) int {

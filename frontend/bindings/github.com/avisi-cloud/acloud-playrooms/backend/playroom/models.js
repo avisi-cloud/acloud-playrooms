@@ -758,6 +758,9 @@ export class UpdateInput {
         }
         if (!("CPURequest" in $$source)) {
             /**
+             * The resource values accept `none`, which unsets that request or limit.
+             * The command refuses a request of `none` while its limit stays a number,
+             * since Kubernetes would then reserve the whole limit instead of nothing.
              * @member
              * @type {string}
              */
@@ -783,6 +786,16 @@ export class UpdateInput {
              * @type {string}
              */
             this["MemLimit"] = "";
+        }
+        if (!("Exposure" in $$source)) {
+            /**
+             * Exposure moves a nodeport or portforward playroom onto the tailnet. The
+             * command accepts only `tailscale` here, and changes the SSH Service alone,
+             * so it applies without a restart.
+             * @member
+             * @type {string}
+             */
+            this["Exposure"] = "";
         }
         if (!("ChangeReadOnly" in $$source)) {
             /**
@@ -850,10 +863,10 @@ export class UpdateInput {
      * @returns {UpdateInput}
      */
     static createFrom($$source = {}) {
-        const $$createField10_0 = $$createType0;
+        const $$createField11_0 = $$createType0;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("Ports" in $$parsedSource) {
-            $$parsedSource["Ports"] = $$createField10_0($$parsedSource["Ports"]);
+            $$parsedSource["Ports"] = $$createField11_0($$parsedSource["Ports"]);
         }
         return new UpdateInput(/** @type {Partial<UpdateInput>} */($$parsedSource));
     }

@@ -40,6 +40,7 @@ const WIRED: Record<string, string[]> = {
     'CPULimit',
     'MemRequest',
     'MemLimit',
+    'Exposure',
     'ChangeReadOnly',
     'ReadOnly',
     'ChangePorts',
@@ -75,6 +76,15 @@ const WIRED: Record<string, string[]> = {
     'NoDefault',
   ],
   'playhouse.DeleteInput': ['Name', 'Force', 'NoWait', 'WaitTimeout'],
+  'playhouse.UpdateInput': [
+    'Name',
+    'Exposure',
+    'TailscaleOAuthClientID',
+    'TailscaleOAuthClientSecret',
+    'MaxPlayroomNodes',
+    'MaxPrivilegedNodes',
+    'WaitTimeout',
+  ],
 };
 
 /**
@@ -110,6 +120,7 @@ const UNWIRED: Record<string, Record<string, string>> = {
   },
   'playhouse.CreateInput': {},
   'playhouse.DeleteInput': {},
+  'playhouse.UpdateInput': {},
 };
 
 /** A zero-valued instance of each model, which is where the field names live. */
@@ -124,6 +135,7 @@ const MODELS: Record<string, object> = {
   'playroom.ListInput': new playroomModels.ListInput({}),
   'playhouse.CreateInput': new playhouseModels.CreateInput({}),
   'playhouse.DeleteInput': new playhouseModels.DeleteInput({}),
+  'playhouse.UpdateInput': new playhouseModels.UpdateInput({}),
 };
 
 describe('every backend input field is either wired to the UI or explained', () => {

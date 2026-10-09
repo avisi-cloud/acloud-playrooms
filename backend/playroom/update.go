@@ -10,13 +10,20 @@ import (
 // UpdateInput is what the GUI sends for `acloud playroom update`, where an
 // omitted flag keeps the current value. Hence the Change* companions.
 type UpdateInput struct {
-	Name           string
-	Playhouse      string
-	Image          string
-	CPURequest     string
-	CPULimit       string
-	MemRequest     string
-	MemLimit       string
+	Name      string
+	Playhouse string
+	Image     string
+	// The resource values accept `none`, which unsets that request or limit.
+	// The command refuses a request of `none` while its limit stays a number,
+	// since Kubernetes would then reserve the whole limit instead of nothing.
+	CPURequest string
+	CPULimit   string
+	MemRequest string
+	MemLimit   string
+	// Exposure moves a nodeport or portforward playroom onto the tailnet. The
+	// command accepts only `tailscale` here, and changes the SSH Service alone,
+	// so it applies without a restart.
+	Exposure       string
 	ChangeReadOnly bool
 	ReadOnly       bool
 	ChangePorts    bool
@@ -42,7 +49,8 @@ func buildUpdateArguments(input UpdateInput) []string {
 		Str("--cpu-request", input.CPURequest).
 		Str("--cpu-limit", input.CPULimit).
 		Str("--memory-request", input.MemRequest).
-		Str("--memory-limit", input.MemLimit)
+		Str("--memory-limit", input.MemLimit).
+		Str("--exposure", input.Exposure)
 
 	// The command reads flag.Changed, so send it only when actually toggled.
 	if input.ChangeReadOnly {

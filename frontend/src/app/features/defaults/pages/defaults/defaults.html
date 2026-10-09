@@ -41,6 +41,11 @@
   </header>
 
   <div class="page-body settings-body">
+    <!-- Outside the loading and failure branches on purpose: without acloud the
+         defaults below cannot load either, and a card nested in that failure
+         would hide the one control that fixes it. -->
+    <app-acloud-binary />
+
     @if (loading()) {
       <!-- The shell's brand mark breathes instead; see PageLoadingService. -->
       <p class="sr-only" role="status">Loading defaults…</p>
@@ -62,6 +67,16 @@
       </div>
     } @else {
       <div class="settings-column">
+        @if (resourceWarnings().length > 0) {
+          <div class="resource-warning" role="alert">
+            <i class="pi pi-exclamation-triangle"></i>
+            <div>
+              @for (warning of resourceWarnings(); track warning) {
+                <p>{{ warning }}</p>
+              }
+            </div>
+          </div>
+        }
         @for (group of groups(); track group.label) {
           <section class="defaults-group">
             <div class="group-label">{{ group.label }}</div>

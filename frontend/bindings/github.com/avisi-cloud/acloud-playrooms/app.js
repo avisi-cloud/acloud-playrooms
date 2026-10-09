@@ -13,6 +13,9 @@ import { Call as $Call, CancellablePromise as $CancellablePromise, Create as $Cr
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as cli$0 from "./backend/cli/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as config$0 from "./backend/config/models.js";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -25,12 +28,34 @@ import * as playhouse$0 from "./backend/playhouse/models.js";
 import * as playroom$0 from "./backend/playroom/models.js";
 
 /**
+ * BrowseForAcloudBinary opens a native file picker and returns the chosen path,
+ * or "" when the user cancelled. Typing an absolute path into a text field is a
+ * poor way to find a binary in a hidden directory, and /usr/local/bin and
+ * /opt/homebrew/bin are both hidden in the Finder's default view.
+ * @returns {$CancellablePromise<string>}
+ */
+export function BrowseForAcloudBinary() {
+    return $Call.ByID(3766231709);
+}
+
+/**
  * CancelOperation reports whether a running command was found and cancelled.
  * @param {string} operationID
  * @returns {$CancellablePromise<boolean>}
  */
 export function CancelOperation(operationID) {
     return $Call.ByID(975567466, operationID);
+}
+
+/**
+ * ClearAcloudBinary forgets the saved path and searches again, for when acloud
+ * has since been installed normally.
+ * @returns {$CancellablePromise<cli$0.BinaryStatus>}
+ */
+export function ClearAcloudBinary() {
+    return $Call.ByID(1638829581).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType0($result);
+    }));
 }
 
 /**
@@ -79,13 +104,24 @@ export function DeletePlayroom(operationID, input) {
 }
 
 /**
+ * GetAcloudBinaryStatus describes the binary the app will run, why, and what to
+ * do when there is none.
+ * @returns {$CancellablePromise<cli$0.BinaryStatus>}
+ */
+export function GetAcloudBinaryStatus() {
+    return $Call.ByID(298481226).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType0($result);
+    }));
+}
+
+/**
  * GetAcloudCompatibility reports whether the installed acloud is newer than the
  * one this GUI was verified against, so the sidebar can say so.
  * @returns {$CancellablePromise<local$0.AcloudCompatibility>}
  */
 export function GetAcloudCompatibility() {
     return $Call.ByID(137755711).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType0($result);
+        return $$createType1($result);
     }));
 }
 
@@ -137,7 +173,7 @@ export function GetOperatingSystem() {
  */
 export function GetPlayroomDefaults() {
     return $Call.ByID(2266523266).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType2($result);
+        return $$createType3($result);
     }));
 }
 
@@ -146,7 +182,7 @@ export function GetPlayroomDefaults() {
  */
 export function GetToolStatuses() {
     return $Call.ByID(1175740481).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType4($result);
+        return $$createType5($result);
     }));
 }
 
@@ -163,7 +199,7 @@ export function IsLoggedIn() {
  */
 export function ListCloudAccounts() {
     return $Call.ByID(1866846424).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType6($result);
+        return $$createType7($result);
     }));
 }
 
@@ -172,7 +208,7 @@ export function ListCloudAccounts() {
  */
 export function ListContexts() {
     return $Call.ByID(1996591047).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType8($result);
+        return $$createType9($result);
     }));
 }
 
@@ -181,7 +217,7 @@ export function ListContexts() {
  */
 export function ListEnvironments() {
     return $Call.ByID(394294985).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType10($result);
+        return $$createType11($result);
     }));
 }
 
@@ -190,7 +226,7 @@ export function ListEnvironments() {
  */
 export function ListOrganisations() {
     return $Call.ByID(90350162).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType12($result);
+        return $$createType13($result);
     }));
 }
 
@@ -199,7 +235,7 @@ export function ListOrganisations() {
  */
 export function ListPlayhouses() {
     return $Call.ByID(2233888008).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType14($result);
+        return $$createType15($result);
     }));
 }
 
@@ -208,7 +244,7 @@ export function ListPlayhouses() {
  */
 export function ListPlayroomImages() {
     return $Call.ByID(3564697124).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType16($result);
+        return $$createType17($result);
     }));
 }
 
@@ -218,7 +254,7 @@ export function ListPlayroomImages() {
  */
 export function ListPlayrooms(input) {
     return $Call.ByID(1813849851, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType18($result);
+        return $$createType19($result);
     }));
 }
 
@@ -254,7 +290,7 @@ export function OpenPlayroomInEditor(operationID, input) {
  */
 export function PreviewConnectPlayroom(input) {
     return $Call.ByID(2452866108, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType19($result);
+        return $$createType20($result);
     }));
 }
 
@@ -264,7 +300,7 @@ export function PreviewConnectPlayroom(input) {
  */
 export function PreviewCreatePlayhouse(input) {
     return $Call.ByID(3520130009, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType19($result);
+        return $$createType20($result);
     }));
 }
 
@@ -274,7 +310,7 @@ export function PreviewCreatePlayhouse(input) {
  */
 export function PreviewCreatePlayroom(input) {
     return $Call.ByID(1511217160, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType19($result);
+        return $$createType20($result);
     }));
 }
 
@@ -284,7 +320,7 @@ export function PreviewCreatePlayroom(input) {
  */
 export function PreviewDeletePlayhouse(input) {
     return $Call.ByID(4046241956, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType19($result);
+        return $$createType20($result);
     }));
 }
 
@@ -294,7 +330,7 @@ export function PreviewDeletePlayhouse(input) {
  */
 export function PreviewDeletePlayroom(input) {
     return $Call.ByID(3324577475, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType19($result);
+        return $$createType20($result);
     }));
 }
 
@@ -304,7 +340,17 @@ export function PreviewDeletePlayroom(input) {
  */
 export function PreviewOpenPlayroomInEditor(input) {
     return $Call.ByID(2022753278, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType19($result);
+        return $$createType20($result);
+    }));
+}
+
+/**
+ * @param {playhouse$0.UpdateInput} input
+ * @returns {$CancellablePromise<string[]>}
+ */
+export function PreviewUpdatePlayhouse(input) {
+    return $Call.ByID(1817471210, input).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType20($result);
     }));
 }
 
@@ -314,7 +360,20 @@ export function PreviewOpenPlayroomInEditor(input) {
  */
 export function PreviewUpdatePlayroom(input) {
     return $Call.ByID(2213859593, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType19($result);
+        return $$createType20($result);
+    }));
+}
+
+/**
+ * SetAcloudBinary remembers a path for this and later launches, returning the
+ * resulting status so the caller can render the outcome without a second call.
+ * A path that does not run is rejected rather than saved.
+ * @param {string} path
+ * @returns {$CancellablePromise<cli$0.BinaryStatus>}
+ */
+export function SetAcloudBinary(path) {
+    return $Call.ByID(1998400028, path).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType0($result);
     }));
 }
 
@@ -391,6 +450,18 @@ export function UnsetPlayroomDefault(operationID, key) {
 }
 
 /**
+ * UpdatePlayhouse converges an existing playhouse. There is no
+ * `playhouse update`; see backend/playhouse/update.go for why this is a
+ * `playhouse create` re-run and which settings it can actually change.
+ * @param {string} operationID
+ * @param {playhouse$0.UpdateInput} input
+ * @returns {$CancellablePromise<void>}
+ */
+export function UpdatePlayhouse(operationID, input) {
+    return $Call.ByID(3915076420, operationID, input);
+}
+
+/**
  * @param {string} operationID
  * @param {playroom$0.UpdateInput} input
  * @returns {$CancellablePromise<void>}
@@ -400,23 +471,24 @@ export function UpdatePlayroom(operationID, input) {
 }
 
 // Private type creation functions
-const $$createType0 = local$0.AcloudCompatibility.createFrom;
-const $$createType1 = playroom$0.DefaultEntry.createFrom;
-const $$createType2 = $Create.Array($$createType1);
-const $$createType3 = local$0.ToolStatus.createFrom;
-const $$createType4 = $Create.Array($$createType3);
-const $$createType5 = playhouse$0.CloudAccountEntry.createFrom;
-const $$createType6 = $Create.Array($$createType5);
-const $$createType7 = config$0.ContextEntry.createFrom;
-const $$createType8 = $Create.Array($$createType7);
-const $$createType9 = playhouse$0.EnvironmentEntry.createFrom;
-const $$createType10 = $Create.Array($$createType9);
-const $$createType11 = config$0.OrganisationEntry.createFrom;
-const $$createType12 = $Create.Array($$createType11);
-const $$createType13 = playhouse$0.PlayhouseEntry.createFrom;
-const $$createType14 = $Create.Array($$createType13);
-const $$createType15 = local$0.ImageEntry.createFrom;
-const $$createType16 = $Create.Array($$createType15);
-const $$createType17 = playroom$0.Listing.createFrom;
-const $$createType18 = $Create.Array($$createType17);
-const $$createType19 = $Create.Array($Create.Any);
+const $$createType0 = cli$0.BinaryStatus.createFrom;
+const $$createType1 = local$0.AcloudCompatibility.createFrom;
+const $$createType2 = playroom$0.DefaultEntry.createFrom;
+const $$createType3 = $Create.Array($$createType2);
+const $$createType4 = local$0.ToolStatus.createFrom;
+const $$createType5 = $Create.Array($$createType4);
+const $$createType6 = playhouse$0.CloudAccountEntry.createFrom;
+const $$createType7 = $Create.Array($$createType6);
+const $$createType8 = config$0.ContextEntry.createFrom;
+const $$createType9 = $Create.Array($$createType8);
+const $$createType10 = playhouse$0.EnvironmentEntry.createFrom;
+const $$createType11 = $Create.Array($$createType10);
+const $$createType12 = config$0.OrganisationEntry.createFrom;
+const $$createType13 = $Create.Array($$createType12);
+const $$createType14 = playhouse$0.PlayhouseEntry.createFrom;
+const $$createType15 = $Create.Array($$createType14);
+const $$createType16 = local$0.ImageEntry.createFrom;
+const $$createType17 = $Create.Array($$createType16);
+const $$createType18 = playroom$0.Listing.createFrom;
+const $$createType19 = $Create.Array($$createType18);
+const $$createType20 = $Create.Array($Create.Any);

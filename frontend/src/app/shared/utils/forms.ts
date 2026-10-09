@@ -61,6 +61,8 @@ export function blankUpdateForm(room: Playroom): UpdateForm {
     changePorts: false,
     clearPorts: false,
     ports: parseRenderedPorts(room.ports),
+    // Off by default: an update with no exposure flag keeps the current one.
+    moveToTailscale: false,
     noWait: false,
     waitTimeout: DEFAULTS.waitTimeout,
   };

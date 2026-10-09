@@ -1,8 +1,8 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { ToolStatus } from '../../shared/models';
 import { CliConsoleService } from './cli-console';
 import { preferredTerminal } from './playroom-lifecycle';
-import { AcloudCompatibility, wailsApi } from './wails-api';
+import { AcloudBinaryStatus, AcloudCompatibility, wailsApi } from './wails-api';
 import { PlayroomStateService } from './playroom-state';
 
 /** How long to wait for an interactive login to land, and how often to look. */
@@ -22,10 +22,24 @@ export class AcloudSessionService {
   private readonly _compatibility = signal<AcloudCompatibility | null>(null);
   private readonly _toolStatuses = signal<ToolStatus[]>([]);
   private readonly _signingInOrOut = signal<boolean>(false);
+  private readonly _binary = signal<AcloudBinaryStatus | null>(null);
 
   readonly version = this._version.asReadonly();
   readonly toolStatuses = this._toolStatuses.asReadonly();
   readonly signingInOrOut = this._signingInOrOut.asReadonly();
+
+  /**
+   * Which acloud the app runs, or why there is none. Null only before the first
+   * read lands.
+   */
+  readonly binary = this._binary.asReadonly();
+
+  /**
+   * Whether acloud is missing, which makes every screen empty. Screens use this
+   * to explain the cause instead of showing "nothing here", and the sidebar to
+   * offer the way out.
+   */
+  readonly acloudIsMissing = computed<boolean>(() => this._binary()?.Found === false);
 
   /**
    * Set only when the running acloud is newer than the version this GUI was
@@ -33,13 +47,37 @@ export class AcloudSessionService {
    */
   readonly compatibility = this._compatibility.asReadonly();
 
-  /** Everything the sidebar reports about the local installation. */
+  /**
+   * Everything the sidebar reports about the local installation. The binary is
+   * read first and on its own: the version and compatibility reads both run
+   * `acloud version`, so without it they fail and have nothing to say.
+   */
   async loadInstallationFacts(): Promise<void> {
+    await this.loadBinaryStatus();
     await Promise.all([
       this.loadAcloudVersion(),
       this.loadCompatibilityWarning(),
       this.loadToolStatuses(),
     ]);
+  }
+
+  /**
+   * Re-reads which acloud is in use. Called at startup, and again after the
+   * path is changed in the settings.
+   */
+  async loadBinaryStatus(): Promise<void> {
+    try {
+      this._binary.set(await wailsApi.getAcloudBinaryStatus());
+    } catch {
+      // The binding itself failing is not the same as acloud being missing, and
+      // claiming it is missing would send the user to fix the wrong thing.
+      this._binary.set(null);
+    }
+  }
+
+  /** Records a status the settings screen already has, to save a round trip. */
+  setBinaryStatus(status: AcloudBinaryStatus): void {
+    this._binary.set(status);
   }
 
   private async loadAcloudVersion(): Promise<void> {

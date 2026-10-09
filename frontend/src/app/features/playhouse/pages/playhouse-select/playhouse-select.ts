@@ -12,6 +12,7 @@ import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import {
   PlayhouseCreateInput,
   PlayhouseDeleteInput,
+  PlayhouseUpdateInput,
   wailsApi,
 } from '../../../../core/services/wails-api';
 import { ConfirmDeleteDialog } from '../../../../shared/components';
@@ -19,6 +20,7 @@ import { DEFAULTS } from '../../../../shared/data';
 import { PlayhouseEntry } from '../../../../shared/models';
 import { explainFailure, FailureExplanation } from '../../../../shared/utils';
 import { CreatePlayhouseDrawerComponent } from '../../components/create-playhouse-drawer/create-playhouse-drawer';
+import { UpdatePlayhouseDrawerComponent } from '../../components/update-playhouse-drawer/update-playhouse-drawer';
 
 /** How often to re-read the list while a create or delete is in flight. */
 const BACKGROUND_POLL_MS = 15000;
@@ -38,6 +40,7 @@ const BACKGROUND_POLL_MS = 15000;
     ToggleSwitchModule,
     ConfirmDeleteDialog,
     CreatePlayhouseDrawerComponent,
+    UpdatePlayhouseDrawerComponent,
   ],
   templateUrl: './playhouse-select.html',
   styleUrl: './playhouse-select.css',
@@ -72,6 +75,8 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
 
   showDelete = false;
   deleteTarget: PlayhouseEntry | null = null;
+  showUpdate = false;
+  updateTarget: PlayhouseEntry | null = null;
   deleteForce = false;
   deleteNoWait = false;
   deleteTimeout = DEFAULTS.waitTimeout;
@@ -157,6 +162,20 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
 
   onCreate(event: { input: Partial<PlayhouseCreateInput>; slug: string }): void {
     this.jobs.create(event.slug, event.input);
+  }
+
+  // ── Edit ───────────────────────────────────────────────────────────────────
+
+  askUpdate(playhouse: PlayhouseEntry, event: MouseEvent): void {
+    // The row itself selects the playhouse, so the action must not also switch
+    // the user's scope on the way to the drawer.
+    event.stopPropagation();
+    this.updateTarget = playhouse;
+    this.showUpdate = true;
+  }
+
+  onUpdate(event: { input: Partial<PlayhouseUpdateInput>; slug: string }): void {
+    this.jobs.update(event.slug, event.input);
   }
 
   // ── Delete ─────────────────────────────────────────────────────────────────

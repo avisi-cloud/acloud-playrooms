@@ -70,6 +70,7 @@ export class PlayroomUpdateDrawerComponent implements OnChanges {
     changePorts: false,
     clearPorts: false,
     ports: [''],
+    moveToTailscale: false,
     noWait: false,
     waitTimeout: DEFAULTS.waitTimeout,
   };

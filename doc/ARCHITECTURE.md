@@ -57,13 +57,40 @@ defaults. Definite switches such as `--read-only`, `--privileged` and
 `--forward-agent` use explicit true/false values where configured CLI defaults
 could otherwise override the user's choice.
 
+## Editing a playhouse
+
+There is no `acloud playhouse update`. `playhouse create` is the update: run
+with an existing name it reports "already exists — updating it" and converges
+the playhouse, backfilling missing node pools, re-stamping the playroom pools
+and re-running the bootstrap.
+
+Only three settings change on that path, and the edit drawer offers only those:
+`--exposure` (with the Tailscale credentials, which are stored in-cluster after
+first use) and the two node ceilings, which are written to each pool's
+max-nodes annotation. The node types and node count are taken from the live
+pools by the converge, and the version, update channel and maintenance schedule
+are read only while provisioning a new cluster, so passing them to an existing
+playhouse silently does nothing. The drawer states that rather than leaving it
+to be discovered.
+
+The edit always passes `--no-default`: `create` makes its playhouse the default
+otherwise, and editing one the user is not scoped to would switch them over.
+
 ## Running commands
 
-`backend/cli` resolves the executable once per runner:
+`backend/cli` resolves the executable and caches it until something changes it:
 
 1. An explicit test override, when supplied.
 2. `ACLOUD_BINARY`, when configured.
-3. `acloud` on `PATH`.
+3. The path the user set in the app, stored next to the remembered theme.
+4. `acloud` on `PATH`.
+5. The known install directories (both Homebrew prefixes, MacPorts, `~/.local/bin`,
+   `~/bin`, `~/go/bin`).
+
+Steps 3 and 5 exist because a bundle launched from Finder inherits
+`/usr/bin:/bin:/usr/sbin:/sbin` and no Homebrew prefix, so `PATH` alone misses
+an acloud that works in any terminal. Saving a path clears the cache, so the
+change applies to the next command rather than the next launch.
 
 It executes that binary with an argument array, not a shell command string.
 

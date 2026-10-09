@@ -106,10 +106,35 @@ func TestBuildUpdateArguments(t *testing.T) {
 			want:  []string{"playroom", "update", "demo", "--playhouse", "ph", "--port", "80", "--port", "443:8443"},
 		},
 		{
+			// Unsetting a request needs its limit unset in the same call, or the
+			// command refuses it: Kubernetes defaults a missing request to the limit.
+			name: "none unsets a resource request and limit",
+			input: UpdateInput{
+				Name: "demo", Playhouse: "ph",
+				CPURequest: "none", CPULimit: "none", MemRequest: "none", MemLimit: "none",
+			},
+			want: []string{
+				"playroom", "update", "demo", "--playhouse", "ph",
+				"--cpu-request", "none", "--cpu-limit", "none",
+				"--memory-request", "none", "--memory-limit", "none",
+			},
+		},
+		{
+			name:  "moving a room onto the tailnet sends the exposure",
+			input: UpdateInput{Name: "demo", Playhouse: "ph", Exposure: "tailscale"},
+			want:  []string{"playroom", "update", "demo", "--playhouse", "ph", "--exposure", "tailscale"},
+		},
+		{
+			name:  "an unset exposure keeps the current one",
+			input: UpdateInput{Name: "demo", Playhouse: "ph"},
+			want:  []string{"playroom", "update", "demo", "--playhouse", "ph"},
+		},
+		{
 			name: "every field set",
 			input: UpdateInput{
 				Name: "demo", Playhouse: "ph", Image: "claude-code",
 				CPURequest: "250m", CPULimit: "4", MemRequest: "2Gi", MemLimit: "4Gi",
+				Exposure:       "tailscale",
 				ChangeReadOnly: true, ReadOnly: true, ChangePorts: true, Ports: []string{"80"},
 				Force: true, NoWait: true, WaitTimeout: "5m", ForceInstall: true,
 			},
@@ -117,6 +142,7 @@ func TestBuildUpdateArguments(t *testing.T) {
 				"playroom", "update", "demo", "--playhouse", "ph",
 				"--image", "claude-code", "--cpu-request", "250m", "--cpu-limit", "4",
 				"--memory-request", "2Gi", "--memory-limit", "4Gi",
+				"--exposure", "tailscale",
 				"--read-only=true", "--port", "80",
 				"--wait-timeout", "5m", "--force", "--no-wait", "--force-install",
 			},

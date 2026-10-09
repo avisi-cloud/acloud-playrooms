@@ -142,6 +142,8 @@ export function updateInputFor(form: UpdateForm): Partial<PlayroomUpdateInput> {
     ReadOnly: form.readOnly,
     ChangePorts: form.changePorts,
     Ports: form.clearPorts ? [] : form.ports.filter(Boolean),
+    // tailscale is the only target the command accepts; empty keeps the current.
+    Exposure: form.moveToTailscale ? 'tailscale' : '',
     NoWait: form.noWait,
     WaitTimeout: form.waitTimeout,
   };

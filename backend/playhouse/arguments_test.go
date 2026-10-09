@@ -84,6 +84,40 @@ func TestBuildDeleteArguments(t *testing.T) {
 	})
 }
 
+func TestBuildUpdateArguments(t *testing.T) {
+	// An update is a `playhouse create` re-run, which converges the existing
+	// playhouse. With nothing else set it is a pure converge: backfill the
+	// missing node pools and re-bootstrap.
+	t.Run("a bare converge passes only the name", func(t *testing.T) {
+		assertArguments(t, buildUpdateArguments(UpdateInput{Name: "e2e-default"}),
+			[]string{"playhouse", "create", "e2e-default", "--no-default", "--yes"})
+	})
+
+	// create makes its playhouse the default unless told not to, so an edit of
+	// a playhouse the user is not scoped to must not switch them over.
+	t.Run("never re-points the default playhouse", func(t *testing.T) {
+		arguments := buildUpdateArguments(UpdateInput{Name: "other", Exposure: "tailscale"})
+		if !slices.Contains(arguments, "--no-default") {
+			t.Fatalf("arguments = %s, want --no-default", strings.Join(arguments, " "))
+		}
+	})
+
+	t.Run("every field set", func(t *testing.T) {
+		assertArguments(t, buildUpdateArguments(UpdateInput{
+			Name: "e2e-default", Exposure: "tailscale",
+			TailscaleOAuthClientID: "id", TailscaleOAuthClientSecret: "secret",
+			MaxPlayroomNodes: 5, MaxPrivilegedNodes: 2, WaitTimeout: "20m",
+		}), []string{
+			"playhouse", "create", "e2e-default",
+			"--exposure", "tailscale",
+			"--tailscale-oauth-client-id", "id",
+			"--tailscale-oauth-client-secret", "secret",
+			"--max-playroom-nodes", "5", "--max-privileged-nodes", "2",
+			"--wait-timeout", "20m", "--no-default", "--yes",
+		})
+	})
+}
+
 func TestBuildListArguments(t *testing.T) {
 	assertArguments(t, buildListArguments(), []string{"playhouse", "list", "-o", "json"})
 }

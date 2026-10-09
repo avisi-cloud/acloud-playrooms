@@ -73,43 +73,33 @@ and `acloud auth status`.
 
 ### 2. Install Acloud Playrooms
 
-Once the first automated release has been published to the Homebrew tap:
-
-```sh
-brew install --cask avisi-cloud/tools/acloud-playrooms
-```
-
-Or download the universal macOS ZIP from [GitHub Releases](https://github.com/avisi-cloud/acloud-playrooms/releases),
-unzip it, and move **Acloud Playrooms.app** into **Applications**.
-The same download supports Apple Silicon and Intel Macs running macOS 12 or later.
+Download the universal macOS ZIP from the
+[latest release](https://github.com/avisi-cloud/acloud-playrooms/releases/latest),
+unzip it, and move **Acloud Playrooms.app** into **Applications**. The same
+download supports Apple Silicon and Intel Macs running macOS 12 or later.
 
 > [!NOTE]
-> Builds are currently ad-hoc signed, not Apple-notarized. The Homebrew cask
-> removes the download quarantine flag for this app. Direct downloads may need
-> approval in macOS Privacy & Security. [Details and signing plans](doc/RELEASING.md#macos-signing-and-quarantine).
+> Builds are currently ad-hoc signed, not Apple-notarized, so the app may need
+> approval in macOS Privacy & Security on first open.
+> [Details and signing plans](doc/RELEASING.md#macos-signing-and-quarantine).
 
 ### 3. Open the app
 
 Open **Acloud Playrooms** from Applications, choose your playhouse, and create
 or select a playroom. Connecting opens your selected terminal.
 
-Update a Homebrew installation with:
-
-```sh
-brew upgrade --cask avisi-cloud/tools/acloud-playrooms
-```
+To update, download the latest ZIP and replace the app in **Applications**.
 
 <details>
 <summary><strong>Something is not working?</strong></summary>
 
-| What you see                          | What to check                                                                                            |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| The app cannot find Acloud            | Run `acloud version` in your terminal. Install the CLI if it is missing.                                 |
-| You are not signed in                 | Run `acloud auth login`, then return to the app.                                                         |
-| No playhouses appear                  | Check the selected context and organisation, and your access to them.                                    |
-| A command fails                       | Open the activity log for the CLI's output and error details.                                            |
-| A direct download is blocked by macOS | Check the release source, then follow [Apple's instructions](https://support.apple.com/en-us/102445).    |
-| Homebrew cannot find the cask         | The first automated release may not have been published yet. Check GitHub Releases or build from source. |
+| What you see                          | What to check                                                                                                                                                        |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The app cannot find Acloud            | Open **Defaults** and set the path under **Acloud command**; `which acloud` in a terminal prints it. An app opened from Finder does not inherit your shell's `PATH`. |
+| You are not signed in                 | Run `acloud auth login`, then return to the app.                                                                                                                     |
+| No playhouses appear                  | Check the selected context and organisation, and your access to them.                                                                                                |
+| A command fails                       | Open the activity log for the CLI's output and error details.                                                                                                        |
+| A direct download is blocked by macOS | Check the release source, then follow [Apple's instructions](https://support.apple.com/en-us/102445).                                                                |
 
 For reproducible bugs, [open an issue](https://github.com/avisi-cloud/acloud-playrooms/issues)
 with the app and CLI versions, what you expected, and what happened. Remove
@@ -210,7 +200,8 @@ ACLOUD_BINARY=/absolute/path/to/acloud make dev
 ```
 
 Use an absolute path because macOS launches app bundles from a different
-working directory.
+working directory. `ACLOUD_BINARY` outranks the path set in the app's
+**Defaults** screen, so unset it when you want the app's own setting to apply.
 
 </details>
 
@@ -223,8 +214,7 @@ are enabled when the optional Homebrew credential is configured.
 **Renovate** prepares dependency update PRs for review.
 
 Maintainers: complete the [one-time GitHub setup](doc/RELEASING.md#one-time-github-setup)
-before the first release. Contributors: see the [squash-commit guidance](CONTRIBUTING.md#pull-request-titles)
-for automated releases; PR titles are not enforced.
+before the first release. Contributors: use [Conventional Commit PR titles](CONTRIBUTING.md#pull-request-titles).
 
 ## Go deeper
 

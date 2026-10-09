@@ -274,12 +274,16 @@
   font-weight: 700;
   flex-shrink: 0;
 }
+/* Leading column: fixed so the three buttons never reflow, and wide enough for
+   all of them plus their gaps. */
 .actions-col {
-  width: 112px;
+  width: 124px;
 }
 .row-actions {
   display: flex;
-  justify-content: flex-end;
+  /* Left-aligned now the column leads the table: flex-end pushed the buttons
+     away from the edge they are read from, and off the row's start. */
+  justify-content: flex-start;
   gap: 7px;
 }
 .muted {
