@@ -190,6 +190,11 @@ tasks:
     deps:
       - task: install:frontend:deps
     cmds:
+      - task: dev:frontend:serve
+
+  dev:frontend:serve:
+    summary: Runs the frontend dev server without reinstalling dependencies
+    cmds:
       - task: frontend:dev:{{.PACKAGE_MANAGER}}
 
   frontend:dev:npm:
