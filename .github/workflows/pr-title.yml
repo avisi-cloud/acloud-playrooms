@@ -1,0 +1,39 @@
+name: Pull request title
+
+# Release Please computes the next version and the changelog from commit
+# subjects on main. Squash-merging makes the PR title that subject, so a title
+# it cannot parse silently costs a version bump: the change ships inside
+# whatever release comes next, with no changelog entry. Checking the title is
+# cheaper than noticing the gap afterwards.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  title:
+    name: Conventional Commit title
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the title used by release automation
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          node <<'JS'
+          const pattern = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^)]+\))?!?: .+/;
+          const title = process.env.PR_TITLE ?? '';
+          if (pattern.test(title)) process.exit(0);
+          console.error(`This title cannot be read by Release Please:\n\n  ${title}\n`);
+          // The colon is what gets left out: "feat(gui) AME-1234 ..." looks
+          // conventional and parses as nothing.
+          console.error('Use "<type>(<scope>): <summary>", for example:\n');
+          console.error('  fix(gui): show connection errors');
+          console.error('  feat(gui): AME-1234 add a playroom filter');
+          console.error('  chore(deps): bump wails to beta.12\n');
+          console.error('Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert.');
+          console.error('The colon after the type (and optional scope) is required.');
+          process.exit(1);
+          JS

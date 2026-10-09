@@ -41,10 +41,11 @@ the actual download archive without uploading anything.
 
 ## Pull request titles
 
-PR titles are not enforced by CI. For automated releases, use a Conventional
-Commit message when squash-merging; you can edit it at merge time without
-renaming the PR. Release Please reads that resulting commit to prepare the next
-version and changelog:
+Use a Conventional Commit title and squash-merge: the title becomes the commit
+subject on `main`, and Release Please reads it to prepare the next version and
+changelog. A title it cannot parse costs a version bump silently, so CI checks
+it — the colon after the type is the part that gets left out, and
+`feat(gui) AME-1234 ...` parses as nothing.
 
 | Title                                              | Meaning                |
 | -------------------------------------------------- | ---------------------- |
