@@ -78,18 +78,10 @@ Download the universal macOS ZIP from the
 unzip it, and move **Acloud Playrooms.app** into **Applications**. The same
 download supports Apple Silicon and Intel Macs running macOS 12 or later.
 
-A Homebrew cask is built by every release but is not published to the tap yet —
-that needs the tap credential in [Releasing](doc/RELEASING.md#one-time-github-setup).
-Once it is configured, this becomes:
-
-```sh
-brew install --cask avisi-cloud/tools/acloud-playrooms
-```
-
 > [!NOTE]
-> Builds are currently ad-hoc signed, not Apple-notarized. The Homebrew cask
-> removes the download quarantine flag for this app. Direct downloads may need
-> approval in macOS Privacy & Security. [Details and signing plans](doc/RELEASING.md#macos-signing-and-quarantine).
+> Builds are currently ad-hoc signed, not Apple-notarized, so the app may need
+> approval in macOS Privacy & Security on first open.
+> [Details and signing plans](doc/RELEASING.md#macos-signing-and-quarantine).
 
 ### 3. Open the app
 
@@ -97,11 +89,6 @@ Open **Acloud Playrooms** from Applications, choose your playhouse, and create
 or select a playroom. Connecting opens your selected terminal.
 
 To update, download the latest ZIP and replace the app in **Applications**.
-Once the cask is published, this becomes:
-
-```sh
-brew upgrade --cask avisi-cloud/tools/acloud-playrooms
-```
 
 <details>
 <summary><strong>Something is not working?</strong></summary>
@@ -113,7 +100,6 @@ brew upgrade --cask avisi-cloud/tools/acloud-playrooms
 | No playhouses appear                  | Check the selected context and organisation, and your access to them.                                                                                                |
 | A command fails                       | Open the activity log for the CLI's output and error details.                                                                                                        |
 | A direct download is blocked by macOS | Check the release source, then follow [Apple's instructions](https://support.apple.com/en-us/102445).                                                                |
-| Homebrew cannot find the cask         | The cask is not published to the tap yet. Use the ZIP from GitHub Releases.                                                                                          |
 
 For reproducible bugs, [open an issue](https://github.com/avisi-cloud/acloud-playrooms/issues)
 with the app and CLI versions, what you expected, and what happened. Remove
