@@ -59,11 +59,19 @@ could otherwise override the user's choice.
 
 ## Running commands
 
-`backend/cli` resolves the executable once per runner:
+`backend/cli` resolves the executable and caches it until something changes it:
 
 1. An explicit test override, when supplied.
 2. `ACLOUD_BINARY`, when configured.
-3. `acloud` on `PATH`.
+3. The path the user set in the app, stored next to the remembered theme.
+4. `acloud` on `PATH`.
+5. The known install directories (both Homebrew prefixes, MacPorts, `~/.local/bin`,
+   `~/bin`, `~/go/bin`).
+
+Steps 3 and 5 exist because a bundle launched from Finder inherits
+`/usr/bin:/bin:/usr/sbin:/sbin` and no Homebrew prefix, so `PATH` alone misses
+an acloud that works in any terminal. Saving a path clears the cache, so the
+change applies to the next command rather than the next launch.
 
 It executes that binary with an argument array, not a shell command string.
 

@@ -8,6 +8,7 @@ import { SelectModule } from 'primeng/select';
 import { SliderModule } from 'primeng/slider';
 import { TagModule } from 'primeng/tag';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { AcloudBinaryCardComponent } from '../../components/acloud-binary/acloud-binary';
 import { CliConsoleService } from '../../../../core/services/cli-console';
 import { ImageCatalogService } from '../../../../core/services/image-catalog';
 import { PageLoadingService } from '../../../../core/services/page-loading';
@@ -113,6 +114,7 @@ const SLIDER_STEP = 0.02;
     SliderModule,
     TagModule,
     ToggleSwitchModule,
+    AcloudBinaryCardComponent,
   ],
   templateUrl: './defaults.html',
   styleUrl: './defaults.css',

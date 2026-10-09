@@ -78,9 +78,12 @@ what makes the argument tests straightforward.
 
 `Runner.Run(ctx, arguments, Options)` executes `acloud <arguments...>` and waits.
 
-The binary is resolved once per Runner, using `ACLOUD_BINARY` when set and
-otherwise `exec.LookPath("acloud")`. Tests point it at a fake program with
-`WithExecutable`.
+The binary is resolved by `binary.go` in the order listed in
+[Architecture](ARCHITECTURE.md#running-commands) and cached per Runner until
+`forgetResolvedBinary` clears it. `DescribeBinary` reports the outcome for the
+settings screen; `SaveConfiguredBinary` checks a candidate with `acloud version`
+before storing it, so an unusable path cannot be saved. Tests point the Runner
+at a fake program with `WithExecutable`.
 
 ```go
 type Options struct {

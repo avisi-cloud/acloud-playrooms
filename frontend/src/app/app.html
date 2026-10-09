@@ -123,6 +123,18 @@
 
       <div class="sidebar-divider"></div>
 
+      <!-- Without acloud every screen is empty, and the toast that said so has
+           long gone by the time the user starts looking. This is the standing
+           pointer to the one control that fixes it. -->
+      @if (session.acloudIsMissing()) {
+        <a class="sidebar-link acloud-missing" routerLink="/settings">
+          <i class="pi pi-exclamation-triangle"></i>
+          <span>Acloud not found</span>
+        </a>
+
+        <div class="sidebar-divider"></div>
+      }
+
       <div class="sidebar-section tools-section">
         <div class="sidebar-label">Tools</div>
         <div class="tool-list">

@@ -6,6 +6,7 @@ import * as playhouseModels from '../../../../bindings/github.com/avisi-cloud/ac
 import * as playroomModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/playroom/models.js';
 import * as localModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/local/models.js';
 import * as configModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/config/models.js';
+import * as cliModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/cli/models.js';
 
 export type PlayroomCreateInput = playroomModels.CreateInput;
 export type PlayroomUpdateInput = playroomModels.UpdateInput;
@@ -26,6 +27,7 @@ export type ContextEntry = configModels.ContextEntry;
 export type ImageEntry = localModels.ImageEntry;
 export type ToolStatus = localModels.ToolStatus;
 export type AcloudCompatibility = localModels.AcloudCompatibility;
+export type AcloudBinaryStatus = cliModels.BinaryStatus;
 
 /** Identifies a command for output streaming and cancellation. */
 export function newOperationId(): string {
@@ -44,6 +46,17 @@ export const wailsApi = {
   getToolStatuses: (): Promise<ToolStatus[]> => app.GetToolStatuses(),
   /** Whether the running acloud is newer than the one this GUI was verified against. */
   getAcloudCompatibility: (): Promise<AcloudCompatibility> => app.GetAcloudCompatibility(),
+
+  // The acloud binary itself. Nothing else works until this resolves, so these
+  // stay callable when every other read is failing.
+  /** Which acloud the app will run, where it came from, and what to fix. */
+  getAcloudBinaryStatus: (): Promise<AcloudBinaryStatus> => app.GetAcloudBinaryStatus(),
+  /** Remembers a path for later launches; rejects one that does not run. */
+  setAcloudBinary: (path: string): Promise<AcloudBinaryStatus> => app.SetAcloudBinary(path),
+  /** Forgets the saved path and searches again. */
+  clearAcloudBinary: (): Promise<AcloudBinaryStatus> => app.ClearAcloudBinary(),
+  /** Native file picker; resolves to '' when cancelled. */
+  browseForAcloudBinary: (): Promise<string> => app.BrowseForAcloudBinary(),
 
   // Window
   getOperatingSystem: (): Promise<string> => app.GetOperatingSystem(),

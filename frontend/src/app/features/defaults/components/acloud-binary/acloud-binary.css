@@ -1,0 +1,142 @@
+.binary-card {
+  border: 1px solid var(--border-2);
+  border-radius: var(--r);
+  background: var(--surf-2);
+  margin-bottom: 1.25rem;
+}
+
+/* A missing binary is the reason the rest of the screen is empty, so the card
+   carries the alarm rather than relying on a toast that has since gone. */
+.binary-card.is-broken {
+  border-color: color-mix(in srgb, var(--bad) 45%, var(--border-2));
+  background: color-mix(in srgb, var(--bad) 4%, var(--surf-2));
+}
+
+.binary-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  border: 0;
+  border-radius: var(--r);
+  background: none;
+  color: var(--tx);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.binary-summary > .pi {
+  flex: none;
+  font-size: 0.75rem;
+  color: var(--tx-3);
+}
+
+.binary-title {
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+/* The path can be long; it may shrink and clip rather than push the badge out. */
+.binary-path-inline {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--tx-3);
+}
+
+.binary-nudge {
+  font-size: 0.75rem;
+  color: var(--bad);
+}
+
+.binary-detail {
+  padding: 0 0.875rem 0.875rem;
+  border-top: 1px solid var(--border);
+  margin-top: 0.125rem;
+  padding-top: 0.875rem;
+}
+
+.binary-message {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--tx-2);
+  line-height: 1.5;
+}
+
+.binary-field-label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--tx-2);
+}
+
+.binary-field {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.binary-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+}
+
+.binary-problem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+  margin: 0.625rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--bad);
+  line-height: 1.5;
+}
+
+.binary-problem .pi {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+}
+
+.binary-actions {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+  margin-left: -0.5rem;
+}
+
+.binary-hint {
+  margin: 0.625rem 0 0;
+  font-size: 0.75rem;
+  color: var(--tx-3);
+  line-height: 1.6;
+}
+
+.binary-hint code,
+.binary-message code {
+  padding: 0.0625rem 0.25rem;
+  border-radius: var(--r-sm);
+  background: var(--surf-3);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--tx-2);
+}
+
+@media (max-width: 640px) {
+  /* The three controls stop fitting on one line well before the window's
+     minimum width, and a 40px-wide path field is unusable. */
+  .binary-field {
+    flex-wrap: wrap;
+  }
+
+  .binary-input {
+    flex-basis: 100%;
+  }
+}

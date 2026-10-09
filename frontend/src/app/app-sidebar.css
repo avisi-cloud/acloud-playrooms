@@ -495,3 +495,14 @@
   color: var(--bad-on-dark);
   font-weight: 600;
 }
+
+/* The one sidebar entry that is a problem report rather than navigation: shown
+   only when acloud cannot be found, which empties every other screen. */
+.sidebar-link.acloud-missing {
+  color: var(--bad-on-dark);
+}
+
+.sidebar-link.acloud-missing:hover {
+  background: color-mix(in srgb, var(--bad-on-dark) 14%, transparent);
+  color: var(--bad-on-dark);
+}
