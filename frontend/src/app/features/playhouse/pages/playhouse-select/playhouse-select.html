@@ -83,17 +83,22 @@
               <table class="ph-table">
                 <thead>
                   <tr>
+                    <th class="actions-col">Actions</th>
                     <th>Playhouse</th>
                     <th>Status</th>
                     <th>Region</th>
                     <th class="col-version">Version</th>
                     <th class="col-identity">Identity</th>
-                    <th class="actions-col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (slug of provisioningSlugs(); track slug) {
                     <tr class="provisioning-row">
+                      <td class="actions-col">
+                        <div class="row-actions">
+                          <i class="pi pi-spin pi-spinner" title="Provisioning"></i>
+                        </div>
+                      </td>
                       <td>
                         <div class="slug-cell">
                           <div class="slug-text">
@@ -105,11 +110,6 @@
                       <td>-</td>
                       <td class="col-version">-</td>
                       <td class="col-identity"><span class="mono muted">-</span></td>
-                      <td>
-                        <div class="row-actions">
-                          <i class="pi pi-spin pi-spinner" title="Provisioning"></i>
-                        </div>
-                      </td>
                     </tr>
                   }
                   @for (playhouse of playhouses(); track playhouse.Slug) {
@@ -117,40 +117,7 @@
                       [class.selected-row]="playhouse.Slug === state.playhouse()"
                       [class.provisioning-row]="isDeleting(playhouse.Slug)"
                     >
-                      <td>
-                        <div class="slug-cell">
-                          <div class="slug-text">
-                            <span class="slug-main">{{ playhouse.Slug }}</span>
-                            <!-- Shown only once the Identity and Version columns
-                                 are dropped, so the data is folded rather than
-                                 lost. -->
-                            <span class="slug-meta"
-                              >{{ playhouse.Version || '-' }} ·
-                              {{ playhouse.Identity || '-' }}</span
-                            >
-                          </div>
-                          @if (playhouse.Slug === state.playhouse()) {
-                            <span class="selected-pill">selected</span>
-                          }
-                        </div>
-                      </td>
-                      <td>
-                        @if (isDeleting(playhouse.Slug)) {
-                          <p-tag value="deleting" severity="danger" styleClass="ph-tag" />
-                        } @else {
-                          <p-tag
-                            [value]="playhouse.Status"
-                            [severity]="statusSeverity(playhouse.Status)"
-                            styleClass="ph-tag"
-                          />
-                        }
-                      </td>
-                      <td>{{ playhouse.Region || '-' }}</td>
-                      <td class="col-version">{{ playhouse.Version || '-' }}</td>
-                      <td class="col-identity">
-                        <span class="mono muted">{{ playhouse.Identity || '-' }}</span>
-                      </td>
-                      <td>
+                      <td class="actions-col">
                         <div class="row-actions">
                           @if (isDeleting(playhouse.Slug)) {
                             <i class="pi pi-spin pi-spinner" title="Deleting"></i>
@@ -186,6 +153,39 @@
                             />
                           }
                         </div>
+                      </td>
+                      <td>
+                        <div class="slug-cell">
+                          <div class="slug-text">
+                            <span class="slug-main">{{ playhouse.Slug }}</span>
+                            <!-- Shown only once the Identity and Version columns
+                                 are dropped, so the data is folded rather than
+                                 lost. -->
+                            <span class="slug-meta"
+                              >{{ playhouse.Version || '-' }} ·
+                              {{ playhouse.Identity || '-' }}</span
+                            >
+                          </div>
+                          @if (playhouse.Slug === state.playhouse()) {
+                            <span class="selected-pill">selected</span>
+                          }
+                        </div>
+                      </td>
+                      <td>
+                        @if (isDeleting(playhouse.Slug)) {
+                          <p-tag value="deleting" severity="danger" styleClass="ph-tag" />
+                        } @else {
+                          <p-tag
+                            [value]="playhouse.Status"
+                            [severity]="statusSeverity(playhouse.Status)"
+                            styleClass="ph-tag"
+                          />
+                        }
+                      </td>
+                      <td>{{ playhouse.Region || '-' }}</td>
+                      <td class="col-version">{{ playhouse.Version || '-' }}</td>
+                      <td class="col-identity">
+                        <span class="mono muted">{{ playhouse.Identity || '-' }}</span>
                       </td>
                     </tr>
                   }
