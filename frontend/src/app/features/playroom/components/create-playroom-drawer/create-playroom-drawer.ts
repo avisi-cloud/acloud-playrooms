@@ -31,15 +31,82 @@ import {
   WizardStepper,
 } from '../../../../shared/components';
 import { OverlayFocusDirective } from '../../../../shared/directives';
-import { CAPABILITIES, EXPOSURES } from '../../../../shared/data';
-import { CreateForm, ImageEntry, Playroom } from '../../../../shared/models';
-import { NAME_RE, blankCreateForm, findImageEntry, updateCache } from '../../../../shared/utils';
+import {
+  CAPABILITIES,
+  EXPOSURES,
+  PLAYROOM_OPTION_TEXTS,
+  PLAYROOM_SIZE_LABELS,
+} from '../../../../shared/data';
+import {
+  CreateForm,
+  CreatePlayroomMode,
+  ImageEntry,
+  Playroom,
+  PlayroomSize,
+} from '../../../../shared/models';
+import {
+  NAME_RE,
+  blankCreateForm,
+  describeResourcesInPlainWords,
+  findImageEntry,
+  readCache,
+  resourcesOfSize,
+  sizeMatchingResources,
+  updateCache,
+} from '../../../../shared/utils';
 
 type CreateStepKey = 'basics' | 'resources' | 'forwarding' | 'options' | 'review';
 
+/** What Easy mode shows, plus the playhouse it was opened in; every other input is an advanced option. */
+const INPUT_FIELDS_SHOWN_IN_EASY_MODE: (keyof PlayroomCreateInput)[] = [
+  'Name',
+  'Playhouse',
+  'Image',
+  'CPURequest',
+  'CPULimit',
+  'MemoryRequest',
+  'MemoryLimit',
+];
+
 /**
- * Guided "create playroom" drawer: the multi-step form, its validation, and the
- * side effects of creating.
+ * The single description of a create form as a backend input. The preview and
+ * the create call both use it, so they cannot describe different commands.
+ */
+function createInputFor(form: CreateForm): Partial<PlayroomCreateInput> {
+  return {
+    Name: form.name,
+    Playhouse: form.playhouse,
+    Image: form.image,
+    Storage: form.storage,
+    CPURequest: form.cpuReq,
+    CPULimit: form.cpuLim,
+    MemoryRequest: form.memReq,
+    MemoryLimit: form.memLim,
+    SSHKey: form.sshKey,
+    EnvVars: form.env.filter(Boolean),
+    GitRepos: form.git.filter(Boolean),
+    Copies: form.copy.filter(Boolean),
+    Ports: form.ports.filter(Boolean),
+    ProxyGroup: form.proxyGroup,
+    Exposure: form.exposure,
+    Capabilities: form.capabilities,
+    CapAdd: form.capAdd.filter(Boolean),
+    Ephemeral: form.ephemeral,
+    ReadOnly: form.readOnly,
+    // Guarded by the acknowledgement: the toggle alone does not send it, so a
+    // user cannot arm the dangerous flag and then forget they did.
+    Privileged: form.privileged && form.acknowledgePrivileged,
+    WorkspaceNamespace: form.workspaceNamespace,
+    NoWait: form.noWait,
+    WaitTimeout: form.waitTimeout,
+    ForceInstall: form.forceInstall,
+  };
+}
+
+/**
+ * The "create playroom" drawer: one form shown as Easy (name, image, size) or
+ * Advanced (every option, in steps), its validation, and the side effects of
+ * creating.
  */
 @Component({
   selector: 'app-create-playroom-drawer',
@@ -93,6 +160,10 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   form: CreateForm = blankCreateForm('');
   touched = false;
   step = 0;
+  /** Both modes edit the same form; only how much of it is on screen differs. */
+  mode: CreatePlayroomMode = readCache().createPlayroomMode;
+  readonly optionTexts = PLAYROOM_OPTION_TEXTS;
+  readonly sizeLabels = PLAYROOM_SIZE_LABELS;
   /** Set by "Go to Options" on the image error, so the privileged toggle is in view on arrival. */
   advancedSecurityOpenedFromImageError = false;
 
@@ -170,40 +241,65 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
     setTimeout(() => document.getElementById('create-name')?.focus());
   }
 
-  /**
-   * The single description of this form as a backend input. Both the preview
-   * and the create call use it, so they cannot describe different commands.
-   */
+  /** The same in both modes, so Easy sends exactly what Advanced would for this form. */
   toInput(): Partial<PlayroomCreateInput> {
-    const form = this.form;
-    return {
-      Name: form.name,
-      Playhouse: form.playhouse,
-      Image: form.image,
-      Storage: form.storage,
-      CPURequest: form.cpuReq,
-      CPULimit: form.cpuLim,
-      MemoryRequest: form.memReq,
-      MemoryLimit: form.memLim,
-      SSHKey: form.sshKey,
-      EnvVars: form.env.filter(Boolean),
-      GitRepos: form.git.filter(Boolean),
-      Copies: form.copy.filter(Boolean),
-      Ports: form.ports.filter(Boolean),
-      ProxyGroup: form.proxyGroup,
-      Exposure: form.exposure,
-      Capabilities: form.capabilities,
-      CapAdd: form.capAdd.filter(Boolean),
-      Ephemeral: form.ephemeral,
-      ReadOnly: form.readOnly,
-      // Guarded by the acknowledgement: the toggle alone does not send it, so a
-      // user cannot arm the dangerous flag and then forget they did.
-      Privileged: form.privileged && form.acknowledgePrivileged,
-      WorkspaceNamespace: form.workspaceNamespace,
-      NoWait: form.noWait,
-      WaitTimeout: form.waitTimeout,
-      ForceInstall: form.forceInstall,
-    };
+    return createInputFor(this.form);
+  }
+
+  // ── Easy and Advanced ──────────────────────────────────────────────────────
+
+  /** Lands on Basics, so the steps are walked from the start with everything filled in. */
+  switchToAdvancedMode(): void {
+    this.rememberMode('advanced');
+    this.step = 0;
+  }
+
+  switchToEasyMode(): void {
+    this.rememberMode('easy');
+  }
+
+  private rememberMode(mode: CreatePlayroomMode): void {
+    this.mode = mode;
+    updateCache({ createPlayroomMode: mode });
+  }
+
+  /** What the form was seeded with: the values the Defaults screen shows. */
+  formFilledWithYourDefaults(): CreateForm {
+    return blankCreateForm(this.form.playhouse, this.defaults);
+  }
+
+  /** Easy hides these, so it says how many will be sent differently from your defaults. */
+  countAdvancedOptionsDifferentFromDefaults(): number {
+    const input = this.toInput();
+    const inputWithYourDefaults = createInputFor(this.formFilledWithYourDefaults());
+    return (Object.keys(input) as (keyof PlayroomCreateInput)[]).filter(
+      (field) =>
+        !INPUT_FIELDS_SHOWN_IN_EASY_MODE.includes(field) &&
+        JSON.stringify(input[field]) !== JSON.stringify(inputWithYourDefaults[field]),
+    ).length;
+  }
+
+  readonly sizeOptions: { id: PlayroomSize; label: string; disabled: boolean }[] = (
+    ['defaults', 'small', 'medium', 'large'] as const
+  ).map((id) => ({ id, label: PLAYROOM_SIZE_LABELS[id], disabled: false }));
+  /** Custom is listed only while the values are custom, and cannot be picked: it is whatever was typed. */
+  readonly sizeOptionsWithCustom = [
+    ...this.sizeOptions,
+    { id: 'custom' as const, label: PLAYROOM_SIZE_LABELS.custom, disabled: true },
+  ];
+
+  selectedSize(): PlayroomSize {
+    return sizeMatchingResources(this.form, this.formFilledWithYourDefaults());
+  }
+
+  chooseSize(size: PlayroomSize): void {
+    if (size === 'custom') return;
+    Object.assign(this.form, resourcesOfSize(size, this.formFilledWithYourDefaults()));
+  }
+
+  describeSize(size: PlayroomSize): string {
+    if (size === 'custom') return describeResourcesInPlainWords(this.form);
+    return describeResourcesInPlainWords(resourcesOfSize(size, this.formFilledWithYourDefaults()));
   }
 
   // ── Step navigation ────────────────────────────────────────────────────────
@@ -237,6 +333,7 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   }
 
   goToPrivilegedModeOnOptionsStep(): void {
+    if (this.mode !== 'advanced') this.switchToAdvancedMode();
     this.advancedSecurityOpenedFromImageError = true;
     this.goStep(this.steps.findIndex((step) => step.key === 'options'));
     setTimeout(() => {
@@ -275,6 +372,11 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
     return '';
   }
 
+  /** Basics waits for Next; Easy has no Next, and its Create stays disabled until this is fixed. */
+  imageErrorShown(): string {
+    return this.touched || this.mode !== 'advanced' ? this.imageError() : '';
+  }
+
   capAddCount(): number {
     return this.form.capAdd.filter((value) => value.trim().length > 0).length;
   }
@@ -298,8 +400,8 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   readonly capabilitiesOptions = [
     {
       id: '',
-      label: 'Configured default',
-      hint: 'Leaves the flag off, so playroom config or acloud decides',
+      label: 'Your default',
+      hint: 'Sends nothing, so your defaults or acloud decide',
     },
     ...CAPABILITIES,
   ];

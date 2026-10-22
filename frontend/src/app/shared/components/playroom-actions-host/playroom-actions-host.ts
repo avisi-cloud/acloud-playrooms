@@ -4,7 +4,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { PlayroomLifecycleService } from '../../../core/services/playroom-lifecycle';
 import { PlayroomDeleteInput, wailsApi } from '../../../core/services/wails-api';
-import { DEFAULTS } from '../../data';
+import { DEFAULTS, PLAYROOM_OPTION_TEXTS } from '../../data';
 import { ConnectTab, Playroom } from '../../models';
 import { readCache, updateCache } from '../../utils';
 import { ConfirmDeleteDialog } from '../confirm-delete-dialog/confirm-delete-dialog';
@@ -44,6 +44,7 @@ export class PlayroomActionsHostComponent {
   deleteTimeout: string = DEFAULTS.waitTimeout;
 
   readonly previewDelete = wailsApi.previewDeletePlayroom;
+  readonly optionTexts = PLAYROOM_OPTION_TEXTS;
 
   openConnect(room: Playroom, tab: ConnectTab): void {
     this.close();

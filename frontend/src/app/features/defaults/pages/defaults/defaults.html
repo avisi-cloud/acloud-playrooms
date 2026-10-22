@@ -87,9 +87,12 @@
                 [class.is-dirty]="row.dirty"
                 [class.is-overridden]="row.overridden"
               >
-                <!-- Key label + source badge + reset -->
+                <!-- Label, the playroom config key, source badge and reset -->
                 <div class="row-label">
-                  <span class="key-name">{{ row.Key }}</span>
+                  <span class="option-name">{{ row.label }}</span>
+                  @if (!row.labelSpellsOutKey) {
+                    <small class="flag-ref">{{ row.Key }}</small>
+                  }
                   @if (row.Source !== 'built-in') {
                     <p-tag
                       [value]="row.Source"
@@ -103,7 +106,7 @@
                       class="reset-btn"
                       type="button"
                       title="Revert to built-in"
-                      [attr.aria-label]="'Revert ' + row.Key + ' to its built-in value'"
+                      [attr.aria-label]="'Revert ' + row.label + ' to its built-in value'"
                       (click)="markDirty(row.Key, row.Builtin)"
                     >
                       <i class="pi pi-undo"></i>
@@ -126,7 +129,7 @@
                           [min]="0"
                           [max]="sliderMax(row.field)"
                           [step]="1"
-                          [ariaLabel]="row.Key"
+                          [ariaLabel]="row.label"
                           styleClass="settings-slider"
                         />
                         <!-- Ticks are positioned at their real stops. Equal
@@ -145,7 +148,7 @@
 
                     @case ('select') {
                       <p-select
-                        [ariaLabel]="row.Key"
+                        [ariaLabel]="row.label"
                         [options]="selectOptions(row.field)"
                         optionLabel="label"
                         optionValue="value"
@@ -159,7 +162,7 @@
                     @case ('toggle') {
                       <div class="toggle-row">
                         <p-toggleswitch
-                          [ariaLabel]="row.Key"
+                          [ariaLabel]="row.label"
                           [ngModel]="toggleValue(row)"
                           (ngModelChange)="setToggle(row.Key, $event)"
                         />
@@ -171,7 +174,7 @@
 
                     @default {
                       <input
-                        [attr.aria-label]="row.Key"
+                        [attr.aria-label]="row.label"
                         pInputText
                         class="text-input"
                         [ngModel]="row.draft"

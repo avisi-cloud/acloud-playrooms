@@ -21,9 +21,9 @@
         <input pInputText class="w-full" [(ngModel)]="deleteTimeout" />
       </div>
       <div class="toggle-stack">
-        <label class="toggle-line">
-          <span>Return without waiting<small class="flag-ref">--no-wait</small></span>
-          <p-toggleswitch [(ngModel)]="deleteNoWait" />
+        <label class="toggle-line" for="delete-playroom-no-wait">
+          <span>{{ optionTexts['no-wait'].label }}<small class="flag-ref">--no-wait</small></span>
+          <p-toggleswitch inputId="delete-playroom-no-wait" [(ngModel)]="deleteNoWait" />
         </label>
         <label class="toggle-line">
           <span>Delete one you do not own<small class="flag-ref">--force</small></span>

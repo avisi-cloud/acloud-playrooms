@@ -19,17 +19,21 @@ export const TERMINALS = [
  * option leaves the flag off, so the playhouse's declared default applies.
  */
 export const EXPOSURES = [
-  { id: '', label: 'Playhouse default', hint: 'Use whatever the playhouse declares' },
+  { id: '', label: 'Playhouse default', hint: 'Whatever this playhouse is set up with' },
   {
     id: 'tailscale',
     label: 'Tailscale',
-    hint: 'Reachable on the tailnet; required for port forwards',
+    hint: 'Connect privately from your Mac; needed for forwarded ports',
   },
-  { id: 'nodeport', label: 'NodePort', hint: 'Direct SSH where nodes have public IPs' },
+  {
+    id: 'nodeport',
+    label: 'NodePort',
+    hint: 'SSH over the internet; only where nodes have public IPs',
+  },
   {
     id: 'portforward',
     label: 'Port-forward',
-    hint: 'No public exposure; reached via the API server',
+    hint: 'Nothing exposed; acloud connects through the cluster API',
   },
 ] as const;
 
@@ -39,7 +43,7 @@ export const CAPABILITIES = [
   {
     id: 'standard',
     label: 'Standard',
-    hint: 'Adds the container runtime defaults, such as raw sockets for tcpdump',
+    hint: 'Also lets tools like tcpdump, nmap and some apt packages work',
   },
 ] as const;
 
@@ -51,12 +55,16 @@ export const PLAYHOUSE_EXPOSURES = [
   {
     id: 'tailscale',
     label: 'Tailscale',
-    hint: 'Needs a Tailscale organisation and OAuth credentials',
+    hint: 'Connect privately from your Mac. Needs a Tailscale organisation and OAuth credentials',
   },
-  { id: 'nodeport', label: 'NodePort', hint: 'Free direct SSH where nodes have public IPs' },
+  {
+    id: 'nodeport',
+    label: 'NodePort',
+    hint: 'Free SSH over the internet; only where nodes have public IPs',
+  },
   {
     id: 'portforward',
     label: 'Port-forward',
-    hint: 'No public exposure; reached via the API server',
+    hint: 'Nothing exposed; acloud connects through the cluster API',
   },
 ] as const;

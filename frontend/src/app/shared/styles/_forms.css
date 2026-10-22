@@ -43,6 +43,11 @@
   gap: 12px;
   align-items: start;
 }
+/* For labels that may wrap to different heights (a long label and its flag),
+   so the inputs beside each other still line up. */
+.field-row--align-inputs {
+  align-items: end;
+}
 
 .section-label {
   font-size: 10px;
