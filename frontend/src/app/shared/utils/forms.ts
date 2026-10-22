@@ -1,5 +1,6 @@
 import { DEFAULTS } from '../data/defaults';
-import { CreateForm, Playroom, UpdateForm } from '../models/playroom';
+import { CAPABILITIES } from '../data/images';
+import { Capabilities, CreateForm, ImageEntry, Playroom, UpdateForm } from '../models/playroom';
 
 export const NAME_RE = /^(?=.{1,50}$)[a-z0-9]([-a-z0-9]*[a-z0-9])?$/;
 
@@ -37,9 +38,12 @@ export function blankCreateForm(playhouse: string, defaults?: DefaultsLookup): C
     ports: [''],
     proxyGroup: value('proxy-group', ''),
     exposure: '',
+    capabilities: capabilitiesOrBlank(value('capabilities', '')),
+    capAdd: [''],
     ephemeral: false,
     readOnly: bool('read-only', true),
     privileged: false,
+    workspaceNamespace: bool('workspace-namespace', false),
     acknowledgePrivileged: false,
     noWait: false,
     waitTimeout: value('wait-timeout', DEFAULTS.waitTimeout),
@@ -56,11 +60,19 @@ export function blankUpdateForm(room: Playroom): UpdateForm {
     cpuLim: room.cpuLim,
     memReq: room.memReq,
     memLim: room.memLim,
+    storage: '',
+    capabilities: '',
     changeReadOnly: false,
     readOnly: room.system !== 'writable',
     changePorts: false,
     clearPorts: false,
     ports: parseRenderedPorts(room.ports),
+    changeCapAdd: false,
+    clearCapAdd: false,
+    capAdd: [''],
+    changeWorkspaceNamespace: false,
+    workspaceNamespace: true,
+    acknowledgeWorkspaceNamespaceRemoval: false,
     // Off by default: an update with no exposure flag keeps the current one.
     moveToTailscale: false,
     noWait: false,
@@ -75,4 +87,14 @@ export function parseRenderedPorts(raw: string): string[] {
     .filter(Boolean)
     .map((value) => value.replace(/\s*→\s*/g, ':'));
   return ports.length ? ports : [''];
+}
+
+/** A configured `capabilities` default this GUI knows, or blank so acloud decides. */
+export function capabilitiesOrBlank(raw: string): Capabilities {
+  return CAPABILITIES.find((profile) => profile.id === raw)?.id ?? '';
+}
+
+/** The catalog entry for an image alias; undefined for a typed registry path. */
+export function findImageEntry(images: ImageEntry[], name: string): ImageEntry | undefined {
+  return images.find((image) => image.Name === name.trim());
 }

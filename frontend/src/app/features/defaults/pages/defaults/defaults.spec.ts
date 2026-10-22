@@ -3,7 +3,7 @@ import { DEFAULT_FIELDS } from './defaults';
 const RESOURCE_KEYS = ['cpu-request', 'cpu-limit', 'memory-request', 'memory-limit'];
 
 describe('Defaults field registry', () => {
-  // 0.35.0 accepts `none` for these four, and a slider can only offer what is
+  // acloud accepts `none` for these four, and a slider can only offer what is
   // in its options list.
   it('offers none as a stop on every resource slider', () => {
     for (const key of RESOURCE_KEYS) {
@@ -26,6 +26,18 @@ describe('Defaults field registry', () => {
       if (field.kind === 'select' && !field.dynamicOptions) {
         expect(field.options?.length, field.key).toBeGreaterThan(0);
       }
+    }
+  });
+
+  it('gives every key acloud 0.37 reports a proper control instead of a text box', () => {
+    const expectedKinds: Record<string, string> = {
+      exposure: 'select',
+      capabilities: 'select',
+      'workspace-namespace': 'toggle',
+      privileged: 'toggle',
+    };
+    for (const [key, kind] of Object.entries(expectedKinds)) {
+      expect(DEFAULT_FIELDS.find((field) => field.key === key)?.kind, key).toBe(kind);
     }
   });
 });

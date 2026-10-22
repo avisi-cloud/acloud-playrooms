@@ -22,7 +22,7 @@ func TestBuildCreateArguments(t *testing.T) {
 			// only the two authoritative toggles are always spelled out.
 			want: []string{
 				"playroom", "create", "demo", "--playhouse", "ph",
-				"--read-only=false", "--privileged=false",
+				"--read-only=false", "--privileged=false", "--workspace-namespace=false",
 			},
 		},
 		{
@@ -32,8 +32,9 @@ func TestBuildCreateArguments(t *testing.T) {
 				CPURequest: "250m", CPULimit: "4", MemoryRequest: "2Gi", MemoryLimit: "4Gi",
 				SSHKey: "/k.pub", EnvVars: []string{"A=B", "C=D"}, GitRepos: []string{"https://g"},
 				Copies: []string{"src:dst"}, Ports: []string{"80", "443:8443"},
-				ProxyGroup: "pg", Exposure: "nodeport", Ephemeral: true, ReadOnly: true,
-				Privileged: true, NoWait: true, WaitTimeout: "5m", ForceInstall: true,
+				ProxyGroup: "pg", Exposure: ExposureNodePort, Capabilities: CapabilitiesStandard,
+				CapAdd: []string{"NET_ADMIN", "SYS_PTRACE"}, Ephemeral: true, ReadOnly: true,
+				Privileged: true, WorkspaceNamespace: true, NoWait: true, WaitTimeout: "5m", ForceInstall: true,
 			},
 			want: []string{
 				"playroom", "create", "demo", "--playhouse", "ph",
@@ -46,8 +47,9 @@ func TestBuildCreateArguments(t *testing.T) {
 				"--copy", "src:dst",
 				"--port", "80", "--port", "443:8443",
 				"--proxy-group", "pg", "--exposure", "nodeport",
+				"--capabilities", "standard", "--cap-add", "NET_ADMIN", "--cap-add", "SYS_PTRACE",
 				"--wait-timeout", "5m", "--ephemeral",
-				"--read-only=true", "--privileged=true",
+				"--read-only=true", "--privileged=true", "--workspace-namespace=true",
 				"--no-wait", "--force-install",
 			},
 		},
@@ -56,7 +58,7 @@ func TestBuildCreateArguments(t *testing.T) {
 			input: CreateInput{Name: "demo", Playhouse: "ph", Image: "   ", EnvVars: []string{"", "  ", "A=B"}},
 			want: []string{
 				"playroom", "create", "demo", "--playhouse", "ph",
-				"--env", "A=B", "--read-only=false", "--privileged=false",
+				"--env", "A=B", "--read-only=false", "--privileged=false", "--workspace-namespace=false",
 			},
 		},
 	}
@@ -111,7 +113,7 @@ func TestBuildUpdateArguments(t *testing.T) {
 			name: "none unsets a resource request and limit",
 			input: UpdateInput{
 				Name: "demo", Playhouse: "ph",
-				CPURequest: "none", CPULimit: "none", MemRequest: "none", MemLimit: "none",
+				CPURequest: "none", CPULimit: "none", MemoryRequest: "none", MemoryLimit: "none",
 			},
 			want: []string{
 				"playroom", "update", "demo", "--playhouse", "ph",
@@ -125,6 +127,42 @@ func TestBuildUpdateArguments(t *testing.T) {
 			want:  []string{"playroom", "update", "demo", "--playhouse", "ph", "--exposure", "tailscale"},
 		},
 		{
+			name:  "growing the storage sends the new size",
+			input: UpdateInput{Name: "demo", Playhouse: "ph", Storage: "40Gi"},
+			want:  []string{"playroom", "update", "demo", "--playhouse", "ph", "--storage", "40Gi"},
+		},
+		{
+			name:  "switching the capability profile sends it",
+			input: UpdateInput{Name: "demo", Playhouse: "ph", Capabilities: CapabilitiesStandard},
+			want:  []string{"playroom", "update", "demo", "--playhouse", "ph", "--capabilities", "standard"},
+		},
+		{
+			name:  "added capabilities are only sent when the set was replaced",
+			input: UpdateInput{Name: "demo", Playhouse: "ph", CapAdd: []string{"NET_ADMIN"}},
+			want:  []string{"playroom", "update", "demo", "--playhouse", "ph"},
+		},
+		{
+			name:  "replacing added capabilities lists each one",
+			input: UpdateInput{Name: "demo", Playhouse: "ph", ChangeCapAdd: true, CapAdd: []string{"NET_ADMIN", " SYS_PTRACE "}},
+			want:  []string{"playroom", "update", "demo", "--playhouse", "ph", "--cap-add", "NET_ADMIN", "--cap-add", "SYS_PTRACE"},
+		},
+		{
+			name:  "clearing every added capability sends the literal none",
+			input: UpdateInput{Name: "demo", Playhouse: "ph", ChangeCapAdd: true, CapAdd: []string{"  "}},
+			want:  []string{"playroom", "update", "demo", "--playhouse", "ph", "--cap-add", "none"},
+		},
+		{
+			name:  "the workspace namespace is only sent when the toggle was touched",
+			input: UpdateInput{Name: "demo", Playhouse: "ph", WorkspaceNamespace: true},
+			want:  []string{"playroom", "update", "demo", "--playhouse", "ph"},
+		},
+		{
+			// =false deletes the namespace, so it must be spelled out, never implied.
+			name:  "removing the workspace namespace sends it explicitly",
+			input: UpdateInput{Name: "demo", Playhouse: "ph", ChangeWorkspaceNamespace: true, WorkspaceNamespace: false},
+			want:  []string{"playroom", "update", "demo", "--playhouse", "ph", "--workspace-namespace=false"},
+		},
+		{
 			name:  "an unset exposure keeps the current one",
 			input: UpdateInput{Name: "demo", Playhouse: "ph"},
 			want:  []string{"playroom", "update", "demo", "--playhouse", "ph"},
@@ -133,17 +171,20 @@ func TestBuildUpdateArguments(t *testing.T) {
 			name: "every field set",
 			input: UpdateInput{
 				Name: "demo", Playhouse: "ph", Image: "claude-code",
-				CPURequest: "250m", CPULimit: "4", MemRequest: "2Gi", MemLimit: "4Gi",
-				Exposure:       "tailscale",
+				CPURequest: "250m", CPULimit: "4", MemoryRequest: "2Gi", MemoryLimit: "4Gi",
+				Exposure: ExposureTailscale, Storage: "40Gi", Capabilities: CapabilitiesStandard,
 				ChangeReadOnly: true, ReadOnly: true, ChangePorts: true, Ports: []string{"80"},
+				ChangeCapAdd: true, CapAdd: []string{"NET_ADMIN"},
+				ChangeWorkspaceNamespace: true, WorkspaceNamespace: true,
 				Force: true, NoWait: true, WaitTimeout: "5m", ForceInstall: true,
 			},
 			want: []string{
 				"playroom", "update", "demo", "--playhouse", "ph",
 				"--image", "claude-code", "--cpu-request", "250m", "--cpu-limit", "4",
 				"--memory-request", "2Gi", "--memory-limit", "4Gi",
-				"--exposure", "tailscale",
-				"--read-only=true", "--port", "80",
+				"--exposure", "tailscale", "--storage", "40Gi", "--capabilities", "standard",
+				"--read-only=true", "--port", "80", "--cap-add", "NET_ADMIN",
+				"--workspace-namespace=true",
 				"--wait-timeout", "5m", "--force", "--no-wait", "--force-install",
 			},
 		},

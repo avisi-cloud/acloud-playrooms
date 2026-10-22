@@ -5,7 +5,15 @@ describe('ImageCatalogService', () => {
   afterEach(() => vi.restoreAllMocks());
 
   it('shares one backend request across concurrent and later callers', async () => {
-    const images = [{ Name: 'default', Reference: 'registry/image', IsDefault: true }];
+    const images = [
+      {
+        Name: 'default',
+        Reference: 'registry/image',
+        Description: '',
+        IsDefault: true,
+        RequiresPrivileged: false,
+      },
+    ];
     const list = vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue(images);
     const catalog = new ImageCatalogService();
 

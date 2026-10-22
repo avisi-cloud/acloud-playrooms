@@ -9,8 +9,10 @@ func TestListImagesCoversKnownAliases(t *testing.T) {
 	}
 	seen := make(map[string]bool, len(entries))
 	for _, entry := range entries {
-		if imageAliases[entry.Name] != entry.Reference {
-			t.Errorf("ListImages() returned %q -> %q", entry.Name, entry.Reference)
+		alias := imageAliases[entry.Name]
+		if alias.reference != entry.Reference || alias.description != entry.Description ||
+			alias.requiresPrivileged != entry.RequiresPrivileged {
+			t.Errorf("ListImages() returned %#v, want it to match %#v", entry, alias)
 		}
 		seen[entry.Name] = true
 	}
@@ -42,6 +44,27 @@ func TestListImagesIsStable(t *testing.T) {
 			if next[index] != first[index] {
 				t.Fatalf("run %d entry %d = %#v, want %#v", i, index, next[index], first[index])
 			}
+		}
+	}
+}
+
+func TestListImagesMarksOnlyDockerInDockerAsNeedingPrivileged(t *testing.T) {
+	for _, entry := range ListImages() {
+		wantPrivileged := entry.Name == "claude-code-dind"
+		if entry.RequiresPrivileged != wantPrivileged {
+			t.Errorf("%s RequiresPrivileged = %v, want %v", entry.Name, entry.RequiresPrivileged, wantPrivileged)
+		}
+	}
+}
+
+func TestListImagesOffersEveryAliasOfAcloud037(t *testing.T) {
+	offered := map[string]bool{}
+	for _, entry := range ListImages() {
+		offered[entry.Name] = true
+	}
+	for _, alias := range []string{"opencode", "claude-code", "claude-code-rootless", "claude-code-dind"} {
+		if !offered[alias] {
+			t.Errorf("ListImages() does not offer %q", alias)
 		}
 	}
 }

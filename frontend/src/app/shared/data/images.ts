@@ -15,7 +15,7 @@ export const TERMINALS = [
 ] as const;
 
 /**
- * `--exposure` values, mirroring pkg/playroom's Exposure* constants. The blank
+ * `--exposure` values, mirroring backend/playroom's Exposure constants. The blank
  * option leaves the flag off, so the playhouse's declared default applies.
  */
 export const EXPOSURES = [
@@ -30,6 +30,16 @@ export const EXPOSURES = [
     id: 'portforward',
     label: 'Port-forward',
     hint: 'No public exposure; reached via the API server',
+  },
+] as const;
+
+/** `--capabilities` profiles, mirroring backend/playroom's Capabilities constants. */
+export const CAPABILITIES = [
+  { id: 'minimal', label: 'Minimal', hint: 'Only what login and sudo need' },
+  {
+    id: 'standard',
+    label: 'Standard',
+    hint: 'Adds the container runtime defaults, such as raw sockets for tcpdump',
   },
 ] as const;
 

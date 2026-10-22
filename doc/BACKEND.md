@@ -59,20 +59,23 @@ command applies its own default — including anything the user configured with
 | `Positional(v)`         | `v`, even when blank                   | required positionals — dropping a blank one shifts every later argument into the wrong slot, so it goes through and the command rejects it |
 | `OptionalPositional(v)` | `v` when non-blank                     | positionals with a command-side default                                                                                                    |
 | `Str(flag, v)`          | `--flag v` when non-blank              | ordinary string flags                                                                                                                      |
-| `Repeat(flag, vs)`      | one `--flag v` per non-blank value     | `--env`, `--git`, `--copy`, `--port`                                                                                                       |
+| `Repeat(flag, vs)`      | one `--flag v` per non-blank value     | `--env`, `--git`, `--copy`, `--port`, `--cap-add`                                                                                          |
 | `Int(flag, n)`          | `--flag n` when `n > 0`                | counts; zero means "not set"                                                                                                               |
 | `Flag(flag, b)`         | bare `--flag` when true                | presence-only booleans: `--ephemeral`, `--no-wait`, `--force`                                                                              |
 | `Explicit(flag, b)`     | `--flag=true` / `--flag=false`, always | booleans whose CLI default is true, or that the command reads through `flag.Changed`                                                       |
 | `Add(v...)`             | verbatim                               | escape hatch — `--yes`, `-o json`, everything past `--`                                                                                    |
 
-`Explicit` is the interesting one. Only `--read-only`, `--privileged` and
-`--forward-agent` use it. All three can be defaulted to true through `playroom
-config`, so a bare `--flag` cannot express "the user turned this off" and
+`Explicit` is the interesting one. Only `--read-only`, `--privileged`,
+`--workspace-namespace` and `--forward-agent` use it. All four can be defaulted
+to true through `playroom config`, so a bare `--flag` cannot express "the user turned this off" and
 omitting it cannot express "the user deliberately left it on". A definite toggle
 in the UI has to send a definite value.
 
 `CommandArguments` is pure serialization — no defaults, no validation, no behaviour. That is
-what makes the argument tests straightforward.
+what makes the argument tests straightforward. A fixed set of values, such as
+`playroom.Capabilities` and `playroom.Exposure`, is a typed string with a
+`Validate()`, and the command's entry point refuses an unknown value before
+anything runs.
 
 ### Running it
 
