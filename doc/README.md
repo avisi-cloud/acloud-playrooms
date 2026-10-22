@@ -9,6 +9,7 @@ and the development quick start.
 | Go packages, commands and cancellation       | [Backend](BACKEND.md)              |
 | Angular screens, state and styling           | [Frontend](FRONTEND.md)            |
 | Why earlier choices were made                | [Decisions](DECISIONS.md)          |
+| What to improve in the UI next               | [UI roadmap](UI-ROADMAP.md)        |
 | GitHub setup, releases, Homebrew and signing | [Releasing](RELEASING.md)          |
 | Local checks and pull request conventions    | [Contributing](../CONTRIBUTING.md) |
 
