@@ -107,7 +107,11 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
   private async seedFromDefaults(): Promise<void> {
     const opened = this.playhouse;
     const pristine = JSON.stringify(this.form);
-    await this.defaults.loadConfiguredDefaultsOnce();
+    try {
+      await this.defaults.loadConfiguredDefaultsOnce();
+    } catch {
+      // The built-in form defaults remain usable when the CLI is unavailable.
+    }
     if (!this.visible || this.playhouse !== opened) return;
     if (JSON.stringify(this.form) !== pristine) return;
     this.form = blankCreateForm(opened, this.defaults);

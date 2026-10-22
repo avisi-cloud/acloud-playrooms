@@ -119,7 +119,11 @@ export class PlayroomConnectDialogComponent implements OnChanges {
    * configurable. The literals below are the fallback for an unknown key.
    */
   private async seedFromDefaults(): Promise<void> {
-    await this.defaults.loadConfiguredDefaultsOnce();
+    try {
+      await this.defaults.loadConfiguredDefaultsOnce();
+    } catch {
+      // Keep the dialog's built-in defaults if the CLI config cannot be read.
+    }
     if (!this.visible) return;
     this.user = this.defaults.configuredText('user', 'playroom');
     this.forwardAgent = this.defaults.configuredToggle('forward-agent', true);

@@ -42,8 +42,8 @@
         class="search-input"
       />
     </p-iconfield>
-    <label class="mine-toggle">
-      <p-toggleswitch [ngModel]="mineOnly()" (ngModelChange)="mineOnly.set($event)" />
+    <label class="mine-toggle" for="mine-only">
+      <p-toggleswitch inputId="mine-only" [ngModel]="mineOnly()" (ngModelChange)="mineOnly.set($event)" />
       <span>Mine</span>
     </label>
 
@@ -55,13 +55,20 @@
   </div>
 
   <section class="page-body content">
-    @if (!loaded()) {
+    @if (actions.loadError()) {
+      <div class="empty-state" role="alert">
+        <h3 class="empty-state-title">Could not load playrooms</h3>
+        <p class="empty-state-text">The list could not be refreshed. Previously loaded rooms may be out of date.</p>
+        <p-button label="Retry" icon="pi pi-refresh" [disabled]="refreshing()" (click)="refreshRooms()" />
+      </div>
+    }
+    @if (!loaded() && !actions.loadError()) {
       <!-- Nothing is drawn while the first read runs: the brand mark in the
            shell breathes instead. This branch still has to exist, though —
            without it the "no playrooms yet" state rendered on every first load
            and every playhouse switch, before any data had arrived. -->
       <p class="sr-only" role="status">Loading playrooms…</p>
-    } @else if (filteredRooms().length === 0) {
+    } @else if (loaded() && filteredRooms().length === 0 && !actions.loadError()) {
       <div class="empty-state">
         <div class="empty-state-icon">
           <i class="pi pi-desktop" style="font-size: 1.75rem"></i>
@@ -86,7 +93,7 @@
           </div>
         }
       </div>
-    } @else {
+    } @else if (filteredRooms().length > 0) {
       <div class="room-grid">
         @for (room of filteredRooms(); track room.name) {
           <app-playroom-card

@@ -44,13 +44,13 @@ export class RoomDetailPageComponent implements OnInit {
 
   readonly roomName = signal('');
   readonly room = computed<Playroom | null>(
-    () => this.state.rooms().find((room) => room.name === this.roomName()) ?? null,
+    () => this.state.rooms().find((room) => room.name === this.roomName() && room.playhouse === this.state.playhouse()) ?? null,
   );
   loading = false;
 
   async ngOnInit(): Promise<void> {
-    this.roomName.set(this.route.snapshot.paramMap.get('name') ?? '');
-    if (this.state.rooms().length === 0) await this.refreshRooms();
+    this.route.paramMap.subscribe((parameters) => this.roomName.set(parameters.get('name') ?? ''));
+    await this.refreshRooms();
   }
 
   goBack(): void {

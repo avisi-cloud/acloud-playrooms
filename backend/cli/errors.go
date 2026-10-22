@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 )
@@ -15,6 +16,15 @@ type ExitError struct {
 	Arguments []string
 	ExitCode  int
 	Stderr    string
+}
+
+// MarshalJSON keeps raw credentials out of structured bridge errors as well as their messages.
+func (exitError *ExitError) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Arguments []string
+		ExitCode  int
+		Stderr    string
+	}{redactArguments(exitError.Arguments), exitError.ExitCode, RedactText(exitError.Stderr, exitError.Arguments)})
 }
 
 // Error returns the CLI's own explanation, with any credential blanked: this

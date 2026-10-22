@@ -25,7 +25,6 @@ import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { wailsApi } from '../../../../core/services/wails-api';
 import { PlayroomActionsHostComponent, PlayroomCardComponent } from '../../../../shared/components';
 import { ConnectTab, Playroom } from '../../../../shared/models';
-import { isTransitional } from '../../../../shared/utils';
 import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-drawer/create-playroom-drawer';
 
 /**
@@ -51,7 +50,7 @@ import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-
 })
 export class RoomsPageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
-  private readonly actions = inject(PlayroomLifecycleService);
+  readonly actions = inject(PlayroomLifecycleService);
   private readonly notify = inject(ToastService);
   private readonly pageLoading = inject(PageLoadingService);
   readonly state = inject(PlayroomStateService);
@@ -68,7 +67,6 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
 
   showCreate = false;
   private ageTimer: ReturnType<typeof setInterval> | null = null;
-  private pollTimer: ReturnType<typeof setInterval> | null = null;
   /** Set when a read arrived mid-flight, to repeat once that one lands. */
   private rereadWhenTheCurrentReadLands = false;
 
@@ -77,7 +75,8 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
     // rather than ngOnInit, which does not fire again on a reused component.
     effect(() => {
       this.state.playhouse();
-      untracked(() => void this.refreshRooms());
+      this.state.scopeRevision();
+      untracked(() => { this.closeOverlays(); void this.refreshRooms(); });
     });
   }
 
@@ -92,7 +91,6 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.ageTimer) clearInterval(this.ageTimer);
-    this.stopPolling();
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -164,7 +162,7 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   );
 
   private findRoomByName(name: string): Playroom | undefined {
-    return this.state.rooms().find((room) => room.name === name);
+    return this.state.rooms().find((room) => room.name === name && room.playhouse === this.state.playhouse());
   }
 
   openRoom(name: string): void {
@@ -183,18 +181,11 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
     this.refreshing.set(true);
     const playhouse = this.state.playhouse();
     try {
-      const rooms = await this.pageLoading.runAndShowIndicatorIf(!background, () =>
+      await this.pageLoading.runAndShowIndicatorIf(!background, () =>
         this.actions.reload(playhouse),
       );
-      this.state.markRoomsLoaded(playhouse);
-      this.state.setRoomsCount(rooms.filter((room) => room.playhouse === playhouse).length);
-      if (rooms.some((room) => isTransitional(room.status))) this.startPolling();
-      else this.stopPolling();
     } catch (error) {
-      // Marked loaded on failure too, so the screen shows its empty state.
-      this.state.markRoomsLoaded(playhouse);
       this.notify.failure('Could not load the playrooms', error);
-      this.stopPolling();
     } finally {
       this.refreshing.set(false);
     }
@@ -249,14 +240,4 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
     this.state.setRooms(this.state.rooms().map((room) => ({ ...room, ageMin: room.ageMin + 1 })));
   }
 
-  private startPolling(): void {
-    if (this.pollTimer) return;
-    this.pollTimer = setInterval(() => void this.refreshRooms(true), 10000);
-  }
-
-  private stopPolling(): void {
-    if (!this.pollTimer) return;
-    clearInterval(this.pollTimer);
-    this.pollTimer = null;
-  }
 }
