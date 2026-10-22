@@ -6,6 +6,25 @@
 .detail-view {
   font-size: 14px;
 }
+.read-failure {
+  margin: 0 auto 16px;
+  max-width: 62ch;
+  padding: 14px 16px;
+  border: 1px solid color-mix(in srgb, var(--bad) 30%, transparent);
+  border-left: 3px solid var(--bad);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--bad) 7%, transparent);
+}
+.read-failure h2 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+.read-failure p {
+  margin: 4px 0 10px;
+  color: var(--tx-2);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
 
 :host ::ng-deep .detail-tag.p-tag {
   font-size: 11px;

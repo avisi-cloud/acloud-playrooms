@@ -4,6 +4,7 @@ import { ButtonModule } from 'primeng/button';
 import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { CommandPreviewComponent, PreviewFunction } from '../command-preview/command-preview';
+import { OverlayFocusDirective } from '../../directives';
 
 /**
  * Typed-confirmation delete dialog, shared by the playroom and playhouse
@@ -11,7 +12,14 @@ import { CommandPreviewComponent, PreviewFunction } from '../command-preview/com
  */
 @Component({
   selector: 'app-confirm-delete-dialog',
-  imports: [FormsModule, DialogModule, ButtonModule, InputTextModule, CommandPreviewComponent],
+  imports: [
+    FormsModule,
+    DialogModule,
+    ButtonModule,
+    InputTextModule,
+    CommandPreviewComponent,
+    OverlayFocusDirective,
+  ],
   templateUrl: './confirm-delete-dialog.html',
   styleUrl: './confirm-delete-dialog.css',
 })

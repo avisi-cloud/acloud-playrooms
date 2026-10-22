@@ -25,6 +25,7 @@ import { EDITORS, TERMINALS } from '../../data';
 import { ConnectTab, Playroom } from '../../models';
 import { readCache } from '../../utils';
 import { CommandPreviewComponent } from '../command-preview/command-preview';
+import { OverlayFocusDirective } from '../../directives';
 
 /**
  * The "connect / open" modal for a playroom, seeded from the cache. The connect
@@ -40,6 +41,7 @@ import { CommandPreviewComponent } from '../command-preview/command-preview';
     InputTextModule,
     ToggleSwitchModule,
     CommandPreviewComponent,
+    OverlayFocusDirective,
   ],
   templateUrl: './playroom-connect-dialog.html',
   styleUrl: './playroom-connect-dialog.css',
@@ -112,6 +114,20 @@ export class PlayroomConnectDialogComponent implements OnChanges {
 
   close(): void {
     this.onVisibleChange(false);
+  }
+
+  onTabKeydown(event: KeyboardEvent): void {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    this.tab =
+      event.key === 'Home'
+        ? 'connect'
+        : event.key === 'End'
+          ? 'open'
+          : this.tab === 'connect'
+            ? 'open'
+            : 'connect';
+    document.getElementById(this.tab + '-tab')?.focus();
   }
 
   /**

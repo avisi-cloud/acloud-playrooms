@@ -23,6 +23,36 @@
   z-index: 1;
 }
 
+.filter-select {
+  height: 34px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  background: var(--surf-2);
+  color: var(--tx-2);
+  padding: 0 8px;
+  font: inherit;
+  font-size: 12px;
+}
+.read-failure {
+  max-width: 56ch;
+  margin: 24px auto;
+  padding: 16px 18px;
+  border: 1px solid color-mix(in srgb, var(--bad) 30%, transparent);
+  border-left: 3px solid var(--bad);
+  border-radius: var(--r);
+  background: color-mix(in srgb, var(--bad) 7%, transparent);
+}
+.read-failure h2 {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+.read-failure p {
+  margin: 5px 0 12px;
+  color: var(--tx-2);
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+
 .mine-toggle {
   display: flex;
   align-items: center;
@@ -71,6 +101,16 @@
 .room-grid > * {
   width: var(--playroom-card-width);
   height: var(--playroom-card-height);
+}
+.room-grid.compact {
+  --playroom-card-height: 184px;
+}
+.room-grid.compact .card-sub,
+.room-grid.compact .card-info-row {
+  display: none;
+}
+.room-grid.compact .card-head {
+  padding-bottom: 12px;
 }
 
 /* Discoverability for the keyboard shortcuts this screen binds. Quiet enough

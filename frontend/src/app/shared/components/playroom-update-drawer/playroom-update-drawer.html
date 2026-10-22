@@ -1,4 +1,9 @@
 <p-drawer
+  appOverlayFocus="Update playroom"
+  [appOverlayVisible]="visible"
+  [closeOnEscape]="!submitting"
+  [dismissible]="!submitting"
+  [showCloseIcon]="!submitting"
   [visible]="visible"
   (visibleChange)="onVisibleChange($event)"
   position="right"
@@ -21,7 +26,8 @@
       <label class="field-label">Image</label>
       <p-select
         [options]="images"
-        [(ngModel)]="form.image"
+        [ngModel]="form.image"
+        (ngModelChange)="form.image = $event ?? ''"
         optionValue="Name"
         optionLabel="Name"
         [editable]="true"
@@ -242,6 +248,10 @@
     }
   </section>
 
+  @if (submitFailure) {
+    <p class="read-failure" role="alert">{{ submitFailure }}</p>
+  }
+  <p class="field-hint">Closing keeps your changes for this room until you quit or switch scope.</p>
   @if (blockingError()) {
     <div class="danger-copy danger-copy--strong">
       <i class="pi pi-exclamation-triangle"></i>{{ blockingError() }}
@@ -252,11 +262,20 @@
 
   <ng-template pTemplate="footer">
     <p-button
+      label="Discard draft"
+      severity="secondary"
+      [text]="true"
+      size="small"
+      [disabled]="submitting"
+      (click)="discardDraft()"
+    />
+    <p-button
       label="Cancel"
       severity="secondary"
       [text]="true"
       size="small"
       styleClass="footer-cancel"
+      [disabled]="submitting"
       (click)="close()"
     />
     <p-button
@@ -264,7 +283,8 @@
       icon="pi pi-sync"
       size="small"
       [severity]="updateButtonSeverity()"
-      [disabled]="!!blockingError()"
+      [disabled]="submitting || !!blockingError()"
+      [loading]="submitting"
       (click)="save()"
     />
   </ng-template>
