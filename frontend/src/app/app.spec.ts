@@ -1,10 +1,11 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { App, BREATH_MS } from './app';
 import { ScopeService } from './core/services/scope';
-import { PlayhouseEntry, wailsApi } from './core/services/wails-api';
+import { AcloudBinaryStatus, PlayhouseEntry, wailsApi } from './core/services/wails-api';
+import { updateCache } from './shared/utils';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -66,6 +67,24 @@ describe('App', () => {
       expect(app.shellBusy()).toBe(false);
     } finally {
       vi.useRealTimers();
+    }
+  });
+
+  // A fresh install is sent to setup by the launch route; this is the other case.
+  it('reopens setup at the step that broke once the installation has been read', async () => {
+    updateCache({ setupCompleted: true });
+    try {
+      vi.spyOn(wailsApi, 'getAcloudBinaryStatus').mockResolvedValue({
+        Found: false,
+      } as AcloudBinaryStatus);
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      await TestBed.createComponent(App).componentInstance.ngOnInit();
+
+      expect(navigate).toHaveBeenCalledWith(['/setup'], { queryParams: { step: 'acloud' } });
+    } finally {
+      localStorage.clear();
+      vi.restoreAllMocks();
     }
   });
 

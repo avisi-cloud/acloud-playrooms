@@ -87,8 +87,9 @@ The ZIP is also available if you prefer to copy the app manually.
 
 ### 3. Open the app
 
-Open **Acloud Playrooms** from Applications, choose your playhouse, and create
-or select a playroom. Connecting opens your selected terminal.
+Open **Acloud Playrooms** from Applications. On first launch, setup walks you
+through acloud, logging in and choosing a playhouse; then create or select a
+playroom. Connecting opens your selected terminal.
 
 To update, quit the app, download the latest DMG, and drag the new app into
 **Applications**, choosing **Replace** when prompted.

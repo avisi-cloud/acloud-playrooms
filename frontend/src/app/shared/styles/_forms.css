@@ -236,6 +236,15 @@
   overflow-wrap: anywhere;
 }
 
+/* A compact state tag beside a label or heading. Global because the acloud
+   card it first marked is shown on both the Defaults and the setup screen. */
+.source-tag.p-tag {
+  font-size: 9.5px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  padding: 1px 7px;
+}
+
 .field-hint .link {
   color: var(--cyan);
   cursor: pointer;

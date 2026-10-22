@@ -6,6 +6,8 @@ export interface CacheState {
   lastEditor: string;
   lastTerminal: string;
   lastTheme: Theme;
+  /** Set once setup is finished; leaving it with "Set up later" does not set it. */
+  setupCompleted: boolean;
 }
 
 export interface ToolStatus {

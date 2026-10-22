@@ -33,6 +33,7 @@ src/app/
     playhouse/                  playhouse selection + create drawer
     playroom/                   room list, room detail, create drawer
     defaults/                   the settings screen
+    setup/                      the setup a new install walks through
   shared/
     components/                 reusable UI and shared playroom action surfaces
     directives/                 behaviour attached to PrimeNG controls
@@ -43,10 +44,12 @@ src/app/
 
 ## Routes
 
-`/` redirects to `/rooms`.
+`/` redirects to `/setup` until setup has been completed once, and to `/rooms`
+after that.
 
 | Route          | Screen                    |
 | -------------- | ------------------------- |
+| `/setup`       | setup                     |
 | `/playhouse`   | playhouse selection       |
 | `/rooms`       | playroom list (guarded)   |
 | `/rooms/:name` | playroom detail (guarded) |
@@ -208,8 +211,15 @@ irreversible action identical from both entry points. Repeating string flag
 controls (`--env`, `--git`, `--copy`, `--port`) use one shared list editor that
 also guarantees the form retains an editable blank row.
 
-`shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal
-and theme to localStorage under `acloud-playroom-gui-cache`.
+`core/services/setup.ts` reads each setup step's status from the services above
+and keeps `setupCompleted`. Setup opens at launch only: a fresh install through
+the `/` redirect, and a completed one whose acloud or login broke through the
+shell, once `ngOnInit` has read the installation. A cache from before setup
+existed (no `setupCompleted` key) with a playhouse counts as completed, so
+upgrades skip it.
+
+`shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal,
+theme and `setupCompleted` to localStorage under `acloud-playroom-gui-cache`.
 
 ## Scope: context and organisation
 
