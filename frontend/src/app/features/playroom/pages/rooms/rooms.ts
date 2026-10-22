@@ -27,7 +27,7 @@ import { wailsApi } from '../../../../core/services/wails-api';
 import { UiSessionService } from '../../../../core/services/ui-session';
 import { PlayroomActionsHostComponent, PlayroomCardComponent } from '../../../../shared/components';
 import { ConnectTab, Playroom } from '../../../../shared/models';
-import { isTransitional, describeError } from '../../../../shared/utils';
+import { describeError } from '../../../../shared/utils';
 import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-drawer/create-playroom-drawer';
 
 /**
