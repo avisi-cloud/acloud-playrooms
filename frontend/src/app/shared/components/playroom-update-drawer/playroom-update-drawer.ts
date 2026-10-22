@@ -22,7 +22,7 @@ import { ImageCatalogService } from '../../../core/services/image-catalog';
 import { PlayroomStateService } from '../../../core/services/playroom-state';
 import { UiSessionService } from '../../../core/services/ui-session';
 import { PlayroomUpdateInput, wailsApi } from '../../../core/services/wails-api';
-import { CAPABILITIES } from '../../data';
+import { CAPABILITIES, PLAYROOM_OPTION_TEXTS } from '../../data';
 import { ImageEntry, Playroom, UpdateForm } from '../../models';
 import { blankUpdateForm, findImageEntry, storageDoesNotGrow } from '../../utils';
 import { CommandPreviewComponent } from '../command-preview/command-preview';
@@ -85,6 +85,7 @@ export class PlayroomUpdateDrawerComponent implements OnChanges, OnDestroy {
   readonly previewUpdate = wailsApi.previewUpdatePlayroom;
 
   images: ImageEntry[] = [];
+  readonly optionTexts = PLAYROOM_OPTION_TEXTS;
 
   @Input() visible = false;
   @Output() visibleChange = new EventEmitter<boolean>();

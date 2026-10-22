@@ -13,7 +13,7 @@ import {
   untracked,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -26,6 +26,7 @@ import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { wailsApi } from '../../../../core/services/wails-api';
 import { UiSessionService } from '../../../../core/services/ui-session';
 import { PlayroomActionsHostComponent, PlayroomCardComponent } from '../../../../shared/components';
+import { CREATE_PLAYROOM_QUERY_PARAM } from '../../../../shared/data';
 import { ConnectTab, Playroom } from '../../../../shared/models';
 import { describeError } from '../../../../shared/utils';
 import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-drawer/create-playroom-drawer';
@@ -53,6 +54,7 @@ import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-
 })
 export class RoomsPageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   readonly actions = inject(PlayroomLifecycleService);
   private readonly notify = inject(ToastService);
   private readonly pageLoading = inject(PageLoadingService);
@@ -101,6 +103,7 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
+    this.openCreateWhenTheUrlAsksForIt();
     this.ageTimer = setInterval(() => this.incrementAges(), 60000);
     try {
       this.state.setUser(await wailsApi.getCurrentUserEmail());
@@ -243,6 +246,18 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
 
   openCreate(): void {
     this.showCreate = true;
+  }
+
+  /** Cleared once read, so Back or a reload does not open the drawer a second time. */
+  private openCreateWhenTheUrlAsksForIt(): void {
+    if (!this.route.snapshot.queryParamMap.has(CREATE_PLAYROOM_QUERY_PARAM)) return;
+    this.openCreate();
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { [CREATE_PLAYROOM_QUERY_PARAM]: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   openConnect(name: string, tab: ConnectTab): void {

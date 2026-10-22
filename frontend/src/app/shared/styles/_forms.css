@@ -43,6 +43,11 @@
   gap: 12px;
   align-items: start;
 }
+/* For labels that may wrap to different heights (a long label and its flag),
+   so the inputs beside each other still line up. */
+.field-row--align-inputs {
+  align-items: end;
+}
 
 .section-label {
   font-size: 10px;
@@ -234,6 +239,15 @@
   color: var(--tx-3);
   font-size: 11.5px;
   overflow-wrap: anywhere;
+}
+
+/* A compact state tag beside a label or heading. Global because the acloud
+   card it first marked is shown on both the Defaults and the setup screen. */
+.source-tag.p-tag {
+  font-size: 9.5px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  padding: 1px 7px;
 }
 
 .field-hint .link {

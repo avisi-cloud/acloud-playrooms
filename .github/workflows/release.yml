@@ -79,6 +79,18 @@ jobs:
         run: |
           gh release view "$RELEASE_TAG"
           gh release upload "$RELEASE_TAG" dist/*.zip dist/*.dmg dist/checksums.txt dist/homebrew/acloud-playrooms.rb --clobber
+      # Not a pre-release: that would drop it from /releases/latest, which the README links to.
+      - name: Add the alpha note to the release notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ALPHA_NOTE: '> **Alpha:** things may change or break between versions. Report problems or ideas in [GitHub issues](https://github.com/avisi-cloud/acloud-playrooms/issues).'
+        run: |
+          release_notes="$(gh release view "$RELEASE_TAG" --json body --jq .body)"
+          if grep -qF -- "$ALPHA_NOTE" <<< "$release_notes"; then
+            echo 'The release notes already have the alpha note.'
+          else
+            printf '%s\n\n%s\n' "$ALPHA_NOTE" "$release_notes" | gh release edit "$RELEASE_TAG" --notes-file -
+          fi
       - name: Check whether Homebrew publishing is configured
         id: homebrew
         env:

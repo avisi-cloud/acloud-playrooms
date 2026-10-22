@@ -73,18 +73,15 @@
   flex-wrap: wrap;
   padding-top: 6px;
 }
-.key-name {
+/* The plain name; the config key beside it is the mono .flag-ref, as on the drawers. */
+.option-name {
   font-size: 12.5px;
   font-weight: 500;
-  font-family: var(--font-mono);
   color: var(--tx);
 }
-
-:host ::ng-deep .source-tag.p-tag {
-  font-size: 9.5px;
-  font-weight: 500;
-  font-family: var(--font-sans);
-  padding: 1px 7px;
+/* The row's gap already spaces it, and a key wrapped under a long name lines up with it. */
+.row-label .flag-ref {
+  margin-left: 0;
 }
 
 .reset-btn {

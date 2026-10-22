@@ -302,9 +302,9 @@
           <span>Delete even if playrooms exist<small class="flag-ref">--force</small></span>
           <p-toggleswitch [(ngModel)]="deleteForce" />
         </label>
-        <label class="toggle-line">
-          <span>Return without waiting<small class="flag-ref">--no-wait</small></span>
-          <p-toggleswitch [(ngModel)]="deleteNoWait" />
+        <label class="toggle-line" for="delete-playhouse-no-wait">
+          <span>{{ optionTexts['no-wait'].label }}<small class="flag-ref">--no-wait</small></span>
+          <p-toggleswitch inputId="delete-playhouse-no-wait" [(ngModel)]="deleteNoWait" />
         </label>
       </div>
     </div>

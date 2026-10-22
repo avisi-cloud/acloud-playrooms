@@ -42,6 +42,9 @@ const cask = `cask "acloud-playrooms" do
   end
 
   caveats <<~EOS
+    This app is in alpha: things may change or break between versions.
+    Report problems or ideas at https://github.com/avisi-cloud/acloud-playrooms/issues
+
     Requires the acloud CLI and an Acloud account.
     Install the CLI with: brew install --cask avisi-cloud/tools/acloud
     Then sign in with: acloud auth login

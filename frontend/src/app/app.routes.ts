@@ -1,8 +1,16 @@
+import { inject } from '@angular/core';
 import { Routes } from '@angular/router';
 import { playhouseGuard } from './core/guards/playhouse-guard';
+import { SetupService } from './core/services/setup';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/rooms', pathMatch: 'full' },
+  // The window opens on '' and nothing navigates there later, so this decides at launch only.
+  { path: '', redirectTo: () => inject(SetupService).pathToOpenAtLaunch(), pathMatch: 'full' },
+  {
+    path: 'setup',
+    loadComponent: () =>
+      import('./features/setup/pages/setup/setup').then((module) => module.SetupPageComponent),
+  },
   {
     path: 'playhouse',
     loadComponent: () =>

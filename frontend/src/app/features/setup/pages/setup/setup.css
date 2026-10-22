@@ -1,0 +1,71 @@
+/* Wizard layout, step heads, the review grid and form primitives are global in
+   shared/styles. Only what a page needs that a drawer does not lives here. */
+
+.setup-wizard {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+/* The card and its actions as one column, so the actions sit under the step
+   the way a drawer's footer sits under its wizard. */
+.setup-step {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.step-title {
+  margin: 0;
+}
+
+/* The status tag keeps its own height instead of stretching to the title and
+   line beside it. */
+.step-head {
+  align-items: flex-start;
+}
+
+.setup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.setup-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 12px 0;
+  font-size: 12.5px;
+  color: var(--tx-2);
+  line-height: 1.5;
+}
+
+.setup-status--ok .pi {
+  color: var(--ok);
+}
+
+.setup-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--tx-3);
+  line-height: 1.5;
+}
+
+.setup-note .pi {
+  margin-top: 2px;
+  color: var(--cyan);
+}
+
+.setup-tool {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setup-tool-name {
+  margin-bottom: 0;
+}

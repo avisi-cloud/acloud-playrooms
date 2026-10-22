@@ -91,19 +91,7 @@
               [style]="{ width: '100%' }"
               appendTo="body"
             />
-            <small class="field-hint">
-              @switch (form.exposure) {
-                @case ('nodeport') {
-                  Free direct SSH, but only where the provider gives nodes public IPs.
-                }
-                @case ('portforward') {
-                  No public exposure at all; playrooms are reached through the API server.
-                }
-                @default {
-                  Playrooms join your tailnet. Needs a Tailscale organisation and OAuth credentials.
-                }
-              }
-            </small>
+            <small class="field-hint">{{ selectedExposureHint() }}.</small>
           </div>
 
           <!-- Only the tailscale exposure needs credentials. Asking for them

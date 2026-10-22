@@ -33,6 +33,7 @@ src/app/
     playhouse/                  playhouse selection + create drawer
     playroom/                   room list, room detail, create drawer
     defaults/                   the settings screen
+    setup/                      the setup a new install walks through
   shared/
     components/                 reusable UI and shared playroom action surfaces
     directives/                 behaviour attached to PrimeNG controls
@@ -43,10 +44,12 @@ src/app/
 
 ## Routes
 
-`/` redirects to `/rooms`.
+`/` redirects to `/setup` until setup has been completed once, and to `/rooms`
+after that.
 
 | Route          | Screen                    |
 | -------------- | ------------------------- |
+| `/setup`       | setup                     |
 | `/playhouse`   | playhouse selection       |
 | `/rooms`       | playroom list (guarded)   |
 | `/rooms/:name` | playroom detail (guarded) |
@@ -142,6 +145,19 @@ its overlay is closed. The same `toInput()` result is submitted, so the preview
 and the action cannot describe different commands. The frontend never assembles
 command lines.
 
+### Easy and Advanced create
+
+The create-playroom drawer shows one form in two modes. **Easy** is one screen
+with name, image and size; **Advanced** is the five-step wizard with every
+option. Both edit the same `CreateForm` and send the same `toInput()`, so
+switching never adds or drops a flag, and the command preview stays on screen in
+both. The size is read from the four CPU and memory values rather than stored,
+so it cannot disagree with what is sent, and Easy says how many advanced options
+differ from your defaults instead of hiding them. The chosen mode is remembered
+in the local cache. Option names and their one-line explanations live in
+`shared/data/playroom-options.ts`, keyed by CLI flag, so the create, update and
+Defaults screens use the same words.
+
 ## State
 
 State that must outlive a screen lives in a service, because every screen is
@@ -208,8 +224,16 @@ irreversible action identical from both entry points. Repeating string flag
 controls (`--env`, `--git`, `--copy`, `--port`) use one shared list editor that
 also guarantees the form retains an editable blank row.
 
-`shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal
-and theme to localStorage under `acloud-playroom-gui-cache`.
+`core/services/setup.ts` reads each setup step's status from the services above
+and keeps `setupCompleted`. Setup opens at launch only: a fresh install through
+the `/` redirect, and a completed one whose acloud or login broke through the
+shell, once `ngOnInit` has read the installation. A cache from before setup
+existed (no `setupCompleted` key) with a playhouse counts as completed, so
+upgrades skip it.
+
+`shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal,
+theme, create-playroom mode and `setupCompleted` to localStorage under
+`acloud-playroom-gui-cache`.
 
 ## Scope: context and organisation
 

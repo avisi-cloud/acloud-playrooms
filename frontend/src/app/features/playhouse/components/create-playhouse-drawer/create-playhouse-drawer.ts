@@ -279,6 +279,11 @@ export class CreatePlayhouseDrawerComponent implements OnChanges {
     return this.form.exposure === 'tailscale';
   }
 
+  /** From the same list the Edit playhouse drawer shows, so both describe an exposure alike. */
+  selectedExposureHint(): string {
+    return this.exposureOptions.find((exposure) => exposure.id === this.form.exposure)?.hint ?? '';
+  }
+
   capacityPrivilegedError(): string {
     if (!this.form.advancedCapacity) return '';
     if (Number(this.form.maxPrivilegedNodes) < 0) return 'Max privileged nodes cannot be negative.';

@@ -13,6 +13,8 @@ export class StringListEditorComponent {
   readonly values = model.required<string[]>();
 
   @Input() label = '';
+  /** One line under the list saying what it does for you; nothing when empty. */
+  @Input() hint = '';
   @Input() placeholder = '';
   @Input() addLabel = 'add value';
   @Input() itemLabel = 'value';

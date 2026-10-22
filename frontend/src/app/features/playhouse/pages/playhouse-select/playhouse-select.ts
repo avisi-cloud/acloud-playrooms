@@ -16,7 +16,7 @@ import {
   wailsApi,
 } from '../../../../core/services/wails-api';
 import { ConfirmDeleteDialog } from '../../../../shared/components';
-import { DEFAULTS } from '../../../../shared/data';
+import { DEFAULTS, PLAYROOM_OPTION_TEXTS } from '../../../../shared/data';
 import { PlayhouseEntry } from '../../../../shared/models';
 import { explainFailure, FailureExplanation } from '../../../../shared/utils';
 import { CreatePlayhouseDrawerComponent } from '../../components/create-playhouse-drawer/create-playhouse-drawer';
@@ -53,6 +53,7 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
 
   /** Backend-generated, so the dialog shows the arguments that will actually run. */
   readonly previewDelete = wailsApi.previewDeletePlayhouse;
+  readonly optionTexts = PLAYROOM_OPTION_TEXTS;
 
   playhouses = signal<PlayhouseEntry[]>([]);
   /** Why the list could not be read, in the two parts a toast shows it in. */

@@ -4,10 +4,16 @@
 
 [![Checks](https://github.com/avisi-cloud/acloud-playrooms/actions/workflows/ci.yml/badge.svg)](https://github.com/avisi-cloud/acloud-playrooms/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/avisi-cloud/acloud-playrooms)](https://github.com/avisi-cloud/acloud-playrooms/releases/latest)
+![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
 ![macOS: Intel and Apple Silicon](https://img.shields.io/badge/macOS-Intel_%2B_Apple_Silicon-black)
 
 [Get started](#get-started) · [How it works](#how-it-works) · [Develop](#develop) · [Release](doc/RELEASING.md) · [Contribute](CONTRIBUTING.md)
+
+> [!WARNING]
+> This app is in alpha: it works, but it is still a work in progress. Things may
+> change or break between versions. Found a problem or have an idea?
+> [Open an issue on GitHub](https://github.com/avisi-cloud/acloud-playrooms/issues).
 
 ![Acloud Playrooms showing development environments and their status](assets/images/playrooms.png)
 
@@ -87,8 +93,9 @@ The ZIP is also available if you prefer to copy the app manually.
 
 ### 3. Open the app
 
-Open **Acloud Playrooms** from Applications, choose your playhouse, and create
-or select a playroom. Connecting opens your selected terminal.
+Open **Acloud Playrooms** from Applications. On first launch, setup walks you
+through acloud, logging in and choosing a playhouse; then create or select a
+playroom. Connecting opens your selected terminal.
 
 To update, quit the app, download the latest DMG, and drag the new app into
 **Applications**, choosing **Replace** when prompted.

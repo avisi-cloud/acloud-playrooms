@@ -1,7 +1,8 @@
 import { vi } from 'vitest';
 
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { MessageService } from 'primeng/api';
 import { RoomsPageComponent } from './rooms';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
@@ -79,6 +80,23 @@ describe('RoomsPageComponent', () => {
 
     expect(playhousesRead()).toEqual(['playhouse-a', 'playhouse-b']);
     expect(state.roomsLoadedFor()).toBe('playhouse-b');
+  });
+
+  // Setup's "Create your first playroom" lands here with the drawer open.
+  it('opens the create drawer when the URL asks for it, then clears the parameter', async () => {
+    vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+    vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([]);
+    TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-a');
+    const router = TestBed.inject(Router);
+    router.resetConfig([{ path: 'rooms', component: RoomsPageComponent }]);
+    const harness = await RouterTestingHarness.create();
+
+    const page = await harness.navigateByUrl('/rooms?create=true', RoomsPageComponent);
+    await harness.fixture.whenStable();
+
+    expect(page.showCreate).toBe(true);
+    // Cleared, so Back or a reload does not open the drawer again.
+    expect(router.url).toBe('/rooms');
   });
 
   it('drops a poll that ticks while a read is already running', async () => {

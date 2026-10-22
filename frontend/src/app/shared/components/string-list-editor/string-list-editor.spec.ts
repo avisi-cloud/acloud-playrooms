@@ -35,4 +35,17 @@ describe('StringListEditorComponent', () => {
     fixture.componentRef.setInput('values', ['', '  ', '3000']);
     expect(fixture.componentInstance.filledValueCount()).toBe(1);
   });
+
+  it('shows the hint under the list only when one is given', () => {
+    const fixture = TestBed.createComponent(StringListEditorComponent);
+    fixture.componentRef.setInput('values', ['']);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.field-hint')).toBeNull();
+
+    fixture.componentRef.setInput('hint', 'Copied from your Mac.');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.field-hint')?.textContent).toBe(
+      'Copied from your Mac.',
+    );
+  });
 });

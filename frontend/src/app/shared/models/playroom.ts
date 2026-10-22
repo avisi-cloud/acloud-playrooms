@@ -78,6 +78,12 @@ export interface CreateForm {
   forceInstall: boolean;
 }
 
+/** The CPU and memory a playroom asks for; a size sets all four at once. */
+export type PlayroomResources = Pick<CreateForm, 'cpuReq' | 'cpuLim' | 'memReq' | 'memLim'>;
+export type PlayroomSizePreset = 'small' | 'medium' | 'large';
+/** Your defaults, a preset, or custom when the four values match neither. */
+export type PlayroomSize = 'defaults' | PlayroomSizePreset | 'custom';
+
 export interface UpdateForm {
   name: string;
   playhouse: string;
