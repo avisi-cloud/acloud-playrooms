@@ -17,7 +17,13 @@ import { PageLoadingService } from '../../../../core/services/page-loading';
 import { PlayroomDefaultsService } from '../../../../core/services/playroom-defaults';
 import { ToastService } from '../../../../core/services/toast';
 import { wailsApi } from '../../../../core/services/wails-api';
-import { CAPABILITIES, EDITORS, EXPOSURES } from '../../../../shared/data';
+import {
+  CAPABILITIES,
+  EDITORS,
+  EXPOSURES,
+  PLAYROOM_OPTION_TEXTS,
+  PlayroomOptionKey,
+} from '../../../../shared/data';
 import { DefaultEntry } from '../../../../shared/models';
 import { explainFailure, FailureExplanation } from '../../../../shared/utils';
 import { OverlayFocusDirective } from '../../../../shared/directives';
@@ -37,6 +43,9 @@ export interface DefaultField {
 }
 interface DefaultViewRow extends DefaultRow {
   field: DefaultField;
+  label: string;
+  /** Hides `image` beside "Image", which would only repeat it. */
+  labelSpellsOutKey: boolean;
   /** The value in the control is not the built-in one — see `groups`. */
   overridden: boolean;
 }
@@ -111,6 +120,16 @@ export const DEFAULT_FIELDS: DefaultField[] = [
 ];
 
 const GROUP_ORDER = ['Resources', 'Connection', 'Networking', 'Behaviour', 'Security', 'Other'];
+
+/** The name the create and update drawers use; a key this build does not know keeps its own. */
+export function labelForDefaultKey(key: string): string {
+  if (!Object.hasOwn(PLAYROOM_OPTION_TEXTS, key)) return key;
+  return PLAYROOM_OPTION_TEXTS[key as PlayroomOptionKey].label;
+}
+
+export function labelSpellsOutKey(key: string): boolean {
+  return labelForDefaultKey(key).toLowerCase().replaceAll(' ', '-') === key;
+}
 const FIELD_BY_KEY = new Map(DEFAULT_FIELDS.map((field) => [field.key, field]));
 
 /**
@@ -170,6 +189,8 @@ export class DefaultsPageComponent implements OnInit, OnDestroy {
     const rows = this.rows().map<DefaultViewRow>((row) => ({
       ...row,
       field: FIELD_BY_KEY.get(row.Key) ?? { key: row.Key, group: 'Other', kind: 'text' },
+      label: labelForDefaultKey(row.Key),
+      labelSpellsOutKey: labelSpellsOutKey(row.Key),
       overridden: row.draft !== row.Builtin,
     }));
     return GROUP_ORDER.map((label) => ({

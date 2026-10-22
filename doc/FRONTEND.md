@@ -142,6 +142,19 @@ its overlay is closed. The same `toInput()` result is submitted, so the preview
 and the action cannot describe different commands. The frontend never assembles
 command lines.
 
+### Easy and Advanced create
+
+The create-playroom drawer shows one form in two modes. **Easy** is one screen
+with name, image and size; **Advanced** is the five-step wizard with every
+option. Both edit the same `CreateForm` and send the same `toInput()`, so
+switching never adds or drops a flag, and the command preview stays on screen in
+both. The size is read from the four CPU and memory values rather than stored,
+so it cannot disagree with what is sent, and Easy says how many advanced options
+differ from your defaults instead of hiding them. The chosen mode is remembered
+in the local cache. Option names and their one-line explanations live in
+`shared/data/playroom-options.ts`, keyed by CLI flag, so the create, update and
+Defaults screens use the same words.
+
 ## State
 
 State that must outlive a screen lives in a service, because every screen is
@@ -208,8 +221,8 @@ irreversible action identical from both entry points. Repeating string flag
 controls (`--env`, `--git`, `--copy`, `--port`) use one shared list editor that
 also guarantees the form retains an editable blank row.
 
-`shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal
-and theme to localStorage under `acloud-playroom-gui-cache`.
+`shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal,
+theme and create-playroom mode to localStorage under `acloud-playroom-gui-cache`.
 
 ## Scope: context and organisation
 

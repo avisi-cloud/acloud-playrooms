@@ -388,9 +388,9 @@ up.
 ### Dangerous flags are exposed, not hidden — 2026-08-14
 
 `--privileged` (all Linux capabilities, host device access) and `--force`
-(bypasses the owner guard) are available from the GUI, behind an Advanced
-section with the CLI's own warning text, and `--privileged` additionally
-requires an acknowledgement.
+(bypasses the owner guard) are available from the GUI, in Advanced mode and
+under "Advanced delete flags", with the CLI's own warning text, and
+`--privileged` additionally requires an acknowledgement.
 
 A GUI that quietly omits flags stops being a mirror of the CLI, and users end up
 distrusting it. Better to show the flag and the warning.

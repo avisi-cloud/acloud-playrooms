@@ -12,3 +12,19 @@
 .step-head + .options-group-label {
   margin-top: 0;
 }
+
+/* Easy has no steps, so its card takes the full width and the free height. */
+.easy-card {
+  flex: 1;
+}
+
+/* "Show advanced options" sits beside the Easy title and must not wrap onto two lines. */
+.step-head p-button {
+  flex: none;
+}
+
+.wizard-side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

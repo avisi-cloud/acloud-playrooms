@@ -1,4 +1,4 @@
-import { DEFAULT_FIELDS } from './defaults';
+import { DEFAULT_FIELDS, labelForDefaultKey, labelSpellsOutKey } from './defaults';
 
 const RESOURCE_KEYS = ['cpu-request', 'cpu-limit', 'memory-request', 'memory-limit'];
 
@@ -39,5 +39,29 @@ describe('Defaults field registry', () => {
     for (const [key, kind] of Object.entries(expectedKinds)) {
       expect(DEFAULT_FIELDS.find((field) => field.key === key)?.kind, key).toBe(kind);
     }
+  });
+
+  it('labels a key with the words the create and update drawers use', () => {
+    expect(labelForDefaultKey('cpu-request')).toBe('Guaranteed CPU');
+    expect(labelForDefaultKey('read-only')).toBe('Read-only system files');
+  });
+
+  it('gives every known key a plain label of its own', () => {
+    for (const field of DEFAULT_FIELDS) {
+      expect(labelForDefaultKey(field.key), field.key).not.toBe(field.key);
+    }
+  });
+
+  it('shows the key only where the label uses other words', () => {
+    expect(labelSpellsOutKey('image')).toBe(true);
+    expect(labelSpellsOutKey('proxy-group')).toBe(true);
+    expect(labelSpellsOutKey('cpu-request')).toBe(false);
+    expect(labelSpellsOutKey('some-new-key')).toBe(true);
+  });
+
+  // A newer CLI may report keys this build has never seen; they keep their name.
+  it('keeps the key itself as the label of a key it does not know', () => {
+    expect(labelForDefaultKey('some-new-key')).toBe('some-new-key');
+    expect(labelForDefaultKey('toString')).toBe('toString');
   });
 });

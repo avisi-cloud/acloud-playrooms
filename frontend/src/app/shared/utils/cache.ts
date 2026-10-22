@@ -8,6 +8,7 @@ export const defaultCache: CacheState = {
   lastEditor: 'vscode',
   lastTerminal: 'terminal',
   lastTheme: 'dark',
+  createPlayroomMode: 'easy',
 };
 
 export function readCache(): CacheState {

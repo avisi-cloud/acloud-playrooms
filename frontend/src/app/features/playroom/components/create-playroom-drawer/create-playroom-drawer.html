@@ -18,283 +18,271 @@
     </div>
   </ng-template>
 
-  <div class="wizard-shell">
-    <app-wizard-stepper [steps]="steps" [activeIndex]="step" (stepSelect)="goStep($event)" />
+  <!-- Easy and Advanced edit one form, so the fields both show are written once. -->
+  <ng-template #nameAndImageFields>
+    <div class="field-group" [class.has-error]="nameError()">
+      <label class="field-label" for="create-name">Name</label>
+      <input
+        id="create-name"
+        [attr.aria-invalid]="!!nameError()"
+        aria-describedby="create-name-hint"
+        pInputText
+        class="w-full"
+        [(ngModel)]="form.name"
+        (blur)="touched = true"
+        placeholder="api-refactor"
+        spellcheck="false"
+        autocorrect="off"
+        autocapitalize="off"
+        autocomplete="off"
+      />
+      <small
+        id="create-name-hint"
+        class="field-hint"
+        [class.error]="nameError()"
+        aria-live="polite"
+        >{{ nameError() || 'Required. Lowercase letters, digits, dashes (DNS-1123).' }}</small
+      >
+    </div>
+    <div class="field-group">
+      <label class="field-label" for="create-image">{{ optionTexts.image.label }}</label>
+      <p-select
+        inputId="create-image"
+        [options]="images"
+        [ngModel]="form.image"
+        (ngModelChange)="form.image = $event ?? ''"
+        optionValue="Name"
+        optionLabel="Name"
+        [editable]="true"
+        placeholder="Select or type an image"
+        appendTo="body"
+        [style]="{ width: '100%' }"
+      >
+        <ng-template let-image pTemplate="item">
+          <div class="ca-option">
+            <span class="ca-name"
+              >{{ image.Name }}{{ image.IsDefault ? ' (default)' : ''
+              }}{{ image.RequiresPrivileged ? ' (needs privileged mode)' : '' }}</span
+            >
+            <span class="ca-meta">{{ image.Reference }}</span>
+          </div>
+        </ng-template>
+      </p-select>
+      <small class="field-hint" [class.error]="imageErrorShown()">{{
+        imageErrorShown() || selectedImage()?.Description || optionTexts.image.hint
+      }}</small>
+      @if (imageErrorShown()) {
+        <p-button
+          label="Go to Options"
+          icon="pi pi-arrow-right"
+          iconPos="right"
+          severity="secondary"
+          [text]="true"
+          size="small"
+          (click)="goToPrivilegedModeOnOptionsStep()"
+        />
+      }
+    </div>
+  </ng-template>
 
-    <section class="wizard-card">
-      @switch (stepKey()) {
-        @case ('basics') {
-          <div class="step-head">
-            <div>
-              <div class="step-title">Name and image</div>
-              <div class="step-sub">
-                The name becomes the pod name, SSH host and workspace folder.
-              </div>
-            </div>
+  <!-- Which size is selected is read from the four values, never stored. -->
+  <ng-template #sizeField>
+    <div class="field-group">
+      <label class="field-label" for="create-size">Size</label>
+      <p-select
+        inputId="create-size"
+        [options]="selectedSize() === 'custom' ? sizeOptionsWithCustom : sizeOptions"
+        optionLabel="label"
+        optionValue="id"
+        optionDisabled="disabled"
+        scrollHeight="320px"
+        [ngModel]="selectedSize()"
+        (ngModelChange)="chooseSize($event)"
+        [style]="{ width: '100%' }"
+        appendTo="body"
+      >
+        <ng-template let-option pTemplate="item">
+          <div class="ca-option">
+            <span class="ca-name">{{ option.label }}</span>
+            <span class="ca-meta">{{ describeSize(option.id) }}</span>
           </div>
-          <div class="field-group" [class.has-error]="nameError()">
-            <label class="field-label" for="create-name">Name</label>
-            <input
-              id="create-name"
-              [attr.aria-invalid]="!!nameError()"
-              aria-describedby="create-name-hint"
-              pInputText
-              class="w-full"
-              [(ngModel)]="form.name"
-              (blur)="touched = true"
-              placeholder="api-refactor"
-              spellcheck="false"
-              autocorrect="off"
-              autocapitalize="off"
-              autocomplete="off"
-            />
-            <small
-              id="create-name-hint"
-              class="field-hint"
-              [class.error]="nameError()"
-              aria-live="polite"
-              >{{ nameError() || 'Required. Lowercase letters, digits, dashes (DNS-1123).' }}</small
-            >
-          </div>
-          <div class="field-group">
-            <label class="field-label">Image</label>
-            <p-select
-              [options]="images"
-              [ngModel]="form.image"
-              (ngModelChange)="form.image = $event ?? ''"
-              optionValue="Name"
-              optionLabel="Name"
-              [editable]="true"
-              placeholder="Select or type an image"
-              appendTo="body"
-              [style]="{ width: '100%' }"
-            >
-              <ng-template let-image pTemplate="item">
-                <div class="ca-option">
-                  <span class="ca-name"
-                    >{{ image.Name }}{{ image.IsDefault ? ' (default)' : ''
-                    }}{{ image.RequiresPrivileged ? ' (needs privileged mode)' : '' }}</span
-                  >
-                  <span class="ca-meta">{{ image.Reference }}</span>
-                </div>
-              </ng-template>
-            </p-select>
-            <small class="field-hint" [class.error]="touched && imageError()">{{
-              (touched && imageError()) ||
-                selectedImage()?.Description ||
-                'Pick a published flavor, or type a full registry path.'
-            }}</small>
-            @if (touched && imageError()) {
-              <p-button
-                label="Go to Options"
-                icon="pi pi-arrow-right"
-                iconPos="right"
-                severity="secondary"
-                [text]="true"
-                size="small"
-                (click)="goToPrivilegedModeOnOptionsStep()"
-              />
-            }
-          </div>
-        }
-        @case ('resources') {
-          <div class="step-head">
-            <div>
-              <div class="step-title">Resources</div>
-              <div class="step-sub">
-                Defaults come from your playroom defaults. Adjust CPU, memory and storage.
-              </div>
-            </div>
-          </div>
-          <div class="field-group">
-            <label class="field-label">Storage</label
-            ><input pInputText class="w-full" [(ngModel)]="form.storage" />
-          </div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label">CPU request</label
-              ><input pInputText class="w-full" [(ngModel)]="form.cpuReq" />
-            </div>
-            <div class="field-group">
-              <label class="field-label">CPU limit</label
-              ><input pInputText class="w-full" [(ngModel)]="form.cpuLim" />
-            </div>
-          </div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label">Memory request</label
-              ><input pInputText class="w-full" [(ngModel)]="form.memReq" />
-            </div>
-            <div class="field-group">
-              <label class="field-label">Memory limit</label
-              ><input pInputText class="w-full" [(ngModel)]="form.memLim" />
-            </div>
-          </div>
-          <small class="field-hint"
-            >Type <code>none</code> to leave a request or limit unset. A request of
-            <code>none</code> needs its limit unset too, or Kubernetes reserves the whole
-            limit.</small
-          >
-        }
-        @case ('forwarding') {
-          <div class="step-head">
-            <div>
-              <div class="step-title">Forwarding</div>
-              <div class="step-sub">
-                Optional SSH key, environment variables, git repos, copy paths and ports.
-              </div>
-            </div>
-          </div>
-          <div class="field-group">
-            <label class="field-label">SSH public key</label
-            ><input
-              pInputText
-              class="w-full"
-              [(ngModel)]="form.sshKey"
-              placeholder="~/.ssh/id_ed25519.pub"
-            />
-          </div>
+        </ng-template>
+      </p-select>
+      <small class="field-hint">{{ describeSize(selectedSize()) }}</small>
+    </div>
+  </ng-template>
 
-          <app-string-list-editor
-            label="Environment"
-            [(values)]="form.env"
-            placeholder="ANTHROPIC_API_KEY"
-            addLabel="add env var"
-            itemLabel="environment variable"
-          />
-          <app-string-list-editor
-            label="Git repositories"
-            [(values)]="form.git"
-            placeholder="git@gitlab.avisi.cloud:team/repo.git"
-            addLabel="add git repo"
-            itemLabel="git repository"
-          />
-          <app-string-list-editor
-            label="Copy paths"
-            [(values)]="form.copy"
-            placeholder="~/work/api"
-            addLabel="add copy path"
-            itemLabel="copy path"
-          />
-          <app-string-list-editor
-            label="Forwarded ports"
-            [(values)]="form.ports"
-            placeholder="3000 or 80:3000"
-            addLabel="add port"
-            itemLabel="port"
-          />
-        }
-        @case ('options') {
-          <div class="step-head">
-            <div>
-              <div class="step-title">Network & options</div>
-              <div class="step-sub">Proxy group, wait behaviour and system flags.</div>
+  @if (mode === 'advanced') {
+    <div class="wizard-shell">
+      <!-- The way back sits with the steps it leaves, so it never squeezes a step title. -->
+      <div class="wizard-side">
+        <app-wizard-stepper [steps]="steps" [activeIndex]="step" (stepSelect)="goStep($event)" />
+        <p-button
+          label="Back to easy mode"
+          severity="secondary"
+          [text]="true"
+          size="small"
+          (click)="switchToEasyMode()"
+        />
+      </div>
+
+      <section class="wizard-card">
+        @switch (stepKey()) {
+          @case ('basics') {
+            <div class="step-head">
+              <div>
+                <div class="step-title">Name and image</div>
+                <div class="step-sub">The name becomes the SSH host and workspace folder.</div>
+              </div>
             </div>
-          </div>
-          <!-- The same three groups as the Defaults screen, so a setting sits
-               under the same heading in both places. -->
-          <div class="section-label options-group-label">Networking</div>
-          <div class="field-group">
-            <label class="field-label" for="create-exposure">Exposure</label>
-            <p-select
-              inputId="create-exposure"
-              [options]="exposureOptions"
-              optionLabel="label"
-              optionValue="id"
-              [(ngModel)]="form.exposure"
-              [style]="{ width: '100%' }"
-              appendTo="body"
-            >
-              <ng-template let-option pTemplate="item">
-                <div class="ca-option">
-                  <span class="ca-name">{{ option.label }}</span>
-                  <span class="ca-meta">{{ option.hint }}</span>
+            <ng-container *ngTemplateOutlet="nameAndImageFields" />
+          }
+          @case ('resources') {
+            <div class="step-head">
+              <div>
+                <div class="step-title">Resources</div>
+                <div class="step-sub">
+                  How much CPU, memory and storage the playroom gets. Starts on your defaults.
                 </div>
-              </ng-template>
-            </p-select>
+              </div>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="create-storage">{{ optionTexts.storage.label }}</label
+              ><input id="create-storage" pInputText class="w-full" [(ngModel)]="form.storage" />
+              <small class="field-hint">{{ optionTexts.storage.hint }}</small>
+            </div>
+            <ng-container *ngTemplateOutlet="sizeField" />
+            <div class="field-row field-row--align-inputs">
+              <div class="field-group">
+                <label class="field-label" for="create-cpu-request"
+                  >{{ optionTexts['cpu-request'].label }}<wbr /><small class="flag-ref"
+                    >--cpu-request</small
+                  ></label
+                ><input
+                  id="create-cpu-request"
+                  pInputText
+                  class="w-full"
+                  [(ngModel)]="form.cpuReq"
+                />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="create-cpu-limit"
+                  >{{ optionTexts['cpu-limit'].label }}<wbr /><small class="flag-ref"
+                    >--cpu-limit</small
+                  ></label
+                ><input id="create-cpu-limit" pInputText class="w-full" [(ngModel)]="form.cpuLim" />
+              </div>
+            </div>
+            <div class="field-row field-row--align-inputs">
+              <div class="field-group">
+                <label class="field-label" for="create-memory-request"
+                  >{{ optionTexts['memory-request'].label }}<wbr /><small class="flag-ref"
+                    >--memory-request</small
+                  ></label
+                ><input
+                  id="create-memory-request"
+                  pInputText
+                  class="w-full"
+                  [(ngModel)]="form.memReq"
+                />
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="create-memory-limit"
+                  >{{ optionTexts['memory-limit'].label }}<wbr /><small class="flag-ref"
+                    >--memory-limit</small
+                  ></label
+                ><input
+                  id="create-memory-limit"
+                  pInputText
+                  class="w-full"
+                  [(ngModel)]="form.memLim"
+                />
+              </div>
+            </div>
             <small class="field-hint"
-              >Leave on the playhouse default unless this room needs something different. Port
-              forwards require Tailscale.</small
+              >Guaranteed is reserved for this playroom; maximum is the most it may use. Type
+              <code>none</code> to leave one unset. Guaranteed <code>none</code> needs maximum
+              <code>none</code> too, or Kubernetes reserves the whole maximum.</small
             >
-          </div>
-          <div class="field-group">
-            <label class="field-label" for="create-proxy-group">Proxy group</label
-            ><input
-              id="create-proxy-group"
-              pInputText
-              class="w-full"
-              [(ngModel)]="form.proxyGroup"
-            />
-          </div>
-
-          <div class="section-label options-group-label">Behaviour</div>
-          <div class="field-row">
+          }
+          @case ('forwarding') {
+            <div class="step-head">
+              <div>
+                <div class="step-title">Forwarding</div>
+                <div class="step-sub">
+                  All optional: what to bring from your Mac, and which ports to open to it.
+                </div>
+              </div>
+            </div>
             <div class="field-group">
-              <label class="field-label" for="create-wait-timeout">Wait timeout</label
+              <label class="field-label" for="create-ssh-key">{{
+                optionTexts['ssh-key'].label
+              }}</label
               ><input
-                id="create-wait-timeout"
+                id="create-ssh-key"
                 pInputText
                 class="w-full"
-                [(ngModel)]="form.waitTimeout"
+                [(ngModel)]="form.sshKey"
+                placeholder="~/.ssh/id_ed25519.pub"
               />
+              <small class="field-hint">{{ optionTexts['ssh-key'].hint }}</small>
             </div>
-            <div class="toggle-stack">
-              <label class="toggle-line" for="create-no-wait"
-                ><span>Return without waiting<small class="flag-ref">--no-wait</small></span
-                ><p-toggleswitch inputId="create-no-wait" [(ngModel)]="form.noWait"
-              /></label>
-              <label class="toggle-line" for="create-force-install"
-                ><span>Reinstall the agent<small class="flag-ref">--force-install</small></span
-                ><p-toggleswitch inputId="create-force-install" [(ngModel)]="form.forceInstall"
-              /></label>
+
+            <app-string-list-editor
+              [label]="optionTexts.env.label"
+              [hint]="optionTexts.env.hint"
+              [(values)]="form.env"
+              placeholder="ANTHROPIC_API_KEY"
+              addLabel="add env var"
+              itemLabel="environment variable"
+            />
+            <app-string-list-editor
+              [label]="optionTexts.git.label"
+              [hint]="optionTexts.git.hint"
+              [(values)]="form.git"
+              placeholder="https://gitlab.avisi.cloud/team/repo.git"
+              addLabel="add git repo"
+              itemLabel="git repository"
+            />
+            <app-string-list-editor
+              [label]="optionTexts.copy.label"
+              [hint]="optionTexts.copy.hint"
+              [(values)]="form.copy"
+              placeholder="~/work/api"
+              addLabel="add copy path"
+              itemLabel="copy path"
+            />
+            <app-string-list-editor
+              [label]="optionTexts.port.label"
+              [hint]="optionTexts.port.hint"
+              [(values)]="form.ports"
+              placeholder="3000 or 80:3000"
+              addLabel="add port"
+              itemLabel="port"
+            />
+          }
+          @case ('options') {
+            <div class="step-head">
+              <div>
+                <div class="step-title">Network & options</div>
+                <div class="step-sub">
+                  How you connect, how Create waits, and what the playroom may do.
+                </div>
+              </div>
             </div>
-          </div>
-          <label class="toggle-line mt-2" for="create-ephemeral"
-            ><span
-              >Discard the disk when the playroom goes<small class="flag-ref"
-                >--ephemeral</small
-              ></span
-            ><p-toggleswitch inputId="create-ephemeral" [(ngModel)]="form.ephemeral"
-          /></label>
-          <label class="toggle-line mt-2" for="create-read-only"
-            ><span>Mount the system read-only<small class="flag-ref">--read-only</small></span
-            ><p-toggleswitch inputId="create-read-only" [(ngModel)]="form.readOnly"
-          /></label>
-
-          <div class="section-label options-group-label">Security</div>
-          <label class="toggle-line" for="create-workspace-namespace"
-            ><span
-              >Give the agent its own Kubernetes namespace<small class="flag-ref"
-                >--workspace-namespace</small
-              ></span
-            ><p-toggleswitch
-              inputId="create-workspace-namespace"
-              [(ngModel)]="form.workspaceNamespace"
-          /></label>
-          <small class="field-hint"
-            >Named <code>playroom-{{ form.name || 'NAME' }}</code
-            >, with a kubeconfig for it. Without it the playroom gets no Kubernetes
-            credentials.</small
-          >
-
-          <!-- Dangerous flags are shown with the CLI's own warning rather than
-               hidden, so the GUI stays a faithful mirror of the command. -->
-          <!-- [open] while anything inside is in use: collapsing it used to hide
-               the privileged acknowledgement and its validation message, leaving
-               Create disabled on the Review step with the reason out of sight. -->
-          <details
-            class="disclosure mt-3"
-            [open]="form.privileged || capAddCount() > 0 || advancedSecurityOpenedFromImageError"
-          >
-            <summary>Advanced &mdash; capabilities and privileged mode</summary>
-            <div class="field-group mt-3">
-              <label class="field-label" for="create-capabilities">Capabilities</label>
+            <!-- The same three groups as the Defaults screen, so a setting sits
+                 under the same heading in both places. -->
+            <div class="section-label options-group-label">Networking</div>
+            <div class="field-group">
+              <label class="field-label" for="create-exposure">{{
+                optionTexts.exposure.label
+              }}</label>
               <p-select
-                inputId="create-capabilities"
-                [options]="capabilitiesOptions"
+                inputId="create-exposure"
+                [options]="exposureOptions"
                 optionLabel="label"
                 optionValue="id"
-                [(ngModel)]="form.capabilities"
+                [(ngModel)]="form.exposure"
                 [style]="{ width: '100%' }"
                 appendTo="body"
               >
@@ -305,112 +293,271 @@
                   </div>
                 </ng-template>
               </p-select>
-              <small class="field-hint"
-                >For root inside the playroom (sshd, sudo). The agent itself runs unprivileged
-                either way.</small
-              >
+              <small class="field-hint">{{ optionTexts.exposure.hint }}</small>
             </div>
-            <app-string-list-editor
-              label="Added capabilities"
-              [(values)]="form.capAdd"
-              placeholder="NET_ADMIN"
-              addLabel="add capability"
-              itemLabel="capability"
-            />
+            <div class="field-group">
+              <label class="field-label" for="create-proxy-group">{{
+                optionTexts['proxy-group'].label
+              }}</label
+              ><input
+                id="create-proxy-group"
+                pInputText
+                class="w-full"
+                [(ngModel)]="form.proxyGroup"
+              />
+              <small class="field-hint">{{ optionTexts['proxy-group'].hint }}</small>
+            </div>
 
-            <label class="toggle-line mt-3" for="create-privileged"
-              ><span>Run privileged<small class="flag-ref">--privileged</small></span
-              ><p-toggleswitch inputId="create-privileged" [(ngModel)]="form.privileged"
-            /></label>
-            @if (form.privileged) {
-              <div class="danger-note">
-                <i class="pi pi-exclamation-triangle"></i>
-                <span>
-                  A privileged playroom runs with all Linux capabilities and access to host devices.
-                  It can affect the node it lands on and anything else running there. Only use it
-                  when a workload genuinely requires it.
-                </span>
-              </div>
-              <label class="toggle-line mt-2" for="create-acknowledge-privileged">
-                <span>I understand what privileged mode grants</span>
-                <p-toggleswitch
-                  inputId="create-acknowledge-privileged"
-                  [(ngModel)]="form.acknowledgePrivileged"
+            <div class="section-label options-group-label">Behaviour</div>
+            <div class="field-row">
+              <div class="field-group">
+                <label class="field-label" for="create-wait-timeout">{{
+                  optionTexts['wait-timeout'].label
+                }}</label
+                ><input
+                  id="create-wait-timeout"
+                  pInputText
+                  class="w-full"
+                  [(ngModel)]="form.waitTimeout"
                 />
-              </label>
-              @if (touched && privilegedError()) {
-                <small class="field-hint error">{{ privilegedError() }}</small>
-              }
-            }
-          </details>
-        }
-        @default {
-          <div class="step-head">
-            <div>
-              <div class="step-title">Review</div>
-              <div class="step-sub">
-                Create runs in the background; the new playroom appears in the list as it comes up.
+                <small class="field-hint">{{ optionTexts['wait-timeout'].hint }}</small>
+              </div>
+              <div class="toggle-stack">
+                <label class="toggle-line" for="create-no-wait"
+                  ><span
+                    >{{ optionTexts['no-wait'].label
+                    }}<small class="flag-ref">--no-wait</small></span
+                  ><p-toggleswitch inputId="create-no-wait" [(ngModel)]="form.noWait"
+                /></label>
               </div>
             </div>
-          </div>
-          <div class="review-grid">
-            <div>
-              <span>Name</span><strong>{{ form.name || 'not set' }}</strong>
+            <label class="toggle-line" for="create-force-install"
+              ><span
+                >{{ optionTexts['force-install'].label
+                }}<small class="flag-ref">--force-install</small></span
+              ><p-toggleswitch inputId="create-force-install" [(ngModel)]="form.forceInstall"
+            /></label>
+            <label class="toggle-line mt-2" for="create-ephemeral"
+              ><span
+                >{{ optionTexts.ephemeral.label }}<small class="flag-ref">--ephemeral</small></span
+              ><p-toggleswitch inputId="create-ephemeral" [(ngModel)]="form.ephemeral"
+            /></label>
+            <small class="field-hint">{{ optionTexts.ephemeral.hint }}</small>
+            <label class="toggle-line mt-2" for="create-read-only"
+              ><span
+                >{{ optionTexts['read-only'].label
+                }}<small class="flag-ref">--read-only</small></span
+              ><p-toggleswitch inputId="create-read-only" [(ngModel)]="form.readOnly"
+            /></label>
+            <small class="field-hint">{{ optionTexts['read-only'].hint }}</small>
+
+            <div class="section-label options-group-label">Security</div>
+            <label class="toggle-line" for="create-workspace-namespace"
+              ><span
+                >{{ optionTexts['workspace-namespace'].label
+                }}<small class="flag-ref">--workspace-namespace</small></span
+              ><p-toggleswitch
+                inputId="create-workspace-namespace"
+                [(ngModel)]="form.workspaceNamespace"
+            /></label>
+            <small class="field-hint"
+              >Lets the agent deploy to <code>playroom-{{ form.name || 'NAME' }}</code
+              >, with its own kubeconfig. Without it, the playroom has no Kubernetes access.</small
+            >
+
+            <!-- Dangerous flags are shown with the CLI's own warning rather than
+                 hidden, so the GUI stays a faithful mirror of the command. -->
+            <!-- [open] while anything inside is in use: collapsing it used to hide
+                 the privileged acknowledgement and its validation message, leaving
+                 Create disabled on the Review step with the reason out of sight. -->
+            <details
+              class="disclosure mt-3"
+              [open]="form.privileged || capAddCount() > 0 || advancedSecurityOpenedFromImageError"
+            >
+              <summary>Capabilities and privileged mode</summary>
+              <div class="field-group mt-3">
+                <label class="field-label" for="create-capabilities">{{
+                  optionTexts.capabilities.label
+                }}</label>
+                <p-select
+                  inputId="create-capabilities"
+                  [options]="capabilitiesOptions"
+                  optionLabel="label"
+                  optionValue="id"
+                  [(ngModel)]="form.capabilities"
+                  [style]="{ width: '100%' }"
+                  appendTo="body"
+                >
+                  <ng-template let-option pTemplate="item">
+                    <div class="ca-option">
+                      <span class="ca-name">{{ option.label }}</span>
+                      <span class="ca-meta">{{ option.hint }}</span>
+                    </div>
+                  </ng-template>
+                </p-select>
+                <small class="field-hint">{{ optionTexts.capabilities.hint }}</small>
+              </div>
+              <app-string-list-editor
+                [label]="optionTexts['cap-add'].label"
+                [hint]="optionTexts['cap-add'].hint"
+                [(values)]="form.capAdd"
+                placeholder="NET_ADMIN"
+                addLabel="add capability"
+                itemLabel="capability"
+              />
+
+              <label class="toggle-line mt-3" for="create-privileged"
+                ><span
+                  >{{ optionTexts.privileged.label
+                  }}<small class="flag-ref">--privileged</small></span
+                ><p-toggleswitch inputId="create-privileged" [(ngModel)]="form.privileged"
+              /></label>
+              <small class="field-hint">{{ optionTexts.privileged.hint }}</small>
+              @if (form.privileged) {
+                <div class="danger-note">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <span>
+                    A privileged playroom runs with all Linux capabilities and access to host
+                    devices. It can affect the node it lands on and anything else running there.
+                    Only use it when a workload genuinely requires it.
+                  </span>
+                </div>
+                <label class="toggle-line mt-2" for="create-acknowledge-privileged">
+                  <span>I understand what privileged mode grants</span>
+                  <p-toggleswitch
+                    inputId="create-acknowledge-privileged"
+                    [(ngModel)]="form.acknowledgePrivileged"
+                  />
+                </label>
+                @if (touched && privilegedError()) {
+                  <small class="field-hint error">{{ privilegedError() }}</small>
+                }
+              }
+            </details>
+          }
+          @default {
+            <div class="step-head">
+              <div>
+                <div class="step-title">Review</div>
+                <div class="step-sub">
+                  Create runs in the background; the new playroom appears in the list as it comes
+                  up.
+                </div>
+              </div>
             </div>
-            <div>
-              <span>Image</span><strong>{{ form.image }}</strong>
+            <div class="review-grid">
+              <div>
+                <span>Name</span><strong>{{ form.name || 'not set' }}</strong>
+              </div>
+              <div>
+                <span>{{ optionTexts.image.label }}</span
+                ><strong>{{ form.image }}</strong>
+              </div>
+              <div>
+                <span>Size</span><strong>{{ sizeLabels[selectedSize()] }}</strong>
+              </div>
+              <div>
+                <span>{{ optionTexts.storage.label }}</span
+                ><strong>{{ form.storage }}</strong>
+              </div>
+              <div>
+                <span>CPU guaranteed / maximum</span
+                ><strong>{{ form.cpuReq }} / {{ form.cpuLim }}</strong>
+              </div>
+              <div>
+                <span>Memory guaranteed / maximum</span
+                ><strong>{{ form.memReq }} / {{ form.memLim }}</strong>
+              </div>
+              <div>
+                <span>{{ optionTexts.port.label }}</span
+                ><strong>{{ portCount() }}</strong>
+              </div>
+              <div>
+                <span>Wait</span
+                ><strong>{{ form.noWait ? "don't wait" : form.waitTimeout }}</strong>
+              </div>
+              <div>
+                <span>System files</span
+                ><strong
+                  >{{ form.readOnly ? 'read-only' : 'writable'
+                  }}{{ form.ephemeral ? ' · disposable home folder' : '' }}</strong
+                >
+              </div>
+              <div>
+                <span>{{ optionTexts.exposure.label }}</span
+                ><strong>{{ form.exposure || 'playhouse default' }}</strong>
+              </div>
+              <div>
+                <span>{{ optionTexts.capabilities.label }}</span
+                ><strong
+                  >{{ form.capabilities || 'your default'
+                  }}{{ capAddCount() ? ' + ' + capAddCount() + ' added' : '' }}</strong
+                >
+              </div>
+              <div>
+                <span>Kubernetes namespace</span
+                ><strong>{{ form.workspaceNamespace ? 'yes' : 'no' }}</strong>
+              </div>
+              @if (form.privileged && form.acknowledgePrivileged) {
+                <div>
+                  <span>{{ optionTexts.privileged.label }}</span
+                  ><strong class="danger-text">yes</strong>
+                </div>
+              }
             </div>
-            <div>
-              <span>Storage</span><strong>{{ form.storage }}</strong>
-            </div>
-            <div>
-              <span>CPU request / limit</span><strong>{{ form.cpuReq }} / {{ form.cpuLim }}</strong>
-            </div>
-            <div>
-              <span>Memory request / limit</span
-              ><strong>{{ form.memReq }} / {{ form.memLim }}</strong>
-            </div>
-            <div>
-              <span>Ports</span><strong>{{ portCount() }} forwarded</strong>
-            </div>
-            <div>
-              <span>Wait</span><strong>{{ form.noWait ? 'no-wait' : form.waitTimeout }}</strong>
-            </div>
-            <div>
-              <span>System</span
-              ><strong
-                >{{ form.readOnly ? 'read-only' : 'writable'
-                }}{{ form.ephemeral ? ' · ephemeral' : '' }}</strong
-              >
-            </div>
-            <div>
-              <span>Exposure</span><strong>{{ form.exposure || 'playhouse default' }}</strong>
-            </div>
-            <div>
-              <span>Capabilities</span
-              ><strong
-                >{{ form.capabilities || 'configured default'
-                }}{{ capAddCount() ? ' + ' + capAddCount() + ' added' : '' }}</strong
-              >
-            </div>
-            <div>
-              <span>Kubernetes namespace</span
-              ><strong>{{ form.workspaceNamespace ? 'yes' : 'no' }}</strong>
-            </div>
-            @if (form.privileged && form.acknowledgePrivileged) {
-              <div><span>Privileged</span><strong class="danger-text">yes</strong></div>
+            <!-- Whatever is blocking Create, said next to the disabled button. -->
+            @if (blockingError()) {
+              <div class="danger-copy danger-copy--strong">
+                <i class="pi pi-exclamation-triangle"></i>{{ blockingError() }}
+              </div>
             }
-          </div>
-          <!-- Whatever is blocking Create, said next to the disabled button. -->
-          @if (blockingError()) {
-            <div class="danger-copy danger-copy--strong">
-              <i class="pi pi-exclamation-triangle"></i>{{ blockingError() }}
-            </div>
           }
         }
+      </section>
+    </div>
+  } @else {
+    <section class="wizard-card easy-card">
+      <div class="step-head">
+        <div>
+          <div class="step-title">Name, image and size</div>
+          <!-- Easy sends the advanced options too, so it says when they differ
+               from your defaults instead of hiding them. -->
+          <div class="step-sub">
+            @if (countAdvancedOptionsDifferentFromDefaults(); as changed) {
+              {{ changed }} advanced {{ changed === 1 ? 'option' : 'options' }} changed from your
+              defaults.
+            } @else {
+              Everything else uses your defaults.
+            }
+          </div>
+        </div>
+        <p-button
+          label="Show advanced options"
+          severity="secondary"
+          [text]="true"
+          size="small"
+          (click)="switchToAdvancedMode()"
+        />
+      </div>
+      <ng-container *ngTemplateOutlet="nameAndImageFields" />
+      <ng-container *ngTemplateOutlet="sizeField" />
+      <!-- The one blocker with no field in Easy, said next to the disabled Create. -->
+      @if (privilegedError()) {
+        <div class="danger-copy danger-copy--strong">
+          <i class="pi pi-exclamation-triangle"></i>{{ privilegedError() }}
+        </div>
+        <p-button
+          label="Go to Options"
+          icon="pi pi-arrow-right"
+          iconPos="right"
+          severity="secondary"
+          [text]="true"
+          size="small"
+          (click)="goToPrivilegedModeOnOptionsStep()"
+        />
       }
     </section>
-  </div>
+  }
 
   @if (submitFailure) {
     <p class="read-failure" role="alert">{{ submitFailure }}</p>
@@ -438,7 +585,7 @@
       [disabled]="submitting"
       (click)="close()"
     />
-    @if (step > 0) {
+    @if (mode === 'advanced' && step > 0) {
       <p-button
         label="Back"
         icon="pi pi-arrow-left"
@@ -448,7 +595,7 @@
         (click)="previous()"
       />
     }
-    @if (step < steps.length - 1) {
+    @if (mode === 'advanced' && step < steps.length - 1) {
       <p-button
         label="Next"
         icon="pi pi-arrow-right"
