@@ -14,7 +14,11 @@ import { ScopeService } from '../../../../core/services/scope';
 import { SetupService, SetupStepKey, SetupStepStatus } from '../../../../core/services/setup';
 import { ToastService } from '../../../../core/services/toast';
 import { WizardStep, WizardStepper } from '../../../../shared/components';
-import { CREATE_PLAYROOM_QUERY_PARAM, SETUP_STEP_QUERY_PARAM } from '../../../../shared/data';
+import {
+  CREATE_PLAYROOM_QUERY_PARAM,
+  PLAYROOM_OPTION_TEXTS,
+  SETUP_STEP_QUERY_PARAM,
+} from '../../../../shared/data';
 import { ToolStatus } from '../../../../shared/models';
 import { describeError } from '../../../../shared/utils';
 import { AcloudBinaryCardComponent } from '../../../defaults/components/acloud-binary/acloud-binary';
@@ -144,6 +148,7 @@ export class SetupPageComponent implements OnInit {
   readonly loginProgress = signal<LoginProgress>('not-started');
   readonly loginFailure = signal('');
 
+  readonly optionTexts = PLAYROOM_OPTION_TEXTS;
   readonly sshKeyDraft = signal('');
   readonly imageDraft = signal('');
   readonly defaultsFailure = signal('');

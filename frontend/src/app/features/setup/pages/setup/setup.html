@@ -188,7 +188,9 @@
                 </p>
               }
               <div class="field-group">
-                <label class="field-label" for="setup-ssh-key">SSH public key</label>
+                <label class="field-label" for="setup-ssh-key">{{
+                  optionTexts['ssh-key'].label
+                }}</label>
                 <input
                   id="setup-ssh-key"
                   pInputText
@@ -201,12 +203,10 @@
                   autocapitalize="off"
                   autocomplete="off"
                 />
-                <small class="field-hint"
-                  >Added to new playrooms, so you can connect with it.</small
-                >
+                <small class="field-hint">{{ optionTexts['ssh-key'].hint }}</small>
               </div>
               <div class="field-group">
-                <label class="field-label" for="setup-image">Image</label>
+                <label class="field-label" for="setup-image">{{ optionTexts.image.label }}</label>
                 <p-select
                   inputId="setup-image"
                   [options]="imageOptions"
