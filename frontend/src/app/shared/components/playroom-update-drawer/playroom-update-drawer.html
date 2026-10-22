@@ -36,10 +36,10 @@
           </div>
         </ng-template>
       </p-select>
-      <small class="field-hint"
-        >Pick a published flavor, or type a full registry path. Leave the current image to keep
-        it.</small
-      >
+      <small class="field-hint">{{
+        selectedImage()?.Description ||
+          'Pick a published flavor, or type a full registry path. Leave the current image to keep it.'
+      }}</small>
     </div>
   </section>
 
@@ -65,10 +65,20 @@
         ><input pInputText class="w-full" [(ngModel)]="form.memLim" />
       </div>
     </div>
+    <div class="field-group">
+      <label class="field-label" for="update-storage">Storage</label
+      ><input
+        id="update-storage"
+        pInputText
+        class="w-full"
+        [(ngModel)]="form.storage"
+        [placeholder]="room?.disk ? 'now ' + room?.disk : ''"
+      />
+    </div>
     <small class="field-hint"
-      >Type <code>none</code> to unset a request or limit — useful for a privileged playroom, which
-      has its node to itself. A request of <code>none</code> needs its limit unset too, or
-      Kubernetes reserves the whole limit.</small
+      >Storage can only grow, and grows without a restart. Type <code>none</code> to unset a request
+      or limit — useful for a privileged playroom, which has its node to itself. A request of
+      <code>none</code> needs its limit unset too, or Kubernetes reserves the whole limit.</small
     >
   </section>
 
@@ -128,6 +138,79 @@
   </section>
 
   <section class="update-card">
+    <div class="update-card-head">Linux capabilities</div>
+    <div class="field-group">
+      <label class="field-label" for="update-capabilities">Capabilities</label>
+      <p-select
+        inputId="update-capabilities"
+        [options]="capabilitiesOptions"
+        optionLabel="label"
+        optionValue="id"
+        [(ngModel)]="form.capabilities"
+        [style]="{ width: '100%' }"
+        appendTo="body"
+      />
+      <small class="field-hint">Added capabilities are kept when the profile changes.</small>
+    </div>
+    <label class="toggle-line" for="update-change-cap-add"
+      ><span>Replace the added capabilities<small class="flag-ref">--cap-add</small></span
+      ><p-toggleswitch inputId="update-change-cap-add" [(ngModel)]="form.changeCapAdd"
+    /></label>
+    @if (form.changeCapAdd) {
+      <div class="toggle-children">
+        <label class="toggle-line" for="update-clear-cap-add"
+          ><span>Remove every added capability</span
+          ><p-toggleswitch inputId="update-clear-cap-add" [(ngModel)]="form.clearCapAdd"
+        /></label>
+        @if (!form.clearCapAdd) {
+          <app-string-list-editor
+            [(values)]="form.capAdd"
+            placeholder="NET_ADMIN"
+            addLabel="add capability"
+            itemLabel="capability"
+            [showHeader]="false"
+            [grouped]="false"
+          />
+        }
+      </div>
+    }
+  </section>
+
+  <section class="update-card">
+    <div class="update-card-head">Kubernetes namespace</div>
+    <label class="toggle-line" for="update-change-workspace-namespace"
+      ><span>Change the namespace setting<small class="flag-ref">--workspace-namespace</small></span
+      ><p-toggleswitch
+        inputId="update-change-workspace-namespace"
+        [(ngModel)]="form.changeWorkspaceNamespace"
+    /></label>
+    @if (form.changeWorkspaceNamespace) {
+      <div class="toggle-children">
+        <label class="toggle-line" for="update-workspace-namespace"
+          ><span>Give the agent its own Kubernetes namespace</span
+          ><p-toggleswitch
+            inputId="update-workspace-namespace"
+            [(ngModel)]="form.workspaceNamespace"
+        /></label>
+        @if (removesWorkspaceNamespace()) {
+          <div class="danger-note">
+            <i class="pi pi-exclamation-triangle"></i>
+            <span
+              >This deletes <code>playroom-{{ form.name }}</code> and everything in it.</span
+            >
+          </div>
+          <label class="toggle-line" for="update-acknowledge-namespace-removal"
+            ><span>I understand the namespace is deleted</span
+            ><p-toggleswitch
+              inputId="update-acknowledge-namespace-removal"
+              [(ngModel)]="form.acknowledgeWorkspaceNamespaceRemoval"
+          /></label>
+        }
+      </div>
+    }
+  </section>
+
+  <section class="update-card">
     <div class="update-card-head">Connectivity</div>
     <label class="toggle-line"
       ><span>Move onto the tailnet<small class="flag-ref">--exposure tailscale</small></span
@@ -144,6 +227,12 @@
     }
   </section>
 
+  @if (blockingError()) {
+    <div class="danger-copy danger-copy--strong">
+      <i class="pi pi-exclamation-triangle"></i>{{ blockingError() }}
+    </div>
+  }
+
   <app-command-preview [input]="previewInput()" [previewFn]="previewUpdate" [enabled]="visible" />
 
   <ng-template pTemplate="footer">
@@ -155,6 +244,12 @@
       styleClass="footer-cancel"
       (click)="close()"
     />
-    <p-button label="Update" icon="pi pi-sync" size="small" (click)="save()" />
+    <p-button
+      label="Update"
+      icon="pi pi-sync"
+      size="small"
+      [disabled]="!!blockingError()"
+      (click)="save()"
+    />
   </ng-template>
 </p-drawer>

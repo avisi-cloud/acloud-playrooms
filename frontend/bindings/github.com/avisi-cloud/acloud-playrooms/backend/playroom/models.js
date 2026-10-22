@@ -7,6 +7,21 @@
 import { Create as $Create } from "@wailsio/runtime";
 
 /**
+ * Capabilities is the Linux capability profile for root inside a playroom (--capabilities).
+ * @readonly
+ * @enum {string}
+ */
+export const Capabilities = {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero: "",
+
+    CapabilitiesMinimal: "minimal",
+    CapabilitiesStandard: "standard",
+};
+
+/**
  * ConnectInput is what the GUI sends for `acloud playroom connect`.
  */
 export class ConnectInput {
@@ -82,7 +97,8 @@ export class ConnectInput {
 
 /**
  * CreateInput is what the GUI sends for `acloud playroom create`. A blank or
- * false field is omitted, except ReadOnly and Privileged; see the builder.
+ * false field is omitted, except ReadOnly, Privileged and WorkspaceNamespace;
+ * see the builder.
  */
 export class CreateInput {
     /**
@@ -191,9 +207,24 @@ export class CreateInput {
         if (!("Exposure" in $$source)) {
             /**
              * @member
-             * @type {string}
+             * @type {Exposure}
              */
-            this["Exposure"] = "";
+            this["Exposure"] = Exposure.$zero;
+        }
+        if (!("Capabilities" in $$source)) {
+            /**
+             * @member
+             * @type {Capabilities}
+             */
+            this["Capabilities"] = Capabilities.$zero;
+        }
+        if (!("CapAdd" in $$source)) {
+            /**
+             * CapAdd adds Linux capabilities on top of the Capabilities profile, e.g. NET_ADMIN.
+             * @member
+             * @type {string[]}
+             */
+            this["CapAdd"] = [];
         }
         if (!("Ephemeral" in $$source)) {
             /**
@@ -215,6 +246,13 @@ export class CreateInput {
              * @type {boolean}
              */
             this["Privileged"] = false;
+        }
+        if (!("WorkspaceNamespace" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["WorkspaceNamespace"] = false;
         }
         if (!("NoWait" in $$source)) {
             /**
@@ -251,6 +289,7 @@ export class CreateInput {
         const $$createField10_0 = $$createType0;
         const $$createField11_0 = $$createType0;
         const $$createField12_0 = $$createType0;
+        const $$createField16_0 = $$createType0;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("EnvVars" in $$parsedSource) {
             $$parsedSource["EnvVars"] = $$createField9_0($$parsedSource["EnvVars"]);
@@ -263,6 +302,9 @@ export class CreateInput {
         }
         if ("Ports" in $$parsedSource) {
             $$parsedSource["Ports"] = $$createField12_0($$parsedSource["Ports"]);
+        }
+        if ("CapAdd" in $$parsedSource) {
+            $$parsedSource["CapAdd"] = $$createField16_0($$parsedSource["CapAdd"]);
         }
         return new CreateInput(/** @type {Partial<CreateInput>} */($$parsedSource));
     }
@@ -387,6 +429,22 @@ export class DeleteInput {
         return new DeleteInput(/** @type {Partial<DeleteInput>} */($$parsedSource));
     }
 }
+
+/**
+ * Exposure is how a playroom's SSH is reachable (--exposure).
+ * @readonly
+ * @enum {string}
+ */
+export const Exposure = {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero: "",
+
+    ExposureTailscale: "tailscale",
+    ExposureNodePort: "nodeport",
+    ExposurePortForward: "portforward",
+};
 
 /**
  * ListInput is what the GUI sends for `acloud playroom list`.
@@ -773,19 +831,19 @@ export class UpdateInput {
              */
             this["CPULimit"] = "";
         }
-        if (!("MemRequest" in $$source)) {
+        if (!("MemoryRequest" in $$source)) {
             /**
              * @member
              * @type {string}
              */
-            this["MemRequest"] = "";
+            this["MemoryRequest"] = "";
         }
-        if (!("MemLimit" in $$source)) {
+        if (!("MemoryLimit" in $$source)) {
             /**
              * @member
              * @type {string}
              */
-            this["MemLimit"] = "";
+            this["MemoryLimit"] = "";
         }
         if (!("Exposure" in $$source)) {
             /**
@@ -793,9 +851,25 @@ export class UpdateInput {
              * command accepts only `tailscale` here, and changes the SSH Service alone,
              * so it applies without a restart.
              * @member
+             * @type {Exposure}
+             */
+            this["Exposure"] = Exposure.$zero;
+        }
+        if (!("Storage" in $$source)) {
+            /**
+             * Storage grows the persistent volume in place; volumes cannot shrink.
+             * @member
              * @type {string}
              */
-            this["Exposure"] = "";
+            this["Storage"] = "";
+        }
+        if (!("Capabilities" in $$source)) {
+            /**
+             * Capabilities switches the profile; explicit CapAdd additions survive the switch.
+             * @member
+             * @type {Capabilities}
+             */
+            this["Capabilities"] = Capabilities.$zero;
         }
         if (!("ChangeReadOnly" in $$source)) {
             /**
@@ -824,6 +898,36 @@ export class UpdateInput {
              * @type {string[]}
              */
             this["Ports"] = [];
+        }
+        if (!("ChangeCapAdd" in $$source)) {
+            /**
+             * CapAdd replaces the whole set of additions, like Ports.
+             * @member
+             * @type {boolean}
+             */
+            this["ChangeCapAdd"] = false;
+        }
+        if (!("CapAdd" in $$source)) {
+            /**
+             * @member
+             * @type {string[]}
+             */
+            this["CapAdd"] = [];
+        }
+        if (!("ChangeWorkspaceNamespace" in $$source)) {
+            /**
+             * Turning WorkspaceNamespace off deletes that namespace and everything in it.
+             * @member
+             * @type {boolean}
+             */
+            this["ChangeWorkspaceNamespace"] = false;
+        }
+        if (!("WorkspaceNamespace" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["WorkspaceNamespace"] = false;
         }
         if (!("Force" in $$source)) {
             /**
@@ -863,10 +967,14 @@ export class UpdateInput {
      * @returns {UpdateInput}
      */
     static createFrom($$source = {}) {
-        const $$createField11_0 = $$createType0;
+        const $$createField13_0 = $$createType0;
+        const $$createField15_0 = $$createType0;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("Ports" in $$parsedSource) {
-            $$parsedSource["Ports"] = $$createField11_0($$parsedSource["Ports"]);
+            $$parsedSource["Ports"] = $$createField13_0($$parsedSource["Ports"]);
+        }
+        if ("CapAdd" in $$parsedSource) {
+            $$parsedSource["CapAdd"] = $$createField15_0($$parsedSource["CapAdd"]);
         }
         return new UpdateInput(/** @type {Partial<UpdateInput>} */($$parsedSource));
     }

@@ -2,6 +2,7 @@ package playroom
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/avisi-cloud/acloud-playrooms/backend/cli"
@@ -16,28 +17,46 @@ type UpdateInput struct {
 	// The resource values accept `none`, which unsets that request or limit.
 	// The command refuses a request of `none` while its limit stays a number,
 	// since Kubernetes would then reserve the whole limit instead of nothing.
-	CPURequest string
-	CPULimit   string
-	MemRequest string
-	MemLimit   string
+	CPURequest    string
+	CPULimit      string
+	MemoryRequest string
+	MemoryLimit   string
 	// Exposure moves a nodeport or portforward playroom onto the tailnet. The
 	// command accepts only `tailscale` here, and changes the SSH Service alone,
 	// so it applies without a restart.
-	Exposure       string
+	Exposure Exposure
+	// Storage grows the persistent volume in place; volumes cannot shrink.
+	Storage string
+	// Capabilities switches the profile; explicit CapAdd additions survive the switch.
+	Capabilities   Capabilities
 	ChangeReadOnly bool
 	ReadOnly       bool
 	ChangePorts    bool
 	Ports          []string
-	Force          bool
-	NoWait         bool
-	WaitTimeout    string
-	ForceInstall   bool
+	// CapAdd replaces the whole set of additions, like Ports.
+	ChangeCapAdd bool
+	CapAdd       []string
+	// Turning WorkspaceNamespace off deletes that namespace and everything in it.
+	ChangeWorkspaceNamespace bool
+	WorkspaceNamespace       bool
+	Force                    bool
+	NoWait                   bool
+	WaitTimeout              string
+	ForceInstall             bool
 }
 
 // Update runs `acloud playroom update`, streaming its progress to the UI.
 func Update(ctx context.Context, operationID string, input UpdateInput) error {
+	if err := validateUpdateInput(input); err != nil {
+		return err
+	}
 	_, err := cli.Run(ctx, buildUpdateArguments(input), cli.Options{OperationID: operationID})
 	return err
+}
+
+// validateUpdateInput refuses a value acloud would reject, before anything runs.
+func validateUpdateInput(input UpdateInput) error {
+	return errors.Join(input.Exposure.Validate(), input.Capabilities.Validate())
 }
 
 // buildUpdateArguments serializes a GUI update into the arguments for
@@ -48,16 +67,24 @@ func buildUpdateArguments(input UpdateInput) []string {
 		Str("--image", input.Image).
 		Str("--cpu-request", input.CPURequest).
 		Str("--cpu-limit", input.CPULimit).
-		Str("--memory-request", input.MemRequest).
-		Str("--memory-limit", input.MemLimit).
-		Str("--exposure", input.Exposure)
+		Str("--memory-request", input.MemoryRequest).
+		Str("--memory-limit", input.MemoryLimit).
+		Str("--exposure", string(input.Exposure)).
+		Str("--storage", input.Storage).
+		Str("--capabilities", string(input.Capabilities))
 
 	// The command reads flag.Changed, so send it only when actually toggled.
 	if input.ChangeReadOnly {
 		arguments.Explicit("--read-only", input.ReadOnly)
 	}
 	if input.ChangePorts {
-		arguments.Add(portArguments(input.Ports)...)
+		arguments.Add(replacementArguments("--port", input.Ports)...)
+	}
+	if input.ChangeCapAdd {
+		arguments.Add(replacementArguments("--cap-add", input.CapAdd)...)
+	}
+	if input.ChangeWorkspaceNamespace {
+		arguments.Explicit("--workspace-namespace", input.WorkspaceNamespace)
 	}
 
 	return arguments.
@@ -68,17 +95,18 @@ func buildUpdateArguments(input UpdateInput) []string {
 		Build()
 }
 
-// portArguments renders a port replacement. --port replaces the whole set, and
-// the command spells "remove every forward" as the literal value `none`.
-func portArguments(ports []string) []string {
+// replacementArguments renders a replacement for a repeatable flag such as
+// --port or --cap-add. Each replaces the whole set, and the command spells
+// "remove them all" as the literal value `none`.
+func replacementArguments(flag string, values []string) []string {
 	var arguments []string
-	for _, port := range ports {
-		if strings.TrimSpace(port) != "" {
-			arguments = append(arguments, "--port", strings.TrimSpace(port))
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			arguments = append(arguments, flag, strings.TrimSpace(value))
 		}
 	}
 	if len(arguments) == 0 {
-		return []string{"--port", "none"}
+		return []string{flag, "none"}
 	}
 	return arguments
 }

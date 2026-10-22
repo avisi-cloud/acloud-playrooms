@@ -10,11 +10,19 @@ function form(overrides: Partial<UpdateForm> = {}): UpdateForm {
     cpuLim: '',
     memReq: '',
     memLim: '',
+    storage: '',
+    capabilities: '',
     changeReadOnly: false,
     readOnly: true,
     changePorts: false,
     clearPorts: false,
     ports: [''],
+    changeCapAdd: false,
+    clearCapAdd: false,
+    capAdd: [''],
+    changeWorkspaceNamespace: false,
+    workspaceNamespace: true,
+    acknowledgeWorkspaceNamespaceRemoval: false,
     moveToTailscale: false,
     noWait: false,
     waitTimeout: '5m',
@@ -41,7 +49,35 @@ describe('updateInputFor', () => {
     );
     expect(input.CPURequest).toBe('none');
     expect(input.CPULimit).toBe('none');
-    expect(input.MemRequest).toBe('none');
-    expect(input.MemLimit).toBe('none');
+    expect(input.MemoryRequest).toBe('none');
+    expect(input.MemoryLimit).toBe('none');
+  });
+
+  it('passes the new storage size and capability profile through', () => {
+    const input = updateInputFor(form({ storage: '40Gi', capabilities: 'standard' }));
+    expect(input.Storage).toBe('40Gi');
+    expect(input.Capabilities).toBe('standard');
+  });
+
+  it('sends the added capabilities without blank rows', () => {
+    const input = updateInputFor(form({ changeCapAdd: true, capAdd: ['NET_ADMIN', ''] }));
+    expect(input.ChangeCapAdd).toBe(true);
+    expect(input.CapAdd).toEqual(['NET_ADMIN']);
+  });
+
+  // An empty list is what the backend turns into `--cap-add none`.
+  it('sends an empty list when every added capability is removed', () => {
+    const input = updateInputFor(
+      form({ changeCapAdd: true, clearCapAdd: true, capAdd: ['NET_ADMIN'] }),
+    );
+    expect(input.CapAdd).toEqual([]);
+  });
+
+  it('passes the namespace toggle and whether it was touched', () => {
+    const input = updateInputFor(
+      form({ changeWorkspaceNamespace: true, workspaceNamespace: false }),
+    );
+    expect(input.ChangeWorkspaceNamespace).toBe(true);
+    expect(input.WorkspaceNamespace).toBe(false);
   });
 });

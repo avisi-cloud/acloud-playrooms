@@ -15,7 +15,7 @@ import { PageLoadingService } from '../../../../core/services/page-loading';
 import { PlayroomDefaultsService } from '../../../../core/services/playroom-defaults';
 import { ToastService } from '../../../../core/services/toast';
 import { wailsApi } from '../../../../core/services/wails-api';
-import { EDITORS } from '../../../../shared/data';
+import { CAPABILITIES, EDITORS, EXPOSURES } from '../../../../shared/data';
 import { DefaultEntry } from '../../../../shared/models';
 import { explainFailure, FailureExplanation } from '../../../../shared/utils';
 
@@ -38,10 +38,7 @@ interface DefaultViewRow extends DefaultRow {
   overridden: boolean;
 }
 
-/**
- * The value acloud reads as "leave this request or limit unset". Accepted by
- * create, play, update and `config set` since 0.35.0.
- */
+/** The value acloud reads as "leave this request or limit unset" (create, update, `config set`). */
 const RESOURCE_NONE = 'none';
 
 /** One registry owns grouping, control kind and options for every known key. */
@@ -80,6 +77,12 @@ export const DEFAULT_FIELDS: DefaultField[] = [
   { key: 'user', group: 'Connection', kind: 'text' },
   { key: 'ssh-key', group: 'Connection', kind: 'text' },
   { key: 'forward-agent', group: 'Connection', kind: 'toggle' },
+  {
+    key: 'exposure',
+    group: 'Networking',
+    kind: 'select',
+    options: [...EXPOSURES].map((exposure) => ({ label: exposure.label, value: exposure.id })),
+  },
   { key: 'proxy-group', group: 'Networking', kind: 'text' },
   {
     key: 'editor',
@@ -94,9 +97,17 @@ export const DEFAULT_FIELDS: DefaultField[] = [
     options: ['1m', '2m', '5m', '10m', '15m', '30m', '60m'],
   },
   { key: 'read-only', group: 'Behaviour', kind: 'toggle' },
+  {
+    key: 'capabilities',
+    group: 'Security',
+    kind: 'select',
+    options: [...CAPABILITIES].map((profile) => ({ label: profile.label, value: profile.id })),
+  },
+  { key: 'workspace-namespace', group: 'Security', kind: 'toggle' },
+  { key: 'privileged', group: 'Security', kind: 'toggle' },
 ];
 
-const GROUP_ORDER = ['Resources', 'Connection', 'Networking', 'Behaviour', 'Other'];
+const GROUP_ORDER = ['Resources', 'Connection', 'Networking', 'Behaviour', 'Security', 'Other'];
 const FIELD_BY_KEY = new Map(DEFAULT_FIELDS.map((field) => [field.key, field]));
 
 /**
@@ -163,7 +174,7 @@ export class DefaultsPageComponent implements OnInit {
   /**
    * The combinations acloud refuses, caught here rather than at the next
    * create. `config set cpu-request none` is accepted on its own, but a request
-   * of `none` against a numeric limit fails every later create and play, since
+   * of `none` against a numeric limit fails every later create, since
    * Kubernetes defaults a missing request to the limit and would reserve the
    * whole thing. The command can only complain when it runs; this screen is
    * where the pair is actually being chosen.

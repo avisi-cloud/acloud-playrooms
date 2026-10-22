@@ -89,12 +89,27 @@ export class ImageEntry {
              */
             this["Reference"] = "";
         }
+        if (!("Description" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Description"] = "";
+        }
         if (!("IsDefault" in $$source)) {
             /**
              * @member
              * @type {boolean}
              */
             this["IsDefault"] = false;
+        }
+        if (!("RequiresPrivileged" in $$source)) {
+            /**
+             * RequiresPrivileged is set for an image acloud refuses outside a privileged playroom.
+             * @member
+             * @type {boolean}
+             */
+            this["RequiresPrivileged"] = false;
         }
 
         Object.assign(this, $$source);

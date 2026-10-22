@@ -9,13 +9,11 @@ import (
 // VerifiedAgainstAcloudVersion is the acloud release whose flags and defaults
 // someone last checked the screens against by hand. Raise it when you re-check.
 //
-// 0.35.0 added `none` for the CPU and memory requests and limits (surfaced as
-// the first stop on each resource slider, and typeable in both drawers),
-// `playroom update --exposure tailscale` (the Connectivity toggle in the update
-// drawer), and `-o json` on the get and list commands the screens already read.
-// The ssh-key fix in the same release is internal to the CLI and needed nothing
-// here.
-const VerifiedAgainstAcloudVersion = "0.35.0"
+// 0.36.0 removed `playroom play`, which the GUI no longer offered. 0.37.0 added
+// the claude-code-rootless and claude-code-dind images (dind needs
+// --privileged). The same check wired the older --capabilities, --cap-add,
+// --workspace-namespace and `update --storage` flags.
+const VerifiedAgainstAcloudVersion = "0.37.0"
 
 // AcloudCompatibility says whether the acloud the GUI is running inside is
 // newer than the one the GUI was verified against.
