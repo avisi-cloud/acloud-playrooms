@@ -35,6 +35,9 @@
 # Root-level dependency folders if commands are run from the wrong directory
 /node_modules/
 
+# Local DMG metadata helpers
+/scripts/__pycache__/
+
 # Platform scaffolds wails3 may regenerate but we do not ship yet
 /build/android/
 /build/ios/

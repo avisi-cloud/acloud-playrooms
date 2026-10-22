@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Acloud Playrooms installer artwork</title>
+    <style>
+      @font-face {
+        font-family: Poppins;
+        font-weight: 400;
+        src: url('../../../frontend/public/fonts/poppins-400-latin.woff2');
+      }
+      @font-face {
+        font-family: Poppins;
+        font-weight: 600;
+        src: url('../../../frontend/public/fonts/poppins-600-latin.woff2');
+      }
+      @font-face {
+        font-family: Poppins;
+        font-weight: 700;
+        src: url('../../../frontend/public/fonts/poppins-700-latin.woff2');
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        width: 720px;
+        height: 480px;
+        overflow: hidden;
+      }
+      body {
+        position: relative;
+        font-family: Poppins, sans-serif;
+        color: #f5f7fa;
+        background: #003345 url('../../../frontend/public/brand/AvisiBackground.webp') center /
+          cover;
+        -webkit-font-smoothing: antialiased;
+      }
+      .brand {
+        position: absolute;
+        top: 34px;
+        left: 40px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .brand img {
+        width: 28px;
+        height: 28px;
+      }
+      .brand span {
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 2px;
+      }
+      .brand b {
+        color: #1dd478;
+      }
+      .eyebrow {
+        position: absolute;
+        right: 40px;
+        top: 40px;
+        color: #b5c9d3;
+        font-size: 10px;
+        letter-spacing: 1.6px;
+      }
+      h1 {
+        position: absolute;
+        left: 0;
+        top: 96px;
+        width: 100%;
+        margin: 0;
+        text-align: center;
+        font-size: 32px;
+        line-height: 1.4;
+        font-weight: 600;
+        letter-spacing: -1px;
+      }
+      .instruction {
+        position: absolute;
+        top: 149px;
+        width: 100%;
+        margin: 0;
+        text-align: center;
+        color: #c5d6df;
+        font-size: 13px;
+      }
+      .well {
+        position: absolute;
+        top: 217px;
+        width: 180px;
+        height: 180px;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 24px;
+        background: linear-gradient(145deg, #f0f3f6, #c5d6df);
+        box-shadow: 0 12px 30px rgba(0, 15, 25, 0.12);
+      }
+      .app {
+        left: 100px;
+      }
+      .applications {
+        left: 440px;
+      }
+      .arrow {
+        position: absolute;
+        top: 268px;
+        left: 320px;
+        width: 80px;
+        height: 32px;
+        color: #1dd478;
+      }
+      .footer {
+        position: absolute;
+        left: 40px;
+        right: 40px;
+        top: 414px;
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        padding-top: 17px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .footer p {
+        margin: 0;
+        color: #b5c9d3;
+        font-size: 10px;
+      }
+      .footer span {
+        color: #1dd478;
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 1.4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="brand">
+      <img src="../../../frontend/public/brand/AvisiLetterWhite.svg" alt="" /><span
+        >AVISI<b>.</b></span
+      >
+    </div>
+    <span class="eyebrow">YOUR CLOUD WORKSPACE</span>
+    <h1>Acloud Playrooms<span style="color: #1dd478">.</span></h1>
+    <p class="instruction">Drag to Applications to install</p>
+    <!-- Light wells extend behind Finder's real icons and dark filename labels. -->
+    <div class="well app"></div>
+    <svg class="arrow" viewBox="0 0 80 32" fill="none" aria-hidden="true">
+      <path
+        d="M5 16h65M58 4l12 12-12 12"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+    <div class="well applications"></div>
+    <div class="footer">
+      <p>Then open Acloud Playrooms from Applications.</p>
+      <span>LET’S BUILD SOMETHING.</span>
+    </div>
+  </body>
+</html>

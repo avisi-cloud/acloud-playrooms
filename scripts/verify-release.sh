@@ -26,3 +26,13 @@ expected_version="$(node -p 'JSON.parse(require("node:fs").readFileSync("metadat
 actual_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_bundle/Contents/Info.plist")"
 test "$actual_version" = "$expected_version"
 ruby -c homebrew/acloud-playrooms.rb
+
+disk_images=(acloud-playrooms_*_darwin_universal.dmg)
+if [ "${#disk_images[@]}" -ne 1 ] || [ ! -f "${disk_images[0]}" ]; then
+  echo 'Expected exactly one universal macOS disk image.' >&2
+  exit 1
+fi
+test "${disk_images[0]}" = "acloud-playrooms_${expected_version}_darwin_universal.dmg"
+# Require an explicit checksum entry for the DMG as well as verifying its value.
+test "$(awk -v image="${disk_images[0]}" '$2 == image { count++ } END { print count+0 }' checksums.txt)" = 1
+bash ../scripts/verify-dmg.sh "${disk_images[0]}" "$expected_version"

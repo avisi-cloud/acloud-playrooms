@@ -56,6 +56,11 @@ jobs:
       - run: npm ci
         working-directory: frontend
       - run: make check
+      - name: Install DMG packaging tool
+        run: brew install create-dmg
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
       - uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
@@ -63,6 +68,7 @@ jobs:
           args: release --clean --skip=publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: node scripts/package-release-dmg.mjs
       - run: node scripts/generate-homebrew-cask.mjs
       - run: bash scripts/verify-release.sh
       - name: Check generated bindings are committed
@@ -72,7 +78,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release view "$RELEASE_TAG"
-          gh release upload "$RELEASE_TAG" dist/*.zip dist/checksums.txt dist/homebrew/acloud-playrooms.rb --clobber
+          gh release upload "$RELEASE_TAG" dist/*.zip dist/*.dmg dist/checksums.txt dist/homebrew/acloud-playrooms.rb --clobber
       - name: Check whether Homebrew publishing is configured
         id: homebrew
         env:
