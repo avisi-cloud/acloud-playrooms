@@ -1,10 +1,6 @@
 <p-toast position="bottom-right" [breakpoints]="{ '720px': { width: '92vw' } }">
   <ng-template let-message pTemplate="message">
-    <div
-      class="toast-body"
-      [class.toast-body--linked]="!!message.data?.operationId"
-      (click)="openActivity(message.data?.operationId)"
-    >
+    <div class="toast-body" [class.toast-body--linked]="!!message.data?.operationId">
       @if (message.summary) {
         <!-- PrimeNG's own classes are kept so severity colouring still applies
              to our replacement template. -->
@@ -18,12 +14,20 @@
         <span class="toast-remedy">{{ message.data.remedy }}</span>
       }
       @if (message.data?.operationId) {
-        <span class="toast-link">View command</span>
+        <button
+          type="button"
+          class="toast-link"
+          [attr.aria-label]="'View command: ' + (message.summary || message.detail)"
+          (click)="openActivity(message.data.operationId)"
+        >
+          View command
+        </button>
       }
     </div>
   </ng-template>
 </p-toast>
 <app-cli-console />
+<a class="skip-link" href="#main-content">Skip to main content</a>
 
 <div class="app-shell" [class.light]="state.theme() === 'light'">
   <!-- ── Sidebar (always visible) ────────────────────────────────────── -->
@@ -108,14 +112,24 @@
       </div>
 
       <nav class="sidebar-nav">
-        <a class="sidebar-link" routerLink="/rooms" routerLinkActive="active">
+        <a
+          class="sidebar-link"
+          routerLink="/rooms"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+        >
           <i class="pi pi-desktop"></i>
           <span>Playrooms</span>
           @if (state.roomsCount() > 0) {
             <span class="sidebar-badge">{{ state.roomsCount() }}</span>
           }
         </a>
-        <a class="sidebar-link" routerLink="/settings" routerLinkActive="active">
+        <a
+          class="sidebar-link"
+          routerLink="/settings"
+          routerLinkActive="active"
+          ariaCurrentWhenActive="page"
+        >
           <i class="pi pi-sliders-h"></i>
           <span>Defaults</span>
         </a>
@@ -222,7 +236,10 @@
   <!-- is-loading makes the brand mark breathe: a screen loading its first
        data, or a command running. It is the app's only first-load indicator —
        screens render nothing while they wait. -->
-  <main class="main-panel" [class.is-loading]="shellBusy()">
-    <router-outlet />
+  <main id="main-content" tabindex="-1" class="main-panel" [class.is-loading]="shellBusy()">
+    @if (delayedBusy()) {
+      <p class="loading-label" role="status">Working… You can follow progress in Activity.</p>
+    }
+    <router-outlet (activate)="focusRoutedContent()" />
   </main>
 </div>

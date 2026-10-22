@@ -1,8 +1,10 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
+import { DialogModule } from 'primeng/dialog';
+import { UiSessionService } from '../../../../core/services/ui-session';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { SliderModule } from 'primeng/slider';
@@ -18,6 +20,7 @@ import { wailsApi } from '../../../../core/services/wails-api';
 import { CAPABILITIES, EDITORS, EXPOSURES } from '../../../../shared/data';
 import { DefaultEntry } from '../../../../shared/models';
 import { explainFailure, FailureExplanation } from '../../../../shared/utils';
+import { OverlayFocusDirective } from '../../../../shared/directives';
 
 interface DefaultRow extends DefaultEntry {
   draft: string;
@@ -126,23 +129,27 @@ const SLIDER_STEP = 0.02;
     CommonModule,
     FormsModule,
     ButtonModule,
+    DialogModule,
     InputTextModule,
     SelectModule,
     SliderModule,
     TagModule,
     ToggleSwitchModule,
     AcloudBinaryCardComponent,
+    OverlayFocusDirective,
   ],
   templateUrl: './defaults.html',
   styleUrl: './defaults.css',
 })
-export class DefaultsPageComponent implements OnInit {
+export class DefaultsPageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly notify = inject(ToastService);
   private readonly console = inject(CliConsoleService);
   private readonly defaults = inject(PlayroomDefaultsService);
   private readonly imageCatalog = inject(ImageCatalogService);
   private readonly pageLoading = inject(PageLoadingService);
+  private readonly session = inject(UiSessionService);
+  showResetConfirmation = false;
 
   rows = signal<DefaultRow[]>([]);
   loading = signal(true);
@@ -197,7 +204,18 @@ export class DefaultsPageComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    await Promise.all([this.refreshDefaults(), this.loadImageOptions()]);
+    const draft = this.session.recall<DefaultRow[]>('defaults');
+    if (draft) {
+      this.rows.set(draft);
+      this.initSliderValues(draft);
+      this.loading.set(false);
+      await this.loadImageOptions();
+    } else await Promise.all([this.refreshDefaults(), this.loadImageOptions()]);
+  }
+
+  ngOnDestroy(): void {
+    if (this.hasDirty()) this.session.remember('defaults', this.rows());
+    else this.session.forget('defaults');
   }
 
   /**
@@ -217,6 +235,7 @@ export class DefaultsPageComponent implements OnInit {
   }
 
   async refreshDefaults(): Promise<void> {
+    if (this.hasDirty() && !this.saving()) return;
     this.loading.set(true);
     this.failure.set(null);
     try {
@@ -309,6 +328,7 @@ export class DefaultsPageComponent implements OnInit {
   }
 
   async saveDefaults(): Promise<void> {
+    if (this.saving()) return;
     this.saving.set(true);
     const dirty = this.rows().filter((row) => row.dirty);
     try {
@@ -323,6 +343,7 @@ export class DefaultsPageComponent implements OnInit {
         );
       }
       this.notify.show({ severity: 'success', detail: 'Defaults saved', life: 2500 });
+      this.session.forget('defaults');
       await this.reloadAfterWrite();
     } catch (e) {
       this.notify.failure('Could not save the defaults', e);
@@ -336,12 +357,15 @@ export class DefaultsPageComponent implements OnInit {
    * resetting is a mutation, so it runs the command that performs it.
    */
   async resetAll(): Promise<void> {
+    if (!this.showResetConfirmation || this.saving()) return;
+    this.showResetConfirmation = false;
     this.saving.set(true);
     try {
       await this.console.run('Clearing all playroom defaults', (operationId) =>
         wailsApi.unsetAllPlayroomDefaults(operationId),
       );
       this.notify.show({ severity: 'success', detail: 'Defaults reset to built-ins', life: 2500 });
+      this.session.forget('defaults');
       await this.reloadAfterWrite();
     } catch (e) {
       this.notify.failure('Could not reset the defaults', e);

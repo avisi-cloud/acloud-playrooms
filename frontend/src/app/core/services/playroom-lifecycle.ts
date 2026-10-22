@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Playroom, UpdateForm } from '../../shared/models';
 import { listingToRoom, readCache } from '../../shared/utils';
 import { CliConsoleService } from './cli-console';
@@ -15,6 +15,31 @@ export class PlayroomLifecycleService {
   private readonly state = inject(PlayroomStateService);
   private readonly notify = inject(ToastService);
   private readonly console = inject(CliConsoleService);
+  private readonly pending = signal<Record<string, string>>({});
+
+  pendingOperation(name: string): string {
+    return this.pending()[`${this.state.scopeRevision()}:${this.state.playhouse()}:${name}`] ?? '';
+  }
+
+  private beginOperation(name: string, playhouse: string, label: string): (() => void) | null {
+    const key = `${this.state.scopeRevision()}:${playhouse}:${name}`;
+    if (this.pending()[key]) return null;
+    this.pending.update((operations) => ({ ...operations, [key]: label }));
+    return () =>
+      this.pending.update((operations) => {
+        const next = { ...operations };
+        delete next[key];
+        return next;
+      });
+  }
+
+  private async reloadAfterOperation(playhouse: string): Promise<void> {
+    try {
+      await this.reload(playhouse);
+    } catch (error) {
+      this.notify.failure('Could not refresh playrooms. Use Refresh to retry.', error);
+    }
+  }
 
   /** Optimistically patch a single room in the shared list. */
   patch(name: string, fields: Partial<Playroom>): void {
@@ -33,14 +58,19 @@ export class PlayroomLifecycleService {
    * is polled, and would bury the commands worth reading.
    */
   async reload(playhouse: string): Promise<Playroom[]> {
+    const revision = this.state.scopeRevision();
     const listings = await wailsApi.listPlayrooms({ Playhouse: playhouse });
     const rooms = listings.map((listing) => listingToRoom(listing, playhouse));
-    this.state.setRooms(rooms);
+    if (revision === this.state.scopeRevision() && playhouse === this.state.playhouse()) {
+      this.state.setRooms(rooms);
+      this.state.markRoomsLoaded(playhouse);
+    }
     return rooms;
   }
 
   async stop(room: Playroom): Promise<void> {
-    this.patch(room.name, { status: 'stopped', host: '', rawStatus: '' });
+    const finish = this.beginOperation(room.name, room.playhouse, 'Stopping');
+    if (!finish) return;
     let startedOperationId = '';
     try {
       await this.console.run(`Stopping "${room.name}"`, (operationId) => {
@@ -50,12 +80,15 @@ export class PlayroomLifecycleService {
       this.notify.toast(`Stopped "${room.name}" (storage retained)`, 'idle', startedOperationId);
     } catch (error) {
       this.notify.failure(`Could not stop "${room.name}"`, error, startedOperationId);
-      await this.reload(room.playhouse);
+    } finally {
+      await this.reloadAfterOperation(room.playhouse);
+      finish();
     }
   }
 
   async start(room: Playroom): Promise<void> {
-    this.patch(room.name, { status: 'starting', host: '', rawStatus: '' });
+    const finish = this.beginOperation(room.name, room.playhouse, 'Starting');
+    if (!finish) return;
     let startedOperationId = '';
     try {
       await this.console.run(`Starting "${room.name}"`, (operationId) => {
@@ -70,12 +103,15 @@ export class PlayroomLifecycleService {
       });
     } catch (error) {
       this.notify.failure(`Could not start "${room.name}"`, error, startedOperationId);
+    } finally {
+      await this.reloadAfterOperation(room.playhouse);
+      finish();
     }
-    await this.reload(room.playhouse);
   }
 
-  async update(form: UpdateForm): Promise<void> {
-    this.patch(form.name, { status: 'starting' });
+  async update(form: UpdateForm): Promise<boolean> {
+    const finish = this.beginOperation(form.name, form.playhouse, 'Updating');
+    if (!finish) return false;
     let startedOperationId = '';
     try {
       await this.console.run(`Updating "${form.name}"`, (operationId) => {
@@ -84,10 +120,14 @@ export class PlayroomLifecycleService {
         return wailsApi.updatePlayroom(operationId, updateInputFor(form));
       });
       this.notify.toast(`Updated "${form.name}"`, 'ok', startedOperationId);
+      return true;
     } catch (error) {
       this.notify.failure(`Could not update "${form.name}"`, error, startedOperationId);
+      return false;
+    } finally {
+      await this.reloadAfterOperation(form.playhouse);
+      finish();
     }
-    await this.reload(form.playhouse);
   }
 
   /**
@@ -100,7 +140,9 @@ export class PlayroomLifecycleService {
     waitTimeout: string,
     force = false,
   ): Promise<boolean> {
-    this.patch(room.name, { status: 'deleting' });
+    const finish = this.beginOperation(room.name, room.playhouse, 'Deleting');
+    if (!finish) return false;
+    const revision = this.state.scopeRevision();
     let startedOperationId = '';
     try {
       await this.console.run(`Deleting "${room.name}"`, (operationId) => {
@@ -114,13 +156,16 @@ export class PlayroomLifecycleService {
           WaitTimeout: waitTimeout,
         });
       });
-      this.remove(room.name);
+      if (revision === this.state.scopeRevision() && room.playhouse === this.state.playhouse())
+        this.remove(room.name);
       this.notify.toast(`Deleted "${room.name}"`, 'ok', startedOperationId);
       return true;
     } catch (error) {
       this.notify.failure(`Could not delete "${room.name}"`, error, startedOperationId);
-      await this.reload(room.playhouse);
+      await this.reloadAfterOperation(room.playhouse);
       return false;
+    } finally {
+      finish();
     }
   }
 }

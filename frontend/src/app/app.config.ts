@@ -27,10 +27,10 @@ const AvisiPreset = definePreset(Aura, {
     colorScheme: {
       light: {
         primary: {
-          color: '{primary.500}',
+          color: '{primary.700}',
           contrastColor: '#ffffff',
-          hoverColor: '{primary.600}',
-          activeColor: '{primary.700}',
+          hoverColor: '{primary.800}',
+          activeColor: '{primary.900}',
         },
         highlight: {
           background: 'rgba(17,153,187,0.1)',
@@ -58,7 +58,7 @@ const AvisiPreset = definePreset(Aura, {
       dark: {
         primary: {
           color: '{primary.400}',
-          contrastColor: '#ffffff',
+          contrastColor: '#003345',
           hoverColor: '{primary.300}',
           activeColor: '{primary.200}',
         },

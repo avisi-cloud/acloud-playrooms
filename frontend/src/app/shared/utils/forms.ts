@@ -95,8 +95,12 @@ export function capabilitiesOrBlank(raw: string): Capabilities {
 }
 
 /** The catalog entry for an image alias; undefined for a typed registry path. */
-export function findImageEntry(images: ImageEntry[], name: string): ImageEntry | undefined {
-  return images.find((image) => image.Name === name.trim());
+export function findImageEntry(
+  images: ImageEntry[],
+  name: string | null | undefined,
+): ImageEntry | undefined {
+  const normalizedName = name?.trim();
+  return normalizedName ? images.find((image) => image.Name === normalizedName) : undefined;
 }
 
 type StorageUnit = '' | 'k' | 'M' | 'G' | 'T' | 'P' | 'Ki' | 'Mi' | 'Gi' | 'Ti' | 'Pi';

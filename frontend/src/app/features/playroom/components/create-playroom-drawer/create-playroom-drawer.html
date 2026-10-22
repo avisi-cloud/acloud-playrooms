@@ -1,4 +1,9 @@
 <p-drawer
+  appOverlayFocus="Create playroom"
+  [appOverlayVisible]="visible"
+  [closeOnEscape]="!submitting"
+  [dismissible]="!submitting"
+  [showCloseIcon]="!submitting"
   [visible]="visible"
   (visibleChange)="onVisibleChange($event)"
   position="right"
@@ -28,8 +33,11 @@
             </div>
           </div>
           <div class="field-group" [class.has-error]="nameError()">
-            <label class="field-label">Name</label>
+            <label class="field-label" for="create-name">Name</label>
             <input
+              id="create-name"
+              [attr.aria-invalid]="!!nameError()"
+              aria-describedby="create-name-hint"
               pInputText
               class="w-full"
               [(ngModel)]="form.name"
@@ -40,15 +48,20 @@
               autocapitalize="off"
               autocomplete="off"
             />
-            <small class="field-hint" [class.error]="nameError()">{{
-              nameError() || 'Required. Lowercase letters, digits, dashes (DNS-1123).'
-            }}</small>
+            <small
+              id="create-name-hint"
+              class="field-hint"
+              [class.error]="nameError()"
+              aria-live="polite"
+              >{{ nameError() || 'Required. Lowercase letters, digits, dashes (DNS-1123).' }}</small
+            >
           </div>
           <div class="field-group">
             <label class="field-label">Image</label>
             <p-select
               [options]="images"
-              [(ngModel)]="form.image"
+              [ngModel]="form.image"
+              (ngModelChange)="form.image = $event ?? ''"
               optionValue="Name"
               optionLabel="Name"
               [editable]="true"
@@ -399,15 +412,30 @@
     </section>
   </div>
 
+  @if (submitFailure) {
+    <p class="read-failure" role="alert">{{ submitFailure }}</p>
+  }
+  <p class="field-hint">
+    Closing keeps this draft for this playhouse until you quit or switch scope.
+  </p>
   <app-command-preview [input]="toInput()" [previewFn]="previewCreate" [enabled]="visible" />
 
   <ng-template pTemplate="footer">
+    <p-button
+      label="Discard draft"
+      severity="secondary"
+      [text]="true"
+      size="small"
+      [disabled]="submitting"
+      (click)="discardDraft()"
+    />
     <p-button
       label="Cancel"
       severity="secondary"
       [text]="true"
       size="small"
       styleClass="footer-cancel"
+      [disabled]="submitting"
       (click)="close()"
     />
     @if (step > 0) {
@@ -433,7 +461,8 @@
         label="Create"
         icon="pi pi-plus"
         size="small"
-        [disabled]="!canCreate()"
+        [disabled]="submitting || !canCreate()"
+        [loading]="submitting"
         (click)="create()"
       />
     }

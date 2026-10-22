@@ -30,7 +30,9 @@ export function statusSeverity(status: StatusKey): Severity {
 }
 
 export function statusLabel(room: Playroom): string {
-  return room.rawStatus || STATUS[room.status]?.label || room.status;
+  return room.status === 'unknown'
+    ? room.rawStatus || STATUS.unknown.label
+    : STATUS[room.status]?.label || room.status;
 }
 
 export function statusDescription(room: Playroom): string {

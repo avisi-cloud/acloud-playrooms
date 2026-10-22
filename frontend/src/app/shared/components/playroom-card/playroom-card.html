@@ -3,6 +3,8 @@
      text link would draw. -->
 <article
   class="playroom-card"
+  [class.compact]="compact"
+  [attr.aria-busy]="!!pendingOperation"
   [ngClass]="statusMap[room.status]?.tone"
   role="link"
   tabindex="0"
@@ -33,7 +35,7 @@
       <span class="card-status-lbl" [ngClass]="statusMap[room.status]?.tone">{{
         statusLabel()
       }}</span>
-      @if (room.rawStatus) {
+      @if (room.rawStatus && room.rawStatus.toLowerCase() !== statusLabel().toLowerCase()) {
         <span class="card-raw-status" [title]="room.rawStatus">{{ room.rawStatus }}</span>
       }
     </div>
@@ -55,7 +57,9 @@
     </div>
     <div class="card-host">{{ room.host || '—' }}</div>
     <div class="card-actions" (click)="$event.stopPropagation()">
-      @if (room.status === 'ready') {
+      @if (pendingOperation) {
+        <span role="status">{{ pendingOperation }}…</span>
+      } @else if (room.status === 'ready') {
         <p-button
           label="Connect"
           icon="pi pi-terminal"
@@ -112,6 +116,7 @@
       <div class="card-actions-end">
         <p-button
           icon="pi pi-ellipsis-h"
+          [disabled]="!!pendingOperation"
           size="small"
           severity="secondary"
           [text]="true"

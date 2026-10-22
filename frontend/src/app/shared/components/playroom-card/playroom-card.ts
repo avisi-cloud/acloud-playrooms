@@ -42,6 +42,8 @@ export class PlayroomCardComponent {
   }
 
   @Input() currentUser = '';
+  @Input() pendingOperation = '';
+  @Input() compact = false;
 
   @Output() openRoom = new EventEmitter<string>();
   @Output() connectRoom = new EventEmitter<string>();
@@ -87,6 +89,8 @@ export class PlayroomCardComponent {
 
   /** Enter and Space open the card; Space must not also scroll the grid. */
   onCardKeydown(event: KeyboardEvent): void {
+    // A child button owns its own Enter/Space activation.
+    if (event.target !== event.currentTarget) return;
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
     this.openRoom.emit(this.room.name);
