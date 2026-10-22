@@ -172,18 +172,34 @@ tasks:
     cmds:
       - wails3 generate bindings -f '{{.BUILD_FLAGS | default "-tags gui"}}' -clean=true{{if eq .OBFUSCATED "true"}} -obfuscated{{end}}
 
+  # From the PNG only, the way CI's macOS 15 builds it: the Icon Composer path
+  # needs macOS 26 and writes a different Assets.car on every run. Builds copy
+  # the committed darwin/Assets.car instead; generate:mac-icon-assets remakes it.
   generate:icons:
     summary: Generates native icon assets.
     dir: build
     sources:
       - "appicon.png"
-      - "appicon.icon/**/*"
     generates:
       - "darwin/icons.icns"
       - "windows/icon.ico"
     cmds:
       - mkdir -p windows
-      - wails3 generate icons -input appicon.png -macfilename darwin/icons.icns -windowsfilename windows/icon.ico -iconcomposerinput appicon.icon -macassetdir darwin
+      - wails3 generate icons -input appicon.png -macfilename darwin/icons.icns -windowsfilename windows/icon.ico
+
+  # Every output goes to a scratch folder and only Assets.car is copied back:
+  # the command also writes an .icns and an .ico, which builds make themselves.
+  generate:mac-icon-assets:
+    summary: Rebuilds darwin/Assets.car from appicon.icon. Needs macOS 26 and Xcode 26; commit the result.
+    dir: build
+    preconditions:
+      - sh: '[ "$(sw_vers -productVersion | cut -d. -f1)" -ge 26 ]'
+        msg: "Assets.car can only be compiled on macOS 26 or later, with Xcode 26."
+    cmds:
+      - rm -rf ../.task/mac-icon-assets
+      - mkdir -p ../.task/mac-icon-assets
+      - wails3 generate icons -input appicon.png -iconcomposerinput appicon.icon -macassetdir ../.task/mac-icon-assets -macfilename ../.task/mac-icon-assets/icons.icns -windowsfilename ../.task/mac-icon-assets/icon.ico
+      - cp ../.task/mac-icon-assets/Assets.car darwin/Assets.car
 
   dev:frontend:
     summary: Runs the frontend in development mode

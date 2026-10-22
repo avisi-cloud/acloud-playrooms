@@ -32,8 +32,9 @@
 /yarn-error.log*
 /pnpm-debug.log*
 
-# Root-level dependency folders if commands are run from the wrong directory
+# Root-level dependency and cache folders if commands are run from the wrong directory
 /node_modules/
+/.angular/
 
 # Local DMG metadata helpers
 /scripts/__pycache__/
