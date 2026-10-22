@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { DEFAULTS } from '../data/defaults';
-import { DefaultsLookup, NAME_RE, blankCreateForm, parseRenderedPorts } from './forms';
+import {
+  DefaultsLookup,
+  NAME_RE,
+  blankCreateForm,
+  capabilitiesOrBlank,
+  findImageEntry,
+  parseRenderedPorts,
+} from './forms';
 
 /** A stand-in for PlayroomDefaultsService holding whatever the test needs. */
 function lookup(values: Record<string, string>): DefaultsLookup {
@@ -86,6 +93,54 @@ describe('blankCreateForm', () => {
 
   it('leaves exposure unset so the playhouse default applies', () => {
     expect(blankCreateForm('ph').exposure).toBe('');
+  });
+
+  it('seeds the capability profile and namespace toggle from the configured defaults', () => {
+    const form = blankCreateForm(
+      'ph',
+      lookup({ capabilities: 'standard', 'workspace-namespace': 'true' }),
+    );
+    expect(form.capabilities).toBe('standard');
+    expect(form.workspaceNamespace).toBe(true);
+    expect(form.capAdd).toEqual(['']);
+  });
+
+  it('starts without a namespace and with acloud choosing the profile when nothing is configured', () => {
+    const form = blankCreateForm('ph');
+    expect(form.capabilities).toBe('');
+    expect(form.workspaceNamespace).toBe(false);
+  });
+});
+
+describe('capabilitiesOrBlank', () => {
+  it('keeps a known profile', () => {
+    expect(capabilitiesOrBlank('minimal')).toBe('minimal');
+    expect(capabilitiesOrBlank('standard')).toBe('standard');
+  });
+
+  it('leaves an unknown value to acloud instead of guessing a profile', () => {
+    expect(capabilitiesOrBlank('everything')).toBe('');
+    expect(capabilitiesOrBlank('')).toBe('');
+  });
+});
+
+describe('findImageEntry', () => {
+  const images = [
+    {
+      Name: 'claude-code-dind',
+      Reference: 'registry/claude-code-dind:latest',
+      Description: 'Docker',
+      IsDefault: false,
+      RequiresPrivileged: true,
+    },
+  ];
+
+  it('finds a catalog alias, ignoring surrounding spaces', () => {
+    expect(findImageEntry(images, ' claude-code-dind ')?.RequiresPrivileged).toBe(true);
+  });
+
+  it('finds nothing for a typed registry path', () => {
+    expect(findImageEntry(images, 'registry.example.com/custom:1')).toBeUndefined();
   });
 });
 

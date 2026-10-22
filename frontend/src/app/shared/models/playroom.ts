@@ -1,6 +1,11 @@
+import { CAPABILITIES, EXPOSURES } from '../data/images';
 import { STATUS } from '../data/status';
 
 export type StatusKey = keyof typeof STATUS;
+/** An `--exposure` value; blank leaves the flag off. */
+export type Exposure = (typeof EXPOSURES)[number]['id'];
+/** A `--capabilities` profile; blank leaves the flag off. */
+export type Capabilities = (typeof CAPABILITIES)[number]['id'] | '';
 export type ConnectTab = 'connect' | 'open';
 
 /**
@@ -10,7 +15,9 @@ export type ConnectTab = 'connect' | 'open';
 export interface ImageEntry {
   Name: string;
   Reference: string;
+  Description: string;
   IsDefault: boolean;
+  RequiresPrivileged: boolean;
 }
 
 export interface Playroom {
@@ -51,12 +58,16 @@ export interface CreateForm {
   copy: string[];
   ports: string[];
   proxyGroup: string;
-  /** `--exposure`: how the room is reachable. Blank means the CLI's default. */
-  exposure: string;
+  exposure: Exposure;
+  capabilities: Capabilities;
+  /** `--cap-add`: Linux capabilities on top of the profile. */
+  capAdd: string[];
   ephemeral: boolean;
   readOnly: boolean;
   /** `--privileged`: all Linux capabilities and host device access. */
   privileged: boolean;
+  /** `--workspace-namespace`: a namespace of its own, with a kubeconfig. */
+  workspaceNamespace: boolean;
   /**
    * Not a flag — the acknowledgement the GUI requires before it will send
    * `--privileged`. It never reaches the command line.
@@ -75,11 +86,22 @@ export interface UpdateForm {
   cpuLim: string;
   memReq: string;
   memLim: string;
+  /** Grows the volume; blank keeps the current size. */
+  storage: string;
+  /** Blank keeps the current profile. */
+  capabilities: Capabilities;
   changeReadOnly: boolean;
   readOnly: boolean;
   changePorts: boolean;
   clearPorts: boolean;
   ports: string[];
+  changeCapAdd: boolean;
+  clearCapAdd: boolean;
+  capAdd: string[];
+  changeWorkspaceNamespace: boolean;
+  workspaceNamespace: boolean;
+  /** Not a flag: the acknowledgement needed before `--workspace-namespace=false`. */
+  acknowledgeWorkspaceNamespaceRemoval: boolean;
   /** Moves a nodeport or portforward room onto the tailnet; see the drawer. */
   moveToTailscale: boolean;
   noWait: boolean;

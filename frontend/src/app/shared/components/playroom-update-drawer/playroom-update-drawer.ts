@@ -19,11 +19,35 @@ import {
 } from '../../../core/services/playroom-lifecycle';
 import { ImageCatalogService } from '../../../core/services/image-catalog';
 import { PlayroomUpdateInput, wailsApi } from '../../../core/services/wails-api';
-import { DEFAULTS } from '../../data';
+import { CAPABILITIES } from '../../data';
 import { ImageEntry, Playroom, UpdateForm } from '../../models';
-import { blankUpdateForm } from '../../utils';
+import { blankUpdateForm, findImageEntry } from '../../utils';
 import { CommandPreviewComponent } from '../command-preview/command-preview';
 import { StringListEditorComponent } from '../string-list-editor/string-list-editor';
+
+/** Stands in for [room] until one is given, so the form always has every field. */
+const EMPTY_ROOM: Playroom = {
+  name: '',
+  owner: '',
+  status: 'unknown',
+  rawStatus: '',
+  ageMin: 0,
+  disk: '',
+  diskType: '',
+  host: '',
+  image: '',
+  cpuReq: '',
+  cpuLim: '',
+  memReq: '',
+  memLim: '',
+  ports: '',
+  system: '',
+  playhouse: '',
+  ephemeral: false,
+  env: [],
+  git: [],
+  copy: [],
+};
 
 /**
  * The "update playroom" drawer, seeded from [room] each time it opens. The save
@@ -57,23 +81,7 @@ export class PlayroomUpdateDrawerComponent implements OnChanges {
   @Output() visibleChange = new EventEmitter<boolean>();
   @Input() room: Playroom | null = null;
 
-  form: UpdateForm = {
-    name: '',
-    playhouse: '',
-    image: '',
-    cpuReq: '',
-    cpuLim: '',
-    memReq: '',
-    memLim: '',
-    changeReadOnly: false,
-    readOnly: true,
-    changePorts: false,
-    clearPorts: false,
-    ports: [''],
-    moveToTailscale: false,
-    noWait: false,
-    waitTimeout: DEFAULTS.waitTimeout,
-  };
+  form: UpdateForm = blankUpdateForm(EMPTY_ROOM);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible'] && this.visible && this.room) {
@@ -94,6 +102,28 @@ export class PlayroomUpdateDrawerComponent implements OnChanges {
     }
   }
 
+  readonly capabilitiesOptions = [
+    { id: '', label: 'Keep current' },
+    ...CAPABILITIES.map(({ id, label }) => ({ id, label })),
+  ];
+
+  selectedImage(): ImageEntry | undefined {
+    return findImageEntry(this.images, this.form.image);
+  }
+
+  /** `--workspace-namespace=false` deletes the namespace and everything in it. */
+  removesWorkspaceNamespace(): boolean {
+    return this.form.changeWorkspaceNamespace && !this.form.workspaceNamespace;
+  }
+
+  /** Whatever is stopping Update, said next to the disabled button. */
+  blockingError(): string {
+    if (this.removesWorkspaceNamespace() && !this.form.acknowledgeWorkspaceNamespaceRemoval) {
+      return 'Confirm that the namespace and everything in it may be deleted.';
+    }
+    return '';
+  }
+
   previewInput(): Partial<PlayroomUpdateInput> {
     return updateInputFor(this.form);
   }
@@ -107,6 +137,7 @@ export class PlayroomUpdateDrawerComponent implements OnChanges {
   }
 
   async save(): Promise<void> {
+    if (this.blockingError()) return;
     const form = this.form;
     this.close();
     await this.actions.update(form);

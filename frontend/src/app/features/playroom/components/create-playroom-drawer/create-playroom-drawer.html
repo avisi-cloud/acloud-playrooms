@@ -65,7 +65,11 @@
                 </div>
               </ng-template>
             </p-select>
-            <small class="field-hint">Pick a published flavor, or type a full registry path.</small>
+            <small class="field-hint" [class.error]="touched && imageError()">{{
+              (touched && imageError()) ||
+                selectedImage()?.Description ||
+                'Pick a published flavor, or type a full registry path.'
+            }}</small>
           </div>
         }
         @case ('resources') {
@@ -208,6 +212,47 @@
             ><span>Mount the system read-only<small class="flag-ref">--read-only</small></span
             ><p-toggleswitch [(ngModel)]="form.readOnly"
           /></label>
+          <label class="toggle-line mt-2" for="create-workspace-namespace"
+            ><span
+              >Give the agent its own Kubernetes namespace<small class="flag-ref"
+                >--workspace-namespace</small
+              ></span
+            ><p-toggleswitch
+              inputId="create-workspace-namespace"
+              [(ngModel)]="form.workspaceNamespace"
+          /></label>
+          <small class="field-hint"
+            >Named <code>playroom-{{ form.name || 'NAME' }}</code
+            >, with a kubeconfig for it. Without it the playroom gets no Kubernetes
+            credentials.</small
+          >
+
+          <details class="disclosure mt-3" [open]="capAddCount() > 0">
+            <summary>Advanced &mdash; Linux capabilities</summary>
+            <div class="field-group mt-3">
+              <label class="field-label" for="create-capabilities">Capabilities</label>
+              <p-select
+                inputId="create-capabilities"
+                [options]="capabilitiesOptions"
+                optionLabel="label"
+                optionValue="id"
+                [(ngModel)]="form.capabilities"
+                [style]="{ width: '100%' }"
+                appendTo="body"
+              />
+              <small class="field-hint"
+                >For root inside the playroom (sshd, sudo). The agent itself runs unprivileged
+                either way.</small
+              >
+            </div>
+            <app-string-list-editor
+              label="Added capabilities"
+              [(values)]="form.capAdd"
+              placeholder="NET_ADMIN"
+              addLabel="add capability"
+              itemLabel="capability"
+            />
+          </details>
 
           <!-- Dangerous flags are shown with the CLI's own warning rather than
                hidden, so the GUI stays a faithful mirror of the command. -->
@@ -280,6 +325,17 @@
             </div>
             <div>
               <span>Exposure</span><strong>{{ form.exposure || 'playhouse default' }}</strong>
+            </div>
+            <div>
+              <span>Capabilities</span
+              ><strong
+                >{{ form.capabilities || 'configured default'
+                }}{{ capAddCount() ? ' + ' + capAddCount() + ' added' : '' }}</strong
+              >
+            </div>
+            <div>
+              <span>Kubernetes namespace</span
+              ><strong>{{ form.workspaceNamespace ? 'yes' : 'no' }}</strong>
             </div>
             @if (form.privileged && form.acknowledgePrivileged) {
               <div><span>Privileged</span><strong class="danger-text">yes</strong></div>

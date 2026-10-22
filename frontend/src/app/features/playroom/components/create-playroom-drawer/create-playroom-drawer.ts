@@ -28,9 +28,9 @@ import {
   WizardStep,
   WizardStepper,
 } from '../../../../shared/components';
-import { EXPOSURES } from '../../../../shared/data';
+import { CAPABILITIES, EXPOSURES } from '../../../../shared/data';
 import { CreateForm, ImageEntry, Playroom } from '../../../../shared/models';
-import { NAME_RE, blankCreateForm, updateCache } from '../../../../shared/utils';
+import { NAME_RE, blankCreateForm, findImageEntry, updateCache } from '../../../../shared/utils';
 
 type CreateStepKey = 'basics' | 'resources' | 'forwarding' | 'options' | 'review';
 
@@ -153,11 +153,14 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
       Ports: form.ports.filter(Boolean),
       ProxyGroup: form.proxyGroup,
       Exposure: form.exposure,
+      Capabilities: form.capabilities,
+      CapAdd: form.capAdd.filter(Boolean),
       Ephemeral: form.ephemeral,
       ReadOnly: form.readOnly,
       // Guarded by the acknowledgement: the toggle alone does not send it, so a
       // user cannot arm the dangerous flag and then forget they did.
       Privileged: form.privileged && form.acknowledgePrivileged,
+      WorkspaceNamespace: form.workspaceNamespace,
       NoWait: form.noWait,
       WaitTimeout: form.waitTimeout,
       ForceInstall: form.forceInstall,
@@ -199,11 +202,28 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
    *  instead of leaving a disabled button with its reason on another step. */
   blockingError(): string {
     if (this.nameInvalid()) return this.nameError() || 'A name is required.';
-    return this.privilegedError();
+    return this.privilegedError() || this.imageError();
   }
 
   canCreate(): boolean {
-    return !this.nameInvalid() && !this.privilegedError();
+    return !this.nameInvalid() && !this.privilegedError() && !this.imageError();
+  }
+
+  selectedImage(): ImageEntry | undefined {
+    return findImageEntry(this.images, this.form.image);
+  }
+
+  /** acloud refuses an image like claude-code-dind outside privileged mode, so refuse it here first. */
+  imageError(): string {
+    const privilegedIsOn = this.form.privileged && this.form.acknowledgePrivileged;
+    if (this.selectedImage()?.RequiresPrivileged && !privilegedIsOn) {
+      return `${this.form.image} needs privileged mode. Turn it on under Options.`;
+    }
+    return '';
+  }
+
+  capAddCount(): number {
+    return this.form.capAdd.filter((value) => value.trim().length > 0).length;
   }
 
   portCount(): number {
@@ -222,6 +242,7 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
   }
 
   readonly exposureOptions = [...EXPOSURES];
+  readonly capabilitiesOptions = [...CAPABILITIES];
 
   private nameInvalid(): boolean {
     return !this.form.name || !NAME_RE.test(this.form.name);
