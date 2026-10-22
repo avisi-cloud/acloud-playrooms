@@ -85,7 +85,11 @@ release-snapshot:
 	node scripts/generate-homebrew-cask.mjs
 	bash scripts/verify-release.sh
 
-clean:
-	-rm -rf bin node_modules frontend/node_modules frontend/dist frontend/.angular frontend/.vite frontend/coverage .task icons.icns
+# After changing build/appicon.icon. Needs macOS 26 and Xcode 26; see doc/RELEASING.md.
+mac-icon-assets: tools
+	"$(WAILS3)" task common:generate:mac-icon-assets
 
-.PHONY: tools dev dev-local build test vet fmt fmt-check check package dmg release-snapshot clean
+clean:
+	-rm -rf bin node_modules frontend/node_modules frontend/dist frontend/.angular frontend/.vite frontend/coverage .angular .task icons.icns
+
+.PHONY: tools dev dev-local build test vet fmt fmt-check check package dmg release-snapshot mac-icon-assets clean
