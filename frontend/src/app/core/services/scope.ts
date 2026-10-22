@@ -74,7 +74,8 @@ export class ScopeService {
     this._loadingPlayhouses.set(true);
     try {
       const playhouses = await wailsApi.listPlayhouses();
-      if (sequence === this.menuReadSequence && revision === this.state.scopeRevision()) this._playhouses.set(playhouses);
+      if (sequence === this.menuReadSequence && revision === this.state.scopeRevision())
+        this._playhouses.set(playhouses);
     } catch {
       /* the menu keeps what it had */
     } finally {
@@ -105,7 +106,12 @@ export class ScopeService {
     target: string,
     runCommand: (operationId: string) => Promise<void>,
   ): Promise<ScopeSwitchResult> {
-    if (this._switching()) return { succeeded: false, operationId: '', errorMessage: 'A scope switch is already running.' };
+    if (this._switching())
+      return {
+        succeeded: false,
+        operationId: '',
+        errorMessage: 'A scope switch is already running.',
+      };
     this._switching.set(true);
     let startedOperationId = '';
     try {

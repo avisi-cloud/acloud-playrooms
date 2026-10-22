@@ -23,8 +23,9 @@ export class PlayroomLifecycleService {
   constructor() {
     effect(() => {
       const selection = this.state.captureSelection();
-      const transitional = this.state.rooms().some((room) =>
-        room.playhouse === selection.playhouse && isTransitional(room.status));
+      const transitional = this.state
+        .rooms()
+        .some((room) => room.playhouse === selection.playhouse && isTransitional(room.status));
       untracked(() => {
         if (this.pollTimer) clearTimeout(this.pollTimer);
         this.pollTimer = null;
@@ -42,7 +43,8 @@ export class PlayroomLifecycleService {
       this.pollTimer = null;
       if (!this.state.isCurrentSelection(selection) || this.destroyed) return;
       void this.reload(selection.playhouse, selection).catch(() => {
-        if (this.state.isCurrentSelection(selection) && !this.destroyed) this.schedulePoll(selection);
+        if (this.state.isCurrentSelection(selection) && !this.destroyed)
+          this.schedulePoll(selection);
       });
     }, 10_000);
   }
@@ -50,13 +52,19 @@ export class PlayroomLifecycleService {
   /** Optimistically patch a single room in the shared list. */
   patch(name: string, fields: Partial<Playroom>, playhouse = this.state.playhouse()): void {
     this.state.setRooms(
-      this.state.rooms().map((room) => (room.name === name && room.playhouse === playhouse ? { ...room, ...fields } : room)),
+      this.state
+        .rooms()
+        .map((room) =>
+          room.name === name && room.playhouse === playhouse ? { ...room, ...fields } : room,
+        ),
     );
   }
 
   /** Remove a room from the shared list. */
   remove(name: string, playhouse: string): void {
-    this.state.setRooms(this.state.rooms().filter((room) => room.name !== name || room.playhouse !== playhouse));
+    this.state.setRooms(
+      this.state.rooms().filter((room) => room.name !== name || room.playhouse !== playhouse),
+    );
     this.state.setRoomsCount(this.state.rooms().length);
   }
 
@@ -65,7 +73,12 @@ export class PlayroomLifecycleService {
    * is polled, and would bury the commands worth reading.
    */
   async reload(playhouse: string, selection = this.state.captureSelection()): Promise<Playroom[]> {
-    if (!playhouse || playhouse !== selection.playhouse || !this.state.isCurrentSelection(selection)) return [];
+    if (
+      !playhouse ||
+      playhouse !== selection.playhouse ||
+      !this.state.isCurrentSelection(selection)
+    )
+      return [];
     const sequence = ++this.readSequence;
     try {
       const listings = await wailsApi.listPlayrooms({ Playhouse: playhouse });
@@ -78,7 +91,8 @@ export class PlayroomLifecycleService {
       }
       return rooms;
     } catch (error) {
-      if (sequence === this.readSequence && this.state.isCurrentSelection(selection)) this.loadError.set(String(error));
+      if (sequence === this.readSequence && this.state.isCurrentSelection(selection))
+        this.loadError.set(String(error));
       throw error;
     }
   }

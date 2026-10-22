@@ -44,7 +44,12 @@ export class RoomDetailPageComponent implements OnInit {
 
   readonly roomName = signal('');
   readonly room = computed<Playroom | null>(
-    () => this.state.rooms().find((room) => room.name === this.roomName() && room.playhouse === this.state.playhouse()) ?? null,
+    () =>
+      this.state
+        .rooms()
+        .find(
+          (room) => room.name === this.roomName() && room.playhouse === this.state.playhouse(),
+        ) ?? null,
   );
   loading = false;
 

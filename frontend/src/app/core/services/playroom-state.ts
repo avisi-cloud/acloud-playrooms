@@ -93,9 +93,11 @@ export class PlayroomStateService {
   }
 
   isCurrentSelection(selection: PlayroomSelection): boolean {
-    return selection.playhouse === this.playhouse() &&
+    return (
+      selection.playhouse === this.playhouse() &&
       selection.scopeRevision === this.scopeRevision() &&
-      selection.selectionRevision === this.selectionRevision();
+      selection.selectionRevision === this.selectionRevision()
+    );
   }
 
   toggleTheme(): void {

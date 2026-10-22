@@ -43,7 +43,11 @@
       />
     </p-iconfield>
     <label class="mine-toggle" for="mine-only">
-      <p-toggleswitch inputId="mine-only" [ngModel]="mineOnly()" (ngModelChange)="mineOnly.set($event)" />
+      <p-toggleswitch
+        inputId="mine-only"
+        [ngModel]="mineOnly()"
+        (ngModelChange)="mineOnly.set($event)"
+      />
       <span>Mine</span>
     </label>
 
@@ -58,8 +62,15 @@
     @if (actions.loadError()) {
       <div class="empty-state" role="alert">
         <h3 class="empty-state-title">Could not load playrooms</h3>
-        <p class="empty-state-text">The list could not be refreshed. Previously loaded rooms may be out of date.</p>
-        <p-button label="Retry" icon="pi pi-refresh" [disabled]="refreshing()" (click)="refreshRooms()" />
+        <p class="empty-state-text">
+          The list could not be refreshed. Previously loaded rooms may be out of date.
+        </p>
+        <p-button
+          label="Retry"
+          icon="pi pi-refresh"
+          [disabled]="refreshing()"
+          (click)="refreshRooms()"
+        />
       </div>
     }
     @if (!loaded() && !actions.loadError()) {

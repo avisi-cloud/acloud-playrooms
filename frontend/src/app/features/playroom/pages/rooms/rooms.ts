@@ -76,7 +76,10 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
     effect(() => {
       this.state.playhouse();
       this.state.scopeRevision();
-      untracked(() => { this.closeOverlays(); void this.refreshRooms(); });
+      untracked(() => {
+        this.closeOverlays();
+        void this.refreshRooms();
+      });
     });
   }
 
@@ -162,7 +165,9 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   );
 
   private findRoomByName(name: string): Playroom | undefined {
-    return this.state.rooms().find((room) => room.name === name && room.playhouse === this.state.playhouse());
+    return this.state
+      .rooms()
+      .find((room) => room.name === name && room.playhouse === this.state.playhouse());
   }
 
   openRoom(name: string): void {
@@ -239,5 +244,4 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   private incrementAges(): void {
     this.state.setRooms(this.state.rooms().map((room) => ({ ...room, ageMin: room.ageMin + 1 })));
   }
-
 }

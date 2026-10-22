@@ -130,12 +130,16 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
     this.refreshing.set(true);
     this.failure.set(null);
     try {
-      const playhouses = await this.pageLoading.runAndShowIndicatorIf(!background, () => wailsApi.listPlayhouses());
-      if (revision === this.state.scopeRevision() && !this.destroyed) this.playhouses.set(playhouses);
+      const playhouses = await this.pageLoading.runAndShowIndicatorIf(!background, () =>
+        wailsApi.listPlayhouses(),
+      );
+      if (revision === this.state.scopeRevision() && !this.destroyed)
+        this.playhouses.set(playhouses);
     } catch (e) {
       // Normalised: this used to be the raw value, and a failed backend call
       // printed an entire HTML error document into the centred error state.
-      if (revision === this.state.scopeRevision() && !this.destroyed) this.failure.set(explainFailure(e));
+      if (revision === this.state.scopeRevision() && !this.destroyed)
+        this.failure.set(explainFailure(e));
     } finally {
       this.refreshing.set(false);
       this.loading.set(false);
