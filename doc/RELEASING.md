@@ -122,6 +122,24 @@ GitHub runs the same rehearsal for pull requests. It also verifies generated
 bindings are committed, runs Go vet and race tests, and runs the frontend's
 formatter, linter, production build and tests.
 
+## Change the app icon
+
+The app carries two macOS icons. `build/darwin/icons.icns` is made from
+`build/appicon.png` on every build. `build/darwin/Assets.car` is the macOS 26
+icon, compiled from `build/appicon.icon`, and is committed: GitHub's macOS 15
+runners cannot compile an `.icon`, so releases ship the committed file, and
+local builds now copy the same one instead of compiling their own.
+
+After changing `appicon.icon`, run this on macOS 26 with Xcode 26 and commit
+`build/darwin/Assets.car`:
+
+```sh
+make mac-icon-assets
+```
+
+`actool` writes a slightly different file on every run, so only commit it when
+the icon itself changed.
+
 ## Build or edit the installer
 
 ```sh
