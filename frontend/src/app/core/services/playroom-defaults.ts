@@ -12,26 +12,30 @@ export class PlayroomDefaultsService {
 
   /** The in-flight or completed load, so concurrent callers share one request. */
   private pending: Promise<void> | null = null;
+  private revision = 0;
 
   /**
-   * Loads the defaults once and caches them. A failure is swallowed so the
-   * caller falls back to its built-in constants rather than blocking.
+   * Shares successful reads; failed or invalidated reads must never become cached defaults.
    */
   loadConfiguredDefaultsOnce(): Promise<void> {
+    const revision = this.revision;
     this.pending ??= wailsApi
       .getPlayroomDefaults()
       .then((entries) => {
-        this._entries.set(entries);
+        if (revision === this.revision) this._entries.set(entries);
       })
-      .catch(() => {
-        this._entries.set([]);
+      .catch((error) => {
+        if (revision === this.revision) this.pending = null;
+        throw error;
       });
     return this.pending;
   }
 
   /** Drops the cache, so the next load re-reads. The Defaults screen calls it. */
   forgetCachedDefaults(): void {
+    this.revision++;
     this.pending = null;
+    this._entries.set([]);
   }
 
   /**

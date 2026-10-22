@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { CliConsoleService } from './cli-console';
 import { PlayroomStateService } from './playroom-state';
+import { PlayroomDefaultsService } from './playroom-defaults';
 import { ContextEntry, OrganisationEntry, PlayhouseEntry, wailsApi } from './wails-api';
 
 /** What a finished scope switch tells the shell, so it can report it. */
@@ -20,6 +21,9 @@ export interface ScopeSwitchResult {
 export class ScopeService {
   private readonly state = inject(PlayroomStateService);
   private readonly console = inject(CliConsoleService);
+  private readonly defaults = inject(PlayroomDefaultsService);
+  private contextReadSequence = 0;
+  private menuReadSequence = 0;
 
   private readonly _contexts = signal<ContextEntry[]>([]);
   private readonly _currentContext = signal<string>('');
@@ -42,10 +46,12 @@ export class ScopeService {
    * between. Always both: the organisation list depends on the context.
    */
   async loadContextAndOrganisation(): Promise<void> {
+    const sequence = ++this.contextReadSequence;
     const [context, organisation] = await Promise.all([
       wailsApi.getCurrentContext().catch(() => ''),
       wailsApi.getCurrentOrganisation().catch(() => ''),
     ]);
+    if (sequence !== this.contextReadSequence) return;
     this._currentContext.set(context);
     this._currentOrganisation.set(organisation);
 
@@ -53,6 +59,7 @@ export class ScopeService {
       wailsApi.listContexts().catch(() => []),
       wailsApi.listOrganisations().catch(() => []),
     ]);
+    if (sequence !== this.contextReadSequence) return;
     this._contexts.set(contexts);
     this._organisations.set(organisations);
   }
@@ -62,14 +69,17 @@ export class ScopeService {
    * last saw. A failure keeps whatever it had.
    */
   async loadPlayhousesForMenu(): Promise<void> {
-    if (this._loadingPlayhouses()) return;
+    const sequence = ++this.menuReadSequence;
+    const revision = this.state.scopeRevision();
     this._loadingPlayhouses.set(true);
     try {
-      this._playhouses.set(await wailsApi.listPlayhouses());
+      const playhouses = await wailsApi.listPlayhouses();
+      if (sequence === this.menuReadSequence && revision === this.state.scopeRevision())
+        this._playhouses.set(playhouses);
     } catch {
       /* the menu keeps what it had */
     } finally {
-      this._loadingPlayhouses.set(false);
+      if (sequence === this.menuReadSequence) this._loadingPlayhouses.set(false);
     }
   }
 
@@ -96,6 +106,12 @@ export class ScopeService {
     target: string,
     runCommand: (operationId: string) => Promise<void>,
   ): Promise<ScopeSwitchResult> {
+    if (this._switching())
+      return {
+        succeeded: false,
+        operationId: '',
+        errorMessage: 'A scope switch is already running.',
+      };
     this._switching.set(true);
     let startedOperationId = '';
     try {
@@ -118,6 +134,10 @@ export class ScopeService {
    * session just left. `noteScopeChange` reaches a screen already open.
    */
   forgetEverythingBelongingToPreviousScope(): void {
+    this.contextReadSequence++;
+    this.menuReadSequence++;
+    this._loadingPlayhouses.set(false);
+    this.defaults.forgetCachedDefaults();
     this.state.selectPlayhouse('');
     this.state.setRooms([]);
     this.state.setRoomsCount(0);

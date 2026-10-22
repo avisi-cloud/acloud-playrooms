@@ -129,7 +129,7 @@ func (runner *Runner) Run(ctx context.Context, arguments []string, options Optio
 	if err := cmd.Start(); err != nil {
 		return Result{}, fmt.Errorf("start %s: %w", PreviewString(arguments), err)
 	}
-	runner.emit(Event{Type: EventStarted, OperationID: options.OperationID, Command: Preview(arguments)})
+	runner.emit(Event{Type: EventStarted, OperationID: options.OperationID, Command: ShellPreview(arguments)})
 
 	// Extracted once: every streamed line is checked against these.
 	secrets := sensitiveValues(arguments)

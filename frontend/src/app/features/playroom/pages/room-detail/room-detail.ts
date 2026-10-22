@@ -56,7 +56,12 @@ export class RoomDetailPageComponent implements OnDestroy {
 
   readonly roomName = signal('');
   readonly room = computed<Playroom | null>(
-    () => this.state.rooms().find((room) => room.name === this.roomName()) ?? null,
+    () =>
+      this.state
+        .rooms()
+        .find(
+          (room) => room.name === this.roomName() && room.playhouse === this.state.playhouse(),
+        ) ?? null,
   );
   loading = false;
   refreshing = false;

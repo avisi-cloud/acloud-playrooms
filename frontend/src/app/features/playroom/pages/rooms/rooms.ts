@@ -27,7 +27,7 @@ import { wailsApi } from '../../../../core/services/wails-api';
 import { UiSessionService } from '../../../../core/services/ui-session';
 import { PlayroomActionsHostComponent, PlayroomCardComponent } from '../../../../shared/components';
 import { ConnectTab, Playroom } from '../../../../shared/models';
-import { isTransitional, describeError } from '../../../../shared/utils';
+import { describeError } from '../../../../shared/utils';
 import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-drawer/create-playroom-drawer';
 
 /**
@@ -87,7 +87,6 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
 
   showCreate = false;
   private ageTimer: ReturnType<typeof setInterval> | null = null;
-  private pollTimer: ReturnType<typeof setInterval> | null = null;
   /** Set when a read arrived mid-flight, to repeat once that one lands. */
   private rereadWhenTheCurrentReadLands = false;
 
@@ -112,7 +111,6 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.ageTimer) clearInterval(this.ageTimer);
-    this.stopPolling();
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -196,7 +194,9 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   );
 
   private findRoomByName(name: string): Playroom | undefined {
-    return this.state.rooms().find((room) => room.name === name);
+    return this.state
+      .rooms()
+      .find((room) => room.name === name && room.playhouse === this.state.playhouse());
   }
 
   openRoom(name: string): void {
@@ -222,8 +222,6 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
       );
       if (playhouse === this.state.playhouse() && revision === this.state.scopeRevision()) {
         this.state.setRoomsCount(rooms.filter((room) => room.playhouse === playhouse).length);
-        if (rooms.some((room) => isTransitional(room.status))) this.startPolling();
-        else this.stopPolling();
         setTimeout(() => this.restoreScroll());
       }
     } catch (error) {
@@ -285,16 +283,5 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
 
   private incrementAges(): void {
     this.state.setRooms(this.state.rooms().map((room) => ({ ...room, ageMin: room.ageMin + 1 })));
-  }
-
-  private startPolling(): void {
-    if (this.pollTimer) return;
-    this.pollTimer = setInterval(() => void this.refreshRooms(true), 10000);
-  }
-
-  private stopPolling(): void {
-    if (!this.pollTimer) return;
-    clearInterval(this.pollTimer);
-    this.pollTimer = null;
   }
 }

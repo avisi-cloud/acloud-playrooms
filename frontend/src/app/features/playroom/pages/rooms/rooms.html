@@ -43,8 +43,9 @@
         class="search-input"
       />
     </p-iconfield>
-    <label class="mine-toggle">
+    <label class="mine-toggle" for="mine-only">
       <p-toggleswitch
+        inputId="mine-only"
         ariaLabel="Show only my playrooms"
         [ngModel]="mineOnly()"
         (ngModelChange)="mineOnly.set($event)"

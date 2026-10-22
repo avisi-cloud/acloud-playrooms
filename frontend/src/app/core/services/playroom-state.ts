@@ -2,6 +2,12 @@ import { Injectable, signal } from '@angular/core';
 import { Playroom, Theme } from '../../shared/models';
 import { readCache, updateCache } from '../../shared/utils';
 
+export interface PlayroomSelection {
+  playhouse: string;
+  scopeRevision: number;
+  selectionRevision: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PlayroomStateService {
   private readonly _playhouse = signal<string>('');
@@ -12,6 +18,7 @@ export class PlayroomStateService {
   private readonly _rooms = signal<Playroom[]>([]);
   private readonly _roomsLoadedFor = signal<string | null>(null);
   private readonly _scopeRevision = signal<number>(0);
+  private readonly selectionRevision = signal(0);
 
   readonly playhouse = this._playhouse.asReadonly();
   readonly user = this._user.asReadonly();
@@ -43,7 +50,12 @@ export class PlayroomStateService {
   selectPlayhouse(slug: string): void {
     // A different playhouse invalidates the list, so the next visit loads
     // again rather than showing the previous playhouse's rooms.
-    if (slug !== this._playhouse()) this._roomsLoadedFor.set(null);
+    if (slug !== this._playhouse()) {
+      this._roomsLoadedFor.set(null);
+      this._rooms.set([]);
+      this._roomsCount.set(0);
+      this.selectionRevision.update((revision) => revision + 1);
+    }
     this._playhouse.set(slug);
     updateCache({ lastPlayhouse: slug });
   }
@@ -68,7 +80,24 @@ export class PlayroomStateService {
 
   /** Records that the context or organisation moved. */
   noteScopeChange(): void {
+    this._roomsLoadedFor.set(null);
     this._scopeRevision.update((revision) => revision + 1);
+  }
+
+  captureSelection(): PlayroomSelection {
+    return {
+      playhouse: this.playhouse(),
+      scopeRevision: this.scopeRevision(),
+      selectionRevision: this.selectionRevision(),
+    };
+  }
+
+  isCurrentSelection(selection: PlayroomSelection): boolean {
+    return (
+      selection.playhouse === this.playhouse() &&
+      selection.scopeRevision === this.scopeRevision() &&
+      selection.selectionRevision === this.selectionRevision()
+    );
   }
 
   toggleTheme(): void {

@@ -63,15 +63,16 @@
     >
       @if (tab === 'connect') {
         <div class="field-group">
-          <label class="field-label">User</label>
-          <input pInputText class="w-full" [(ngModel)]="user" />
+          <label class="field-label" for="connect-user">User</label>
+          <input id="connect-user" pInputText class="w-full" [(ngModel)]="user" />
         </div>
         <div class="field-group">
-          <label class="field-label">Terminal</label>
+          <label class="field-label" for="connect-terminal">Terminal</label>
           <p-select
             [options]="terminals"
             optionLabel="label"
             optionValue="id"
+            inputId="connect-terminal"
             [(ngModel)]="terminal"
             [style]="{ width: '100%' }"
             appendTo="body"
@@ -87,11 +88,12 @@
         </label>
       } @else {
         <div class="field-group">
-          <label class="field-label">Editor</label>
+          <label class="field-label" for="connect-editor">Editor</label>
           <p-select
             [options]="editors"
             optionLabel="label"
             optionValue="id"
+            inputId="connect-editor"
             [(ngModel)]="editor"
             [style]="{ width: '100%' }"
             appendTo="body"

@@ -14,6 +14,15 @@ func PreviewString(arguments []string) string {
 	return Quote(Preview(arguments))
 }
 
+// ShellPreview returns redacted, shell-quoted words that are safe to join for display or copying.
+func ShellPreview(arguments []string) []string {
+	words := Preview(arguments)
+	for i, word := range words {
+		words[i] = shellQuote(word)
+	}
+	return words
+}
+
 // Quote joins already-complete command parts into one shell-safe command line,
 // as the terminal hand-off needs before passing it to an emulator.
 func Quote(parts []string) string {

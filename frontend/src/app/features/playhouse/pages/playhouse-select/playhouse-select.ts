@@ -82,13 +82,21 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
   deleteTimeout = DEFAULTS.waitTimeout;
 
   private backgroundPoll: ReturnType<typeof setInterval> | null = null;
+  private rereadRequested = false;
+  private destroyed = false;
 
   constructor() {
     // Loads on open and on every scope switch. An effect rather than ngOnInit,
     // which a switch made on this screen would never fire again.
     effect(() => {
       this.state.scopeRevision();
-      untracked(() => void this.refreshPlayhouses());
+      untracked(() => {
+        this.playhouses.set([]);
+        this.showCreate = false;
+        this.showUpdate = false;
+        this.showDelete = false;
+        void this.refreshPlayhouses();
+      });
     });
 
     // A finished create or delete means the platform's view has changed.
@@ -105,6 +113,7 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.stopBackgroundPoll();
   }
 
@@ -113,20 +122,31 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
    * nobody asked for, which stay out of the shell indicator.
    */
   async refreshPlayhouses(background = false): Promise<void> {
-    if (this.refreshing()) return;
+    if (this.refreshing()) {
+      if (!background) this.rereadRequested = true;
+      return;
+    }
+    const revision = this.state.scopeRevision();
     this.refreshing.set(true);
     this.failure.set(null);
     try {
-      this.playhouses.set(
-        await this.pageLoading.runAndShowIndicatorIf(!background, () => wailsApi.listPlayhouses()),
+      const playhouses = await this.pageLoading.runAndShowIndicatorIf(!background, () =>
+        wailsApi.listPlayhouses(),
       );
+      if (revision === this.state.scopeRevision() && !this.destroyed)
+        this.playhouses.set(playhouses);
     } catch (e) {
       // Normalised: this used to be the raw value, and a failed backend call
       // printed an entire HTML error document into the centred error state.
-      this.failure.set(explainFailure(e));
+      if (revision === this.state.scopeRevision() && !this.destroyed)
+        this.failure.set(explainFailure(e));
     } finally {
       this.refreshing.set(false);
       this.loading.set(false);
+    }
+    if (this.rereadRequested && !this.destroyed) {
+      this.rereadRequested = false;
+      await this.refreshPlayhouses();
     }
   }
 

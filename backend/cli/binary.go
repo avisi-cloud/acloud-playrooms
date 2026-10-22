@@ -115,6 +115,26 @@ func ConfiguredBinary() string {
 	return strings.TrimSpace(string(raw))
 }
 
+// TerminalExecutable returns the command name suitable for a user terminal.
+// Keep PATH-resolved binaries as "acloud" so the user's shell can resolve the
+// same command naturally; explicit overrides remain absolute and deterministic.
+func TerminalExecutable() (string, error) {
+	if override := strings.TrimSpace(os.Getenv("ACLOUD_BINARY")); override != "" {
+		return override, nil
+	}
+	if configured := ConfiguredBinary(); configured != "" {
+		return configured, nil
+	}
+	if _, err := exec.LookPath("acloud"); err == nil {
+		return "acloud", nil
+	}
+	path, _, err := resolveBinary()
+	if err != nil {
+		return "", err
+	}
+	return path, nil
+}
+
 // SaveConfiguredBinary records a binary for this and every later launch, after
 // checking it actually runs. Saving an unusable path would reproduce the state
 // this setting exists to escape, so the check is part of saving rather than

@@ -4,7 +4,6 @@ package terminal
 
 import (
 	"errors"
-	"os/exec"
 
 	"github.com/avisi-cloud/acloud-playrooms/backend/cli"
 )
@@ -23,6 +22,7 @@ const (
 // handOff is the launch itself, behind a variable so tests can see what would
 // have been opened without opening it.
 var handOff = openCommandLineInTerminal
+var resolveExecutable = cli.TerminalExecutable
 
 // Open launches `acloud <arguments...>` in the chosen terminal emulator.
 func Open(emulator Emulator, arguments []string) error {
@@ -36,16 +36,11 @@ func Open(emulator Emulator, arguments []string) error {
 	return handOff(emulator, line)
 }
 
-// commandLine renders the command the terminal will run, preferring the bare
-// name "acloud" and falling back to this binary's path when it is not on PATH.
+// commandLine uses the same configured executable as non-interactive commands.
 func commandLine(arguments []string) (string, error) {
-	name := "acloud"
-	if _, err := exec.LookPath(name); err != nil {
-		resolved, execErr := cli.Executable()
-		if execErr != nil {
-			return "", execErr
-		}
-		name = resolved
+	name, err := resolveExecutable()
+	if err != nil {
+		return "", err
 	}
 	return cli.Quote(append([]string{name}, arguments...)), nil
 }
