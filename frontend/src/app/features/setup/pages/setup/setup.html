@@ -1,0 +1,296 @@
+<div class="page-shell setup-view">
+  <header class="page-header">
+    <div class="page-header-left">
+      <div class="page-header-stack">
+        <h1 class="page-header-title">Set up Acloud Playrooms<span class="punt">.</span></h1>
+        <p class="page-header-sub">Everything you need before your first playroom.</p>
+      </div>
+    </div>
+    <div class="page-header-actions">
+      <p-button
+        label="Set up later"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        [title]="setup.setupCompleted() ? '' : 'Setup opens again the next time the app starts'"
+        (click)="setUpLater()"
+      />
+    </div>
+  </header>
+
+  <div class="page-body">
+    <div class="wizard-shell setup-wizard">
+      <app-wizard-stepper
+        [steps]="steps()"
+        [activeIndex]="activeIndex()"
+        (stepSelect)="goToStep($event)"
+      />
+
+      <div class="setup-step">
+        <section class="wizard-card">
+          <div class="step-head">
+            <div>
+              <h2 class="step-title">{{ activeStep().label }}</h2>
+              <div class="step-sub">{{ activeStep().summary }}</div>
+            </div>
+            <!-- Optional steps get no tag: their line already starts with "Optional". -->
+            @if (statusOf(activeStep().key); as status) {
+              @if (status !== 'optional') {
+                <p-tag
+                  [value]="statusLabel(status)"
+                  [severity]="statusSeverity(status)"
+                  [rounded]="true"
+                  styleClass="source-tag"
+                />
+              }
+            }
+          </div>
+
+          @switch (activeStep().key) {
+            @case ('welcome') {
+              <!-- The same words as the README's "A word you will see". -->
+              <div class="review-grid">
+                <div><span>Playroom</span><strong>Your cloud development workspace</strong></div>
+                <div>
+                  <span>Playhouse</span
+                  ><strong>The environment that hosts a collection of playrooms</strong>
+                </div>
+                <div>
+                  <span>Acloud CLI</span
+                  ><strong>The command-line program that does the actual work</strong>
+                </div>
+                <div>
+                  <span>This app</span
+                  ><strong>A visual interface that runs those commands for you</strong>
+                </div>
+              </div>
+            }
+
+            @case ('acloud') {
+              <app-acloud-binary />
+              <!-- Information, not a blocker: the commands are real either way. -->
+              @if (session.compatibility(); as compatibility) {
+                <p class="setup-note">
+                  <i class="pi pi-info-circle"></i>
+                  <span>{{ compatibility.Explanation }}</span>
+                </p>
+              }
+            }
+
+            @case ('login') {
+              @if (state.loggedIn()) {
+                <p class="setup-status setup-status--ok" role="status">
+                  <i class="pi pi-check-circle"></i>
+                  <span>Signed in as {{ state.user() || 'your account' }}</span>
+                </p>
+              } @else {
+                <!-- Control, then its subtext: the subtext follows the login as it runs. -->
+                <div class="field-group">
+                  <p-button
+                    label="Log in"
+                    icon="pi pi-sign-in"
+                    size="small"
+                    [disabled]="session.signingInOrOut()"
+                    [loading]="session.signingInOrOut()"
+                    (click)="signIn()"
+                  />
+                  <small
+                    class="field-hint"
+                    [class.error]="loginProgress() === 'failed'"
+                    role="status"
+                  >
+                    @switch (loginProgress()) {
+                      @case ('waiting-for-credentials') {
+                        Finish logging in in your terminal…
+                      }
+                      @case ('not-signed-in') {
+                        Not signed in yet — try again.
+                      }
+                      @case ('failed') {
+                        Could not start the login: {{ loginFailure() }}
+                      }
+                      @default {
+                        The login opens in your terminal.
+                      }
+                    }
+                  </small>
+                </div>
+              }
+            }
+
+            @case ('playhouse') {
+              @if (!state.loggedIn()) {
+                <p class="setup-status">Log in first to see your playhouses.</p>
+              } @else if (scope.playhouses().length === 0) {
+                <p class="setup-status" role="status">
+                  @if (scope.loadingPlayhouses()) {
+                    Loading playhouses…
+                  } @else {
+                    No playhouses in this organisation yet. A playhouse hosts your playrooms;
+                    creating one takes a few minutes.
+                  }
+                </p>
+                @if (!scope.loadingPlayhouses()) {
+                  <p-button
+                    label="Go to playhouses"
+                    icon="pi pi-arrow-right"
+                    iconPos="right"
+                    severity="secondary"
+                    [outlined]="true"
+                    size="small"
+                    (click)="goToPlayhouses()"
+                  />
+                }
+              } @else {
+                <div class="field-group">
+                  <label class="field-label" for="setup-playhouse">Playhouse</label>
+                  <p-select
+                    inputId="setup-playhouse"
+                    [options]="scope.playhouses()"
+                    optionLabel="Slug"
+                    optionValue="Slug"
+                    [ngModel]="state.playhouse() || null"
+                    (ngModelChange)="choosePlayhouse($event)"
+                    placeholder="Select a playhouse"
+                    appendTo="body"
+                    [style]="{ width: '100%' }"
+                  />
+                  <small class="field-hint">You can switch later from the sidebar.</small>
+                </div>
+              }
+            }
+
+            @case ('tools') {
+              @for (tool of session.toolStatuses(); track tool.Command) {
+                <div class="field-group">
+                  <div class="setup-tool">
+                    <span class="field-label setup-tool-name">{{ tool.Name }}</span>
+                    <p-tag
+                      [value]="tool.State"
+                      [severity]="toolSeverity(tool)"
+                      [rounded]="true"
+                      styleClass="source-tag"
+                    />
+                  </div>
+                  @if (toolPurpose(tool); as purpose) {
+                    <small class="field-hint">{{ purpose }}</small>
+                  }
+                </div>
+              } @empty {
+                <p class="setup-status" role="status">Checking your tools…</p>
+              }
+            }
+
+            @case ('defaults') {
+              @if (defaultsFailure(); as failure) {
+                <p class="setup-status danger-text" role="alert">
+                  Could not read your current defaults: {{ failure }}
+                </p>
+              }
+              <div class="field-group">
+                <label class="field-label" for="setup-ssh-key">SSH public key</label>
+                <input
+                  id="setup-ssh-key"
+                  pInputText
+                  class="w-full"
+                  [ngModel]="sshKeyDraft()"
+                  (ngModelChange)="sshKeyDraft.set($event)"
+                  placeholder="~/.ssh/id_ed25519.pub"
+                  spellcheck="false"
+                  autocorrect="off"
+                  autocapitalize="off"
+                  autocomplete="off"
+                />
+                <small class="field-hint"
+                  >Added to new playrooms, so you can connect with it.</small
+                >
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="setup-image">Image</label>
+                <p-select
+                  inputId="setup-image"
+                  [options]="imageOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  [ngModel]="imageDraft()"
+                  (ngModelChange)="imageDraft.set($event ?? '')"
+                  appendTo="body"
+                  [style]="{ width: '100%' }"
+                />
+                <small class="field-hint">The workspace image new playrooms start from.</small>
+              </div>
+            }
+
+            @case ('done') {
+              <div class="review-grid">
+                <div>
+                  <span>Acloud CLI</span
+                  ><strong>{{ session.binary()?.Version || session.binary()?.Path || '-' }}</strong>
+                </div>
+                <div>
+                  <span>Account</span><strong>{{ state.user() || '-' }}</strong>
+                </div>
+                <div>
+                  <span>Playhouse</span><strong>{{ state.playhouse() || '-' }}</strong>
+                </div>
+                <div>
+                  <span>Tools</span
+                  ><strong
+                    >{{ installedToolCount() }} of
+                    {{ session.toolStatuses().length }} installed</strong
+                  >
+                </div>
+              </div>
+            }
+          }
+        </section>
+
+        <div class="setup-actions">
+          @if (activeIndex() > 0) {
+            <p-button
+              label="Back"
+              icon="pi pi-arrow-left"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              (click)="goToPreviousStep()"
+            />
+          }
+          @if (isLastStep()) {
+            <p-button
+              label="Go to playrooms"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              (click)="finishAndGoToPlayrooms()"
+            />
+            <p-button
+              label="Create your first playroom"
+              icon="pi pi-plus"
+              size="small"
+              (click)="finishAndCreateFirstPlayroom()"
+            />
+          } @else if (activeStep().key === 'defaults' && defaultsChanged()) {
+            <p-button
+              label="Save and continue"
+              icon="pi pi-check"
+              size="small"
+              [loading]="savingDefaults()"
+              [disabled]="savingDefaults()"
+              (click)="saveDefaultsAndContinue()"
+            />
+          } @else {
+            <p-button
+              [label]="activeStep().key === 'defaults' ? 'Skip' : 'Next'"
+              icon="pi pi-arrow-right"
+              iconPos="right"
+              size="small"
+              [disabled]="!canGoToNextStep()"
+              (click)="goToNextStep()"
+            />
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

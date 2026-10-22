@@ -15,7 +15,7 @@ import { MenuModule } from 'primeng/menu';
 import { PopoverModule } from 'primeng/popover';
 import { ToastModule } from 'primeng/toast';
 import { ToolStatus } from './shared/models';
-import { RELEASE_STAGE } from './shared/data';
+import { RELEASE_STAGE, SETUP_STEP_QUERY_PARAM } from './shared/data';
 import { CliConsoleComponent } from './shared/components';
 import { PlayroomStateService } from './core/services/playroom-state';
 import { CliConsoleService } from './core/services/cli-console';
@@ -23,6 +23,7 @@ import { ToastService } from './core/services/toast';
 import { PageLoadingService } from './core/services/page-loading';
 import { AcloudSessionService } from './core/services/acloud-session';
 import { ScopeService } from './core/services/scope';
+import { SetupService } from './core/services/setup';
 import { WindowChromeService } from './core/services/window-chrome';
 import { wailsApi } from './core/services/wails-api';
 
@@ -64,6 +65,7 @@ export class App implements OnInit {
   readonly session = inject(AcloudSessionService);
   readonly scope = inject(ScopeService);
   readonly releaseStage = RELEASE_STAGE;
+  private readonly setup = inject(SetupService);
   private readonly windowChrome = inject(WindowChromeService);
   private readonly router = inject(Router);
   private readonly notify = inject(ToastService);
@@ -117,6 +119,12 @@ export class App implements OnInit {
       this.session.refreshSignedInUser(),
       this.scope.loadContextAndOrganisation(),
     ]);
+    // Only here, at launch: a sign-out later in the session keeps its own behaviour.
+    const brokenStep = this.setup.requiredStepThatBrokeSinceSetup();
+    if (brokenStep)
+      void this.router.navigate(['/setup'], {
+        queryParams: { [SETUP_STEP_QUERY_PARAM]: brokenStep },
+      });
   }
 
   /**
@@ -315,16 +323,15 @@ export class App implements OnInit {
    * the terminal returns long before the browser round-trip is done.
    */
   async signIn(): Promise<void> {
-    this.session.markSigningInOrOut(true);
     try {
-      await this.session.openLoginInTerminal();
-      this.notify.show({
-        severity: 'info',
-        summary: 'Complete the login in your terminal',
-        detail: 'This window updates once the credentials are stored.',
-      });
-
-      if (await this.session.waitForCredentialsToAppear()) {
+      const signedIn = await this.session.signInThroughTerminal(() =>
+        this.notify.show({
+          severity: 'info',
+          summary: 'Complete the login in your terminal',
+          detail: 'This window updates once the credentials are stored.',
+        }),
+      );
+      if (signedIn) {
         this.notify.show({
           severity: 'success',
           summary: 'Signed in',
@@ -339,8 +346,6 @@ export class App implements OnInit {
       });
     } catch (error) {
       this.notify.failure('Login failed', error);
-    } finally {
-      this.session.markSigningInOrOut(false);
     }
   }
 

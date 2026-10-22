@@ -9,6 +9,8 @@ export interface CacheState {
   lastTerminal: string;
   lastTheme: Theme;
   createPlayroomMode: CreatePlayroomMode;
+  /** Set once setup is finished; leaving it with "Set up later" does not set it. */
+  setupCompleted: boolean;
 }
 
 export interface ToolStatus {

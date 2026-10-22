@@ -163,6 +163,21 @@ export class AcloudSessionService {
     return this.state.loggedIn();
   }
 
+  /**
+   * Both halves of the login as one busy period, so the account button and
+   * setup cannot start a second one. Resolves to whether credentials appeared.
+   */
+  async signInThroughTerminal(onTerminalOpened: () => void): Promise<boolean> {
+    this.markSigningInOrOut(true);
+    try {
+      await this.openLoginInTerminal();
+      onTerminalOpened();
+      return await this.waitForCredentialsToAppear();
+    } finally {
+      this.markSigningInOrOut(false);
+    }
+  }
+
   /** Runs `acloud auth logout`, clearing the stored credentials. */
   async signOut(): Promise<void> {
     await this.console.run('Signing out', (operationId) => wailsApi.logout(operationId));

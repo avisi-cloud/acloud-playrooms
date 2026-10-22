@@ -353,16 +353,7 @@ export class DefaultsPageComponent implements OnInit, OnDestroy {
     this.saving.set(true);
     const dirty = this.rows().filter((row) => row.dirty);
     try {
-      for (const row of dirty) {
-        const clearing = row.draft === '' || row.draft === row.Builtin;
-        await this.console.run(
-          clearing ? `Clearing default "${row.Key}"` : `Setting default "${row.Key}"`,
-          (operationId) =>
-            clearing
-              ? wailsApi.unsetPlayroomDefault(operationId, row.Key)
-              : wailsApi.setPlayroomDefault(operationId, row.Key, row.draft),
-        );
-      }
+      for (const row of dirty) await this.defaults.saveDefault(row.Key, row.draft, row.Builtin);
       this.notify.show({ severity: 'success', detail: 'Defaults saved', life: 2500 });
       this.session.forget('defaults');
       await this.reloadAfterWrite();
@@ -406,6 +397,10 @@ export class DefaultsPageComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     void this.router.navigate(['/rooms']);
+  }
+
+  runSetupAgain(): void {
+    void this.router.navigate(['/setup']);
   }
 
   sourceSeverity(source: string): 'success' | 'secondary' | 'info' {

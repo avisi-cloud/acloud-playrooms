@@ -21,6 +21,14 @@
         <span class="dirty-count">{{ dirtyCount() }} unsaved</span>
       }
       <p-button
+        label="Run setup again"
+        icon="pi pi-replay"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        (click)="runSetupAgain()"
+      />
+      <p-button
         label="Reset all"
         severity="secondary"
         [outlined]="true"

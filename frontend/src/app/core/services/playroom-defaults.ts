@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { CliConsoleService } from './cli-console';
 import { PlayroomDefaultEntry, wailsApi } from './wails-api';
 
 /**
@@ -7,6 +8,7 @@ import { PlayroomDefaultEntry, wailsApi } from './wails-api';
  */
 @Injectable({ providedIn: 'root' })
 export class PlayroomDefaultsService {
+  private readonly console = inject(CliConsoleService);
   private readonly _entries = signal<PlayroomDefaultEntry[]>([]);
   readonly entries = this._entries.asReadonly();
 
@@ -29,6 +31,21 @@ export class PlayroomDefaultsService {
         throw error;
       });
     return this.pending;
+  }
+
+  /**
+   * Writes one default through the activity log. Empty or the built-in value is
+   * cleared rather than set, so the key keeps following the CLI's own default.
+   */
+  async saveDefault(key: string, value: string, builtin: string): Promise<void> {
+    const clearing = value === '' || value === builtin;
+    await this.console.run(
+      clearing ? `Clearing default "${key}"` : `Setting default "${key}"`,
+      (operationId) =>
+        clearing
+          ? wailsApi.unsetPlayroomDefault(operationId, key)
+          : wailsApi.setPlayroomDefault(operationId, key, value),
+    );
   }
 
   /** Drops the cache, so the next load re-reads. The Defaults screen calls it. */

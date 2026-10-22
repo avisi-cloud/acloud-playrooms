@@ -4,13 +4,13 @@
       type="button"
       class="wizard-step"
       [class.active]="i === activeIndex"
-      [class.done]="i < activeIndex"
+      [class.done]="showsAsDone(step, i)"
       [class.last]="last"
       [attr.aria-current]="i === activeIndex ? 'step' : null"
       (click)="stepSelect.emit(i)"
     >
       <span class="wizard-step-marker">
-        @if (i < activeIndex) {
+        @if (showsAsDone(step, i)) {
           <i class="pi pi-check"></i>
         } @else {
           <i [class]="step.icon"></i>

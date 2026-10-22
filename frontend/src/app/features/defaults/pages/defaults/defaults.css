@@ -84,13 +84,6 @@
   margin-left: 0;
 }
 
-:host ::ng-deep .source-tag.p-tag {
-  font-size: 9.5px;
-  font-weight: 500;
-  font-family: var(--font-sans);
-  padding: 1px 7px;
-}
-
 .reset-btn {
   display: flex;
   align-items: center;
