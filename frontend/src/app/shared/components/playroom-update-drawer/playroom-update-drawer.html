@@ -31,7 +31,10 @@
       >
         <ng-template let-image pTemplate="item">
           <div class="ca-option">
-            <span class="ca-name">{{ image.Name }}{{ image.IsDefault ? ' (default)' : '' }}</span>
+            <span class="ca-name"
+              >{{ image.Name }}{{ image.IsDefault ? ' (default)' : ''
+              }}{{ image.RequiresPrivileged ? ' (needs privileged mode)' : '' }}</span
+            >
             <span class="ca-meta">{{ image.Reference }}</span>
           </div>
         </ng-template>
@@ -45,6 +48,21 @@
 
   <section class="update-card">
     <div class="update-card-head">Resources</div>
+    <div class="field-group" [class.has-error]="storageError()">
+      <label class="field-label" for="update-storage">Storage</label
+      ><input
+        id="update-storage"
+        pInputText
+        class="w-full"
+        [(ngModel)]="form.storage"
+        (blur)="storageTouched = true"
+      />
+      <small class="field-hint" [class.error]="storageError()">{{
+        storageError() ||
+          (room?.disk ? 'Now ' + room?.disk + '. ' : '') +
+            'Storage can only grow, and grows without a restart.'
+      }}</small>
+    </div>
     <div class="field-row">
       <div class="field-group">
         <label class="field-label">CPU request</label
@@ -65,20 +83,10 @@
         ><input pInputText class="w-full" [(ngModel)]="form.memLim" />
       </div>
     </div>
-    <div class="field-group">
-      <label class="field-label" for="update-storage">Storage</label
-      ><input
-        id="update-storage"
-        pInputText
-        class="w-full"
-        [(ngModel)]="form.storage"
-        [placeholder]="room?.disk ? 'now ' + room?.disk : ''"
-      />
-    </div>
     <small class="field-hint"
-      >Storage can only grow, and grows without a restart. Type <code>none</code> to unset a request
-      or limit — useful for a privileged playroom, which has its node to itself. A request of
-      <code>none</code> needs its limit unset too, or Kubernetes reserves the whole limit.</small
+      >Type <code>none</code> to unset a request or limit — useful for a privileged playroom, which
+      has its node to itself. A request of <code>none</code> needs its limit unset too, or
+      Kubernetes reserves the whole limit.</small
     >
   </section>
 
@@ -149,7 +157,14 @@
         [(ngModel)]="form.capabilities"
         [style]="{ width: '100%' }"
         appendTo="body"
-      />
+      >
+        <ng-template let-option pTemplate="item">
+          <div class="ca-option">
+            <span class="ca-name">{{ option.label }}</span>
+            <span class="ca-meta">{{ option.hint }}</span>
+          </div>
+        </ng-template>
+      </p-select>
       <small class="field-hint">Added capabilities are kept when the profile changes.</small>
     </div>
     <label class="toggle-line" for="update-change-cap-add"
@@ -245,9 +260,10 @@
       (click)="close()"
     />
     <p-button
-      label="Update"
+      [label]="updateButtonLabel()"
       icon="pi pi-sync"
       size="small"
+      [severity]="updateButtonSeverity()"
       [disabled]="!!blockingError()"
       (click)="save()"
     />

@@ -59,7 +59,8 @@
               <ng-template let-image pTemplate="item">
                 <div class="ca-option">
                   <span class="ca-name"
-                    >{{ image.Name }}{{ image.IsDefault ? ' (default)' : '' }}</span
+                    >{{ image.Name }}{{ image.IsDefault ? ' (default)' : ''
+                    }}{{ image.RequiresPrivileged ? ' (needs privileged mode)' : '' }}</span
                   >
                   <span class="ca-meta">{{ image.Reference }}</span>
                 </div>
@@ -70,6 +71,17 @@
                 selectedImage()?.Description ||
                 'Pick a published flavor, or type a full registry path.'
             }}</small>
+            @if (touched && imageError()) {
+              <p-button
+                label="Go to Options"
+                icon="pi pi-arrow-right"
+                iconPos="right"
+                severity="secondary"
+                [text]="true"
+                size="small"
+                (click)="goToPrivilegedModeOnOptionsStep()"
+              />
+            }
           </div>
         }
         @case ('resources') {
@@ -166,53 +178,78 @@
               <div class="step-sub">Proxy group, wait behaviour and system flags.</div>
             </div>
           </div>
+          <!-- The same three groups as the Defaults screen, so a setting sits
+               under the same heading in both places. -->
+          <div class="section-label options-group-label">Networking</div>
           <div class="field-group">
-            <label class="field-label">Exposure</label>
+            <label class="field-label" for="create-exposure">Exposure</label>
             <p-select
+              inputId="create-exposure"
               [options]="exposureOptions"
               optionLabel="label"
               optionValue="id"
               [(ngModel)]="form.exposure"
               [style]="{ width: '100%' }"
               appendTo="body"
-            />
+            >
+              <ng-template let-option pTemplate="item">
+                <div class="ca-option">
+                  <span class="ca-name">{{ option.label }}</span>
+                  <span class="ca-meta">{{ option.hint }}</span>
+                </div>
+              </ng-template>
+            </p-select>
             <small class="field-hint"
               >Leave on the playhouse default unless this room needs something different. Port
               forwards require Tailscale.</small
             >
           </div>
           <div class="field-group">
-            <label class="field-label">Proxy group</label
-            ><input pInputText class="w-full" [(ngModel)]="form.proxyGroup" />
+            <label class="field-label" for="create-proxy-group">Proxy group</label
+            ><input
+              id="create-proxy-group"
+              pInputText
+              class="w-full"
+              [(ngModel)]="form.proxyGroup"
+            />
           </div>
+
+          <div class="section-label options-group-label">Behaviour</div>
           <div class="field-row">
             <div class="field-group">
-              <label class="field-label">Wait timeout</label
-              ><input pInputText class="w-full" [(ngModel)]="form.waitTimeout" />
+              <label class="field-label" for="create-wait-timeout">Wait timeout</label
+              ><input
+                id="create-wait-timeout"
+                pInputText
+                class="w-full"
+                [(ngModel)]="form.waitTimeout"
+              />
             </div>
             <div class="toggle-stack">
-              <label class="toggle-line"
+              <label class="toggle-line" for="create-no-wait"
                 ><span>Return without waiting<small class="flag-ref">--no-wait</small></span
-                ><p-toggleswitch [(ngModel)]="form.noWait"
+                ><p-toggleswitch inputId="create-no-wait" [(ngModel)]="form.noWait"
               /></label>
-              <label class="toggle-line"
+              <label class="toggle-line" for="create-force-install"
                 ><span>Reinstall the agent<small class="flag-ref">--force-install</small></span
-                ><p-toggleswitch [(ngModel)]="form.forceInstall"
+                ><p-toggleswitch inputId="create-force-install" [(ngModel)]="form.forceInstall"
               /></label>
             </div>
           </div>
-          <label class="toggle-line mt-2"
+          <label class="toggle-line mt-2" for="create-ephemeral"
             ><span
               >Discard the disk when the playroom goes<small class="flag-ref"
                 >--ephemeral</small
               ></span
-            ><p-toggleswitch [(ngModel)]="form.ephemeral"
+            ><p-toggleswitch inputId="create-ephemeral" [(ngModel)]="form.ephemeral"
           /></label>
-          <label class="toggle-line mt-2"
+          <label class="toggle-line mt-2" for="create-read-only"
             ><span>Mount the system read-only<small class="flag-ref">--read-only</small></span
-            ><p-toggleswitch [(ngModel)]="form.readOnly"
+            ><p-toggleswitch inputId="create-read-only" [(ngModel)]="form.readOnly"
           /></label>
-          <label class="toggle-line mt-2" for="create-workspace-namespace"
+
+          <div class="section-label options-group-label">Security</div>
+          <label class="toggle-line" for="create-workspace-namespace"
             ><span
               >Give the agent its own Kubernetes namespace<small class="flag-ref"
                 >--workspace-namespace</small
@@ -227,8 +264,16 @@
             credentials.</small
           >
 
-          <details class="disclosure mt-3" [open]="capAddCount() > 0">
-            <summary>Advanced &mdash; Linux capabilities</summary>
+          <!-- Dangerous flags are shown with the CLI's own warning rather than
+               hidden, so the GUI stays a faithful mirror of the command. -->
+          <!-- [open] while anything inside is in use: collapsing it used to hide
+               the privileged acknowledgement and its validation message, leaving
+               Create disabled on the Review step with the reason out of sight. -->
+          <details
+            class="disclosure mt-3"
+            [open]="form.privileged || capAddCount() > 0 || advancedSecurityOpenedFromImageError"
+          >
+            <summary>Advanced &mdash; capabilities and privileged mode</summary>
             <div class="field-group mt-3">
               <label class="field-label" for="create-capabilities">Capabilities</label>
               <p-select
@@ -239,7 +284,14 @@
                 [(ngModel)]="form.capabilities"
                 [style]="{ width: '100%' }"
                 appendTo="body"
-              />
+              >
+                <ng-template let-option pTemplate="item">
+                  <div class="ca-option">
+                    <span class="ca-name">{{ option.label }}</span>
+                    <span class="ca-meta">{{ option.hint }}</span>
+                  </div>
+                </ng-template>
+              </p-select>
               <small class="field-hint"
                 >For root inside the playroom (sshd, sudo). The agent itself runs unprivileged
                 either way.</small
@@ -252,18 +304,10 @@
               addLabel="add capability"
               itemLabel="capability"
             />
-          </details>
 
-          <!-- Dangerous flags are shown with the CLI's own warning rather than
-               hidden, so the GUI stays a faithful mirror of the command. -->
-          <!-- [open] while privileged is on: collapsing it used to hide the
-               acknowledgement and its validation message, leaving Create
-               disabled on the Review step with the reason out of sight. -->
-          <details class="disclosure mt-3" [open]="form.privileged">
-            <summary>Advanced &mdash; privileged mode</summary>
-            <label class="toggle-line mt-3"
+            <label class="toggle-line mt-3" for="create-privileged"
               ><span>Run privileged<small class="flag-ref">--privileged</small></span
-              ><p-toggleswitch [(ngModel)]="form.privileged"
+              ><p-toggleswitch inputId="create-privileged" [(ngModel)]="form.privileged"
             /></label>
             @if (form.privileged) {
               <div class="danger-note">
@@ -274,9 +318,12 @@
                   when a workload genuinely requires it.
                 </span>
               </div>
-              <label class="toggle-line mt-2">
+              <label class="toggle-line mt-2" for="create-acknowledge-privileged">
                 <span>I understand what privileged mode grants</span>
-                <p-toggleswitch [(ngModel)]="form.acknowledgePrivileged" />
+                <p-toggleswitch
+                  inputId="create-acknowledge-privileged"
+                  [(ngModel)]="form.acknowledgePrivileged"
+                />
               </label>
               @if (touched && privilegedError()) {
                 <small class="field-hint error">{{ privilegedError() }}</small>

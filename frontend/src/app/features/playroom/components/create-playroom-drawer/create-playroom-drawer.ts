@@ -86,12 +86,15 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
   form: CreateForm = blankCreateForm('');
   touched = false;
   step = 0;
+  /** Set by "Go to Options" on the image error, so the privileged toggle is in view on arrival. */
+  advancedSecurityOpenedFromImageError = false;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible'] && this.visible) {
       this.form = blankCreateForm(this.playhouse);
       this.touched = false;
       this.step = 0;
+      this.advancedSecurityOpenedFromImageError = false;
       void this.loadImages();
       void this.seedFromDefaults();
     }
@@ -193,6 +196,11 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
     this.touched = false;
   }
 
+  goToPrivilegedModeOnOptionsStep(): void {
+    this.advancedSecurityOpenedFromImageError = true;
+    this.goStep(this.steps.findIndex((step) => step.key === 'options'));
+  }
+
   canLeaveStep(): boolean {
     if (this.stepKey() === 'basics') return !this.nameInvalid();
     return true;
@@ -242,7 +250,14 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
   }
 
   readonly exposureOptions = [...EXPOSURES];
-  readonly capabilitiesOptions = [...CAPABILITIES];
+  readonly capabilitiesOptions = [
+    {
+      id: '',
+      label: 'Configured default',
+      hint: 'Leaves the flag off, so playroom config or acloud decides',
+    },
+    ...CAPABILITIES,
+  ];
 
   private nameInvalid(): boolean {
     return !this.form.name || !NAME_RE.test(this.form.name);

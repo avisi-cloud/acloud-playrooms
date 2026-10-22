@@ -7,6 +7,8 @@ import {
   capabilitiesOrBlank,
   findImageEntry,
   parseRenderedPorts,
+  storageDoesNotGrow,
+  storageSizeInBytes,
 } from './forms';
 
 /** A stand-in for PlayroomDefaultsService holding whatever the test needs. */
@@ -141,6 +143,47 @@ describe('findImageEntry', () => {
 
   it('finds nothing for a typed registry path', () => {
     expect(findImageEntry(images, 'registry.example.com/custom:1')).toBeUndefined();
+  });
+});
+
+describe('storageSizeInBytes', () => {
+  it('reads binary and decimal suffixes the way Kubernetes does', () => {
+    expect(storageSizeInBytes('20Gi')).toBe(20 * 2 ** 30);
+    expect(storageSizeInBytes('512Mi')).toBe(512 * 2 ** 20);
+    expect(storageSizeInBytes('20G')).toBe(20e9);
+    expect(storageSizeInBytes('1.5Ti')).toBe(1.5 * 2 ** 40);
+  });
+
+  it('reads a plain number as bytes, ignoring surrounding spaces', () => {
+    expect(storageSizeInBytes(' 21474836480 ')).toBe(21474836480);
+  });
+
+  it('returns undefined for anything it cannot read, instead of guessing', () => {
+    for (const quantity of ['', 'none', '20gb', '20 Gi', 'Gi', '-5Gi']) {
+      expect(storageSizeInBytes(quantity), quantity).toBeUndefined();
+    }
+  });
+});
+
+describe('storageDoesNotGrow', () => {
+  it('allows a larger size, in any unit', () => {
+    expect(storageDoesNotGrow('20Gi', '30Gi')).toBe(false);
+    expect(storageDoesNotGrow('20Gi', '1Ti')).toBe(false);
+    expect(storageDoesNotGrow('20Gi', '22G')).toBe(false);
+  });
+
+  it('refuses the same or a smaller size, also when written differently', () => {
+    expect(storageDoesNotGrow('20Gi', '20Gi')).toBe(true);
+    expect(storageDoesNotGrow('20Gi', '10Gi')).toBe(true);
+    expect(storageDoesNotGrow('20Gi', '21474836480')).toBe(true);
+    expect(storageDoesNotGrow('20Gi', '20G')).toBe(true);
+  });
+
+  it('leaves an empty or unreadable size to acloud', () => {
+    expect(storageDoesNotGrow('20Gi', '')).toBe(false);
+    expect(storageDoesNotGrow('20Gi', 'lots')).toBe(false);
+    expect(storageDoesNotGrow('', '10Gi')).toBe(false);
+    expect(storageDoesNotGrow('unknown', '10Gi')).toBe(false);
   });
 });
 

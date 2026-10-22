@@ -98,3 +98,37 @@ export function capabilitiesOrBlank(raw: string): Capabilities {
 export function findImageEntry(images: ImageEntry[], name: string): ImageEntry | undefined {
   return images.find((image) => image.Name === name.trim());
 }
+
+type StorageUnit = '' | 'k' | 'M' | 'G' | 'T' | 'P' | 'Ki' | 'Mi' | 'Gi' | 'Ti' | 'Pi';
+
+const BYTES_PER_STORAGE_UNIT: Record<StorageUnit, number> = {
+  '': 1,
+  k: 1e3,
+  M: 1e6,
+  G: 1e9,
+  T: 1e12,
+  P: 1e15,
+  Ki: 2 ** 10,
+  Mi: 2 ** 20,
+  Gi: 2 ** 30,
+  Ti: 2 ** 40,
+  Pi: 2 ** 50,
+};
+
+const STORAGE_QUANTITY_RE = /^(\d+(?:\.\d+)?)(Ki|Mi|Gi|Ti|Pi|k|M|G|T|P)?$/;
+
+/** A Kubernetes storage quantity such as `20Gi` in bytes; undefined when it cannot be read. */
+export function storageSizeInBytes(quantity: string): number | undefined {
+  const match = STORAGE_QUANTITY_RE.exec(quantity.trim());
+  if (!match) return undefined;
+  const unit = (match[2] ?? '') as StorageUnit;
+  return Number(match[1]) * BYTES_PER_STORAGE_UNIT[unit];
+}
+
+/** acloud only grows storage; a size it cannot read is left for acloud to judge. */
+export function storageDoesNotGrow(currentSize: string, requestedSize: string): boolean {
+  const currentBytes = storageSizeInBytes(currentSize);
+  const requestedBytes = storageSizeInBytes(requestedSize);
+  if (currentBytes === undefined || requestedBytes === undefined) return false;
+  return requestedBytes <= currentBytes;
+}

@@ -21,7 +21,7 @@ import { ImageCatalogService } from '../../../core/services/image-catalog';
 import { PlayroomUpdateInput, wailsApi } from '../../../core/services/wails-api';
 import { CAPABILITIES } from '../../data';
 import { ImageEntry, Playroom, UpdateForm } from '../../models';
-import { blankUpdateForm, findImageEntry } from '../../utils';
+import { blankUpdateForm, findImageEntry, storageDoesNotGrow } from '../../utils';
 import { CommandPreviewComponent } from '../command-preview/command-preview';
 import { StringListEditorComponent } from '../string-list-editor/string-list-editor';
 
@@ -82,10 +82,13 @@ export class PlayroomUpdateDrawerComponent implements OnChanges {
   @Input() room: Playroom | null = null;
 
   form: UpdateForm = blankUpdateForm(EMPTY_ROOM);
+  /** Set on blur, so a half-typed size such as "3" on the way to "30Gi" is not called too small. */
+  storageTouched = false;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible'] && this.visible && this.room) {
       this.form = blankUpdateForm(this.room);
+      this.storageTouched = false;
       void this.loadImages();
     }
   }
@@ -103,8 +106,8 @@ export class PlayroomUpdateDrawerComponent implements OnChanges {
   }
 
   readonly capabilitiesOptions = [
-    { id: '', label: 'Keep current' },
-    ...CAPABILITIES.map(({ id, label }) => ({ id, label })),
+    { id: '', label: 'Keep current', hint: "Leaves the room's profile as it is" },
+    ...CAPABILITIES,
   ];
 
   selectedImage(): ImageEntry | undefined {
@@ -116,12 +119,30 @@ export class PlayroomUpdateDrawerComponent implements OnChanges {
     return this.form.changeWorkspaceNamespace && !this.form.workspaceNamespace;
   }
 
+  /** Removing the namespace deletes what is in it, so the button says so. */
+  updateButtonLabel(): string {
+    return this.removesWorkspaceNamespace() ? 'Update and delete namespace' : 'Update';
+  }
+
+  updateButtonSeverity(): 'danger' | null {
+    return this.removesWorkspaceNamespace() ? 'danger' : null;
+  }
+
+  /** acloud refuses a size that does not grow the volume, so refuse it here first. */
+  storageError(): string {
+    const currentSize = this.room?.disk ?? '';
+    if (this.storageTouched && storageDoesNotGrow(currentSize, this.form.storage)) {
+      return `Storage can only grow: pick more than ${currentSize}.`;
+    }
+    return '';
+  }
+
   /** Whatever is stopping Update, said next to the disabled button. */
   blockingError(): string {
     if (this.removesWorkspaceNamespace() && !this.form.acknowledgeWorkspaceNamespaceRemoval) {
       return 'Confirm that the namespace and everything in it may be deleted.';
     }
-    return '';
+    return this.storageError();
   }
 
   previewInput(): Partial<PlayroomUpdateInput> {
