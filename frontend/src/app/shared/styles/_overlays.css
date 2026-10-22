@@ -187,6 +187,35 @@ body:has(.p-dialog-mask) .app-shell {
   background: color-mix(in srgb, var(--bad) 12%, transparent) !important;
 }
 
+/* What the sidebar's release stage badge means. PrimeNG's own popover chrome,
+   like the sidebar menus; only the width and the content are set here. */
+.release-stage-popover {
+  width: 280px;
+}
+.release-stage-popover .release-stage-explanation {
+  margin: 0 0 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tx);
+}
+.release-stage-popover .release-stage-feedback {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--link);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.release-stage-popover .release-stage-feedback:hover {
+  text-decoration: underline;
+}
+
 /* ── Dialog / drawer header content (inside the chrome above) ────────────── */
 .dialog-head-content {
   display: flex;

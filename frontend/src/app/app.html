@@ -42,7 +42,45 @@
       <img class="sidebar-brand-img" src="/brand/AvisiLetterWhite.svg" alt="Avisi" />
       <div class="sidebar-brand-text">
         <span class="sidebar-brand-name">Avisi Playground<span class="punt">.</span></span>
-        <span class="sidebar-brand-sub">Powered by AME</span>
+        <!-- The release stage sits on this line because the name has no room
+             left beside it. Its panel is appended to body, like the menus. -->
+        <span class="sidebar-brand-sub">
+          Powered by AME
+          <button
+            #releaseStageBadge
+            type="button"
+            class="release-stage-badge"
+            aria-haspopup="dialog"
+            [attr.aria-expanded]="releaseStagePopover.overlayVisible"
+            [attr.aria-label]="releaseStage.label + ': what this means'"
+            (click)="releaseStagePopover.toggle($event)"
+          >
+            {{ releaseStage.label }}
+          </button>
+        </span>
+        <p-popover
+          #releaseStagePopover
+          appendTo="body"
+          styleClass="release-stage-popover"
+          [ariaLabel]="releaseStage.label"
+          (onShow)="releaseStageFeedback.focus()"
+        >
+          <p class="release-stage-explanation">{{ releaseStage.explanation }}</p>
+          <button
+            #releaseStageFeedback
+            type="button"
+            class="release-stage-feedback"
+            (keydown.escape)="releaseStageBadge.focus()"
+            (click)="
+              releaseStagePopover.hide();
+              releaseStageBadge.focus();
+              openFeedbackPageInDefaultBrowser()
+            "
+          >
+            <i class="pi pi-github" aria-hidden="true"></i>
+            <span>Report a problem or idea on GitHub</span>
+          </button>
+        </p-popover>
         @if (session.version()) {
           <span class="sidebar-brand-version">acloud&nbsp;&nbsp;{{ session.version() }}</span>
         }

@@ -4,7 +4,9 @@ import { provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { App, BREATH_MS } from './app';
 import { ScopeService } from './core/services/scope';
+import { ToastService } from './core/services/toast';
 import { PlayhouseEntry, wailsApi } from './core/services/wails-api';
+import { RELEASE_STAGE } from './shared/data';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -112,6 +114,52 @@ describe('App', () => {
       expect(items[0].label).toBe('No playhouses in this organisation');
       expect(items[0].disabled).toBe(true);
       expect(items.at(-1)?.label).toBe('View all / Create');
+    });
+  });
+
+  describe('release stage', () => {
+    /** The panel is appended to body, so its action is found on the document. */
+    const openReleaseStagePanelAndActivateFeedback = async () => {
+      const fixture = TestBed.createComponent(App);
+      await fixture.whenStable();
+      const sidebar = fixture.nativeElement as HTMLElement;
+      sidebar.querySelector<HTMLButtonElement>('.release-stage-badge')?.click();
+      await fixture.whenStable();
+      const feedback = document.querySelector<HTMLButtonElement>('.release-stage-feedback');
+      expect(feedback).not.toBeNull();
+      feedback?.click();
+    };
+
+    afterEach(() => vi.restoreAllMocks());
+
+    it('shows the release stage in the sidebar brand', async () => {
+      const fixture = TestBed.createComponent(App);
+      await fixture.whenStable();
+      const badge = (fixture.nativeElement as HTMLElement).querySelector(
+        '.sidebar-brand .release-stage-badge',
+      );
+
+      expect(badge?.textContent?.trim()).toBe(RELEASE_STAGE.label);
+    });
+
+    it('opens the feedback page in the default browser', async () => {
+      const openUrl = vi.spyOn(wailsApi, 'openUrlInDefaultBrowser').mockResolvedValue();
+
+      await openReleaseStagePanelAndActivateFeedback();
+
+      expect(openUrl).toHaveBeenCalledWith(RELEASE_STAGE.feedbackUrl);
+    });
+
+    it('says so when the browser cannot be opened', async () => {
+      const failure = new Error('no browser');
+      vi.spyOn(wailsApi, 'openUrlInDefaultBrowser').mockRejectedValue(failure);
+      const reportFailure = vi.spyOn(TestBed.inject(ToastService), 'failure');
+
+      await openReleaseStagePanelAndActivateFeedback();
+
+      await vi.waitFor(() =>
+        expect(reportFailure).toHaveBeenCalledWith('Could not open GitHub', failure),
+      );
     });
   });
 });
