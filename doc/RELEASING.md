@@ -14,8 +14,9 @@ flowchart TD
     E --> F[Directly call publishing workflow: checks, build and tests]
     F --> G[Wails builds Intel and Apple Silicon into one app]
     G --> H[GoReleaser creates the ZIP and checksums]
-    H --> I[Verify the extracted app and generate the cask]
-    I --> J[Upload release files]
+    H --> I[Create the branded DMG and add its checksum]
+    I --> V[Verify both packages and generate the cask]
+    V --> J[Upload release files]
     J --> K{Homebrew credential configured?}
     K -->|Yes| L[Update avisi-cloud/homebrew-tools]
     K -->|No| M["Skip Homebrew; GitHub release is ready"]
@@ -57,7 +58,7 @@ approval, then wait for the required checks before merging. See
 
 The publishing job uses the built-in `GITHUB_TOKEN` for release uploads and the
 separate Homebrew token only when checking out and updating the tap. Without it,
-the ZIP, checksums and generated cask are still published to GitHub; the workflow
+the DMG, ZIP, checksums and generated cask are still published to GitHub; the workflow
 summary notes that the tap update was skipped. Add the secret later to enable
 tap updates for subsequent releases. A configured but invalid token still fails
 the Homebrew step so credential problems are not silently ignored.
@@ -69,6 +70,8 @@ the Homebrew step so credential problems are not silently ignored.
 | Release Please               | Version proposal, changelog, release tag and GitHub Release                      |
 | Wails                        | Bindings, frontend build, native Go build, universal binary and `.app` packaging |
 | GoReleaser v2 OSS            | Release archive, SHA-256 checksums and build metadata                            |
+| `create-dmg`                 | Branded drag-to-Applications disk image with the same universal app              |
+| `package-release-dmg.mjs`    | Package the release DMG and add its SHA-256 to the shared checksum file          |
 | `generate-homebrew-cask.mjs` | An app cask using the archive's actual SHA-256                                   |
 | GitHub Actions               | Checks, artifact verification, upload and Homebrew update                        |
 | Renovate                     | Dependency update PRs; no automatic merging                                      |
@@ -99,20 +102,70 @@ does not publish prereleases to the shared Homebrew cask.
 
 ## Try a release locally
 
-On macOS with Go, Node.js, Xcode Command Line Tools and GoReleaser v2 installed:
+On macOS with Go, Node.js, Python 3.10+, Xcode Command Line Tools, GoReleaser v2 and
+`create-dmg` installed:
 
 ```sh
+brew install create-dmg
 make release-snapshot
 ```
 
-This produces a universal `.app` inside a ZIP, checksums, and a generated cask
-under `dist/`. It extracts the archive, checks its checksum, bundle metadata,
-both CPU architectures, ad-hoc signature, and cask syntax. Nothing is published.
+This produces a branded DMG, a ZIP, checksums, and a generated cask under `dist/`.
+Both downloads contain the same universal `.app`; Homebrew continues to use the
+ZIP. Verification checks both checksums, bundle metadata, both CPU architectures,
+ad-hoc signatures, and cask syntax. It mounts the DMG read-only and checks its
+Applications shortcut, artwork, legal notices, and persisted Finder layout,
+then detaches it. Nothing is published.
 Snapshot casks are for inspection; their download URLs are not published releases.
 
 GitHub runs the same rehearsal for pull requests. It also verifies generated
 bindings are committed, runs Go vet and race tests, and runs the frontend's
 formatter, linter, production build and tests.
+
+## Build or edit the installer
+
+```sh
+make dmg
+```
+
+This builds and verifies `bin/acloud-playrooms_<version>_darwin_universal.dmg`.
+Use `make dmg VERSION=0.28.2` to override the configured application version.
+Packaging uses `create-dmg` with a real Applications shortcut and the existing
+app icon as the mounted volume icon. LICENSE and NOTICE are included in the
+hidden `.legal` directory on the disk image.
+
+The editable artwork is `build/darwin/dmg/background.html`. It references the
+existing `AvisiBackground.webp`, white Avisi mark, and vendored Poppins fonts.
+To regenerate the committed PNG preview and TIFF background on macOS:
+
+```sh
+swift scripts/render-dmg-background.swift
+```
+
+The TIFF contains 720 × 480 and 1440 × 960 representations for standard and
+Retina displays. Release builds use this committed file without rendering HTML
+or installing artwork tools. Keep the artwork's icon wells aligned with the
+positions in `scripts/dmg-layout.py` when editing the layout.
+
+Packaging and verification do not require permission to control Finder. The
+first build installs the pinned `ds-store` and `mac-alias` Python libraries into
+`bin/dmg-tools/`; subsequent builds reuse them. `create-dmg` makes a writable
+image with its Finder automation disabled. The packaging script then writes
+the background alias, window settings and icon positions directly into
+`.DS_Store` and compresses the finished image. Verification reads these settings
+back and fails if the design is missing. The final visual check is to open the
+DMG in Finder yourself.
+
+The background also has a Finder bookmark tied to the disk image's volume UUID.
+This prevents a second mounted build from borrowing an older build's background.
+Verification uses macOS's native bookmark resolver, checks that it resolves to
+the mounted image being tested, and checks artwork dimensions and content.
+
+The saved opening size is 720 × 512 points, including a 32-point Finder title
+bar, so the full 720 × 480 artwork is visible. Finder still allows users to resize
+its window or drag icons; a DMG cannot enforce a fixed window size or make its
+bitmap background responsive. Eject previous copies before a visual test to
+avoid reopening an older mounted build.
 
 ## Retry a release
 

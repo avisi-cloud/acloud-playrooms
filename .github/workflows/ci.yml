@@ -54,6 +54,11 @@ jobs:
           install-only: true
       - name: Validate release configuration
         run: goreleaser check
+      - name: Install DMG packaging tool
+        run: brew install create-dmg
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
       - name: Build a complete release without publishing
         run: make release-snapshot
       - run: make vet test

@@ -5,9 +5,9 @@ GORELEASER ?= goreleaser
 LOCAL_ACLOUD ?= ../acloud/bin/acloud
 LOCAL_ACLOUD_ABS := $(abspath $(LOCAL_ACLOUD))
 
-# The application version is written down once, in build/config.yml, which is
-# also what Wails reads when it packages the app.
-CONFIG_VERSION := $(shell awk -F'"' '/^[[:space:]]*version:/ { value=$$2 } END { print value }' build/config.yml)
+# Use the top-level version maintained by Release Please, and pass it to Wails
+# so the app bundle and installer filename always agree.
+CONFIG_VERSION := $(shell awk -F':[[:space:]]*' '/^version:/ { gsub(/["[:space:]]/, "", $$2); print $$2; exit }' build/config.yml)
 ifeq ($(strip $(VERSION)),)
 VERSION := $(CONFIG_VERSION)
 endif
@@ -75,12 +75,17 @@ package: tools
 	lipo "bin/Acloud Playrooms.app/Contents/MacOS/Acloud Playrooms" -verify_arch arm64 x86_64
 	codesign --verify --deep --strict "bin/Acloud Playrooms.app"
 
+dmg: package
+	bash scripts/package-dmg.sh "$(VERSION)"
+	bash scripts/verify-dmg.sh "bin/acloud-playrooms_$(VERSION)_darwin_universal.dmg" "$(VERSION)"
+
 release-snapshot:
 	$(GORELEASER) release --snapshot --clean
+	node scripts/package-release-dmg.mjs
 	node scripts/generate-homebrew-cask.mjs
 	bash scripts/verify-release.sh
 
 clean:
 	-rm -rf bin node_modules frontend/node_modules frontend/dist frontend/.angular frontend/.vite frontend/coverage .task icons.icns
 
-.PHONY: tools dev dev-local build test vet fmt fmt-check check package release-snapshot clean
+.PHONY: tools dev dev-local build test vet fmt fmt-check check package dmg release-snapshot clean

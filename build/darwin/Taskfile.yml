@@ -41,15 +41,27 @@ tasks:
           DEV:
             ref: .DEV
       - task: common:generate:icons
+    cmds:
+      - task: compile:native
+        vars:
+          ARCH: '{{.ARCH}}'
+          OUTPUT: '{{.OUTPUT}}'
+          BUILD_FLAGS:
+            ref: .BUILD_FLAGS
+    vars: &native_build_vars
+      BUILD_FLAGS: '{{if eq .DEV "true"}}-tags gui{{if eq .OBFUSCATED "true"}},wails_obfuscated{{end}}{{if .EXTRA_TAGS}},{{.EXTRA_TAGS}}{{end}} -buildvcs=false -gcflags=all="-l"{{else}}-tags production,gui{{if eq .OBFUSCATED "true"}},wails_obfuscated{{end}}{{if .EXTRA_TAGS}},{{.EXTRA_TAGS}}{{end}} -trimpath -buildvcs=false -ldflags="-w -s"{{end}}'
+      DEFAULT_OUTPUT: '{{.BIN_DIR}}/{{.APP_NAME}}'
+      OUTPUT: '{{ .OUTPUT | default .DEFAULT_OUTPUT }}'
+
+  compile:native:
+    summary: Compiles Go using the already prepared frontend and icons
+    internal: true
     preconditions:
       - sh: '{{if eq .OBFUSCATED "true"}}command -v garble >/dev/null 2>&1{{else}}true{{end}}'
         msg: "garble is required for obfuscated builds. Install it with: go install mvdan.cc/garble@v0.16.0 (requires Go 1.24+). See https://github.com/burrowers/garble/releases for version/toolchain compatibility."
     cmds:
       - '{{if eq .OBFUSCATED "true"}}garble {{.GARBLE_ARGS}} build{{else}}go build{{end}} {{.BUILD_FLAGS}} -o "{{.OUTPUT}}" ./main'
-    vars:
-      BUILD_FLAGS: '{{if eq .DEV "true"}}-tags gui{{if eq .OBFUSCATED "true"}},wails_obfuscated{{end}}{{if .EXTRA_TAGS}},{{.EXTRA_TAGS}}{{end}} -buildvcs=false -gcflags=all="-l"{{else}}-tags production,gui{{if eq .OBFUSCATED "true"}},wails_obfuscated{{end}}{{if .EXTRA_TAGS}},{{.EXTRA_TAGS}}{{end}} -trimpath -buildvcs=false -ldflags="-w -s"{{end}}'
-      DEFAULT_OUTPUT: '{{.BIN_DIR}}/{{.APP_NAME}}'
-      OUTPUT: '{{ .OUTPUT | default .DEFAULT_OUTPUT }}'
+    vars: *native_build_vars
     env:
       GOOS: darwin
       CGO_ENABLED: 1
@@ -91,13 +103,14 @@ tasks:
 
   build:universal:
     summary: Builds darwin universal binary (arm64 + amd64)
-    # These builds share npm dependencies, bindings and frontend output.
+    # Prepare the shared frontend, bindings and icons on the first build. The
+    # second architecture only compiles Go, without reinstalling npm packages.
     cmds:
       - task: build
         vars:
           ARCH: amd64
           OUTPUT: "{{.BIN_DIR}}/{{.APP_NAME}}-amd64"
-      - task: build
+      - task: '{{if eq OS "darwin"}}compile:native{{else}}build{{end}}'
         vars:
           ARCH: arm64
           OUTPUT: "{{.BIN_DIR}}/{{.APP_NAME}}-arm64"

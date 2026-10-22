@@ -73,10 +73,12 @@ and `acloud auth status`.
 
 ### 2. Install Acloud Playrooms
 
-Download the universal macOS ZIP from the
+Download the universal macOS DMG from the
 [latest release](https://github.com/avisi-cloud/acloud-playrooms/releases/latest),
-unzip it, and move **Acloud Playrooms.app** into **Applications**. The same
+open it, and drag **Acloud Playrooms** onto **Applications** in the installer
+window. Eject the disk image after copying. The same
 download supports Apple Silicon and Intel Macs running macOS 12 or later.
+The ZIP is also available if you prefer to copy the app manually.
 
 > [!NOTE]
 > Builds are currently ad-hoc signed, not Apple-notarized, so the app may need
@@ -88,7 +90,8 @@ download supports Apple Silicon and Intel Macs running macOS 12 or later.
 Open **Acloud Playrooms** from Applications, choose your playhouse, and create
 or select a playroom. Connecting opens your selected terminal.
 
-To update, download the latest ZIP and replace the app in **Applications**.
+To update, quit the app, download the latest DMG, and drag the new app into
+**Applications**, choosing **Replace** when prompted.
 
 <details>
 <summary><strong>Something is not working?</strong></summary>
@@ -172,6 +175,7 @@ make dev
 | `make build`            | Build the app for your Mac in `bin/`                                             |
 | `make check`            | Check Go formatting, frontend formatting/lint/build/tests, Go vet and race tests |
 | `make package`          | Build a universal Mac application                                                |
+| `make dmg`              | Build and verify the branded installer (requires `create-dmg` and Python 3.10+)  |
 | `make release-snapshot` | Build and verify release files locally, without publishing                       |
 
 Run `make build` before `make check` on a fresh checkout so generated bindings
