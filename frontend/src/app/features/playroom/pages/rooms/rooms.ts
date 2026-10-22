@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import {
   Component,
+  ElementRef,
   HostListener,
   OnDestroy,
   OnInit,
@@ -23,8 +24,10 @@ import { PlayroomLifecycleService } from '../../../../core/services/playroom-lif
 import { PageLoadingService } from '../../../../core/services/page-loading';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { wailsApi } from '../../../../core/services/wails-api';
+import { UiSessionService } from '../../../../core/services/ui-session';
 import { PlayroomActionsHostComponent, PlayroomCardComponent } from '../../../../shared/components';
 import { ConnectTab, Playroom } from '../../../../shared/models';
+import { isTransitional, describeError } from '../../../../shared/utils';
 import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-drawer/create-playroom-drawer';
 
 /**
@@ -56,8 +59,25 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   readonly state = inject(PlayroomStateService);
   @ViewChild('roomActions') private roomActions?: PlayroomActionsHostComponent;
 
-  readonly query = signal('');
-  readonly mineOnly = signal(false);
+  readonly session = inject(UiSessionService);
+  readonly query = this.session.query;
+  readonly mineOnly = this.session.mineOnly;
+  readonly statusFilter = this.session.status;
+  readonly sort = this.session.sort;
+  readonly compact = this.session.compact;
+  readonly failure = signal('');
+  @ViewChild('listBody') private listBody?: ElementRef<HTMLElement>;
+  private restoredScroll = false;
+
+  restoreScroll(): void {
+    if (!this.loaded() || this.restoredScroll || !this.listBody) return;
+    this.listBody.nativeElement.scrollTop = this.session.scrollTop;
+    this.restoredScroll = true;
+  }
+
+  rememberScroll(event: Event): void {
+    this.session.scrollTop = (event.target as HTMLElement).scrollTop;
+  }
   readonly refreshing = signal(false);
   /**
    * Whether there is anything to render yet. From shared state, not a field:
@@ -76,10 +96,7 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
     effect(() => {
       this.state.playhouse();
       this.state.scopeRevision();
-      untracked(() => {
-        this.closeOverlays();
-        void this.refreshRooms();
-      });
+      untracked(() => void this.refreshRooms());
     });
   }
 
@@ -99,10 +116,9 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   @HostListener('window:keydown', ['$event'])
   handleKeydown(event: KeyboardEvent): void {
     // Escape still reaches the overlays; anything else would open a second one.
-    if (event.key === 'Escape') {
-      this.closeOverlays();
-      return;
-    }
+    // PrimeNG owns Escape for nested selects and overlays. Do not close their
+    // parent drawer when the user only meant to dismiss a dropdown.
+    if (event.key === 'Escape') return;
     if (this.anyOverlayOpen()) return;
 
     // PrimeNG renders its select as <div role="combobox">, not <select>.
@@ -128,12 +144,13 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
 
   /** Whether the empty state is "nothing here" or "nothing matches". */
   hasFilters(): boolean {
-    return this.mineOnly() || this.query().trim().length > 0;
+    return this.mineOnly() || this.query().trim().length > 0 || !!this.statusFilter();
   }
 
   clearFilters(): void {
     this.mineOnly.set(false);
     this.query.set('');
+    this.statusFilter.set('');
   }
 
   /**
@@ -145,14 +162,26 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
     const playhouse = this.state.playhouse();
     const mineOnly = this.mineOnly();
     const user = this.state.user();
-    return this.state.rooms().filter((room) => {
-      const searchable = `${room.name} ${room.owner}`.toLowerCase();
-      return (
-        room.playhouse === playhouse &&
-        (!mineOnly || room.owner === user) &&
-        (!query || searchable.includes(query))
+    const status = this.statusFilter();
+    const sort = this.sort();
+    return this.state
+      .rooms()
+      .filter((room) => {
+        const searchable = `${room.name} ${room.owner}`.toLowerCase();
+        return (
+          room.playhouse === playhouse &&
+          (!mineOnly || room.owner === user) &&
+          (!status || room.status === status) &&
+          (!query || searchable.includes(query))
+        );
+      })
+      .sort((left, right) =>
+        sort === 'age'
+          ? left.ageMin - right.ageMin || left.name.localeCompare(right.name)
+          : sort === 'status'
+            ? left.status.localeCompare(right.status) || left.name.localeCompare(right.name)
+            : left.name.localeCompare(right.name),
       );
-    });
   });
 
   readonly mineCount = computed<number>(
@@ -185,12 +214,21 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
     }
     this.refreshing.set(true);
     const playhouse = this.state.playhouse();
+    const revision = this.state.scopeRevision();
+    this.failure.set('');
     try {
-      await this.pageLoading.runAndShowIndicatorIf(!background, () =>
+      const rooms = await this.pageLoading.runAndShowIndicatorIf(!background, () =>
         this.actions.reload(playhouse),
       );
+      if (playhouse === this.state.playhouse() && revision === this.state.scopeRevision()) {
+        this.state.setRoomsCount(rooms.filter((room) => room.playhouse === playhouse).length);
+        setTimeout(() => this.restoreScroll());
+      }
     } catch (error) {
-      this.notify.failure('Could not load the playrooms', error);
+      if (playhouse === this.state.playhouse() && revision === this.state.scopeRevision()) {
+        this.failure.set(describeError(error));
+        if (!background) this.notify.failure('Could not load the playrooms', error);
+      }
     } finally {
       this.refreshing.set(false);
     }
@@ -213,6 +251,7 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   }
 
   openUpdate(name: string): void {
+    if (this.actions.pendingOperation(name)) return;
     const room = this.findRoomByName(name);
     if (room) this.roomActions?.openUpdate(room);
   }
@@ -232,6 +271,7 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   // ── Delete ─────────────────────────────────────────────────────────────────
 
   askDelete(name: string): void {
+    if (this.actions.pendingOperation(name)) return;
     const room = this.findRoomByName(name);
     if (room) this.roomActions?.openDelete(room);
   }

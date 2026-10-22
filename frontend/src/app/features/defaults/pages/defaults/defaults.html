@@ -27,7 +27,7 @@
         size="small"
         title="Clears every configured default, restoring the built-in values"
         [disabled]="loading() || saving() || !hasConfigured()"
-        (click)="resetAll()"
+        (click)="showResetConfirmation = true"
       />
       <p-button
         label="Save"
@@ -79,7 +79,7 @@
         }
         @for (group of groups(); track group.label) {
           <section class="defaults-group">
-            <div class="group-label">{{ group.label }}</div>
+            <h2 class="group-label">{{ group.label }}</h2>
 
             @for (row of group.rows; track row.Key) {
               <div
@@ -121,11 +121,12 @@
                         </div>
                         <p-slider
                           [ngModel]="sliderValues[row.Key]"
-                          (ngModelChange)="sliderValues[row.Key] = $event"
+                          (ngModelChange)="onSliderChange(row, $event)"
                           (onSlideEnd)="onSliderChange(row, $event.value ?? sliderValues[row.Key])"
                           [min]="0"
                           [max]="sliderMax(row.field)"
-                          [step]="sliderStep"
+                          [step]="1"
+                          [ariaLabel]="row.Key"
                           styleClass="settings-slider"
                         />
                         <!-- Ticks are positioned at their real stops. Equal
@@ -144,6 +145,7 @@
 
                     @case ('select') {
                       <p-select
+                        [ariaLabel]="row.Key"
                         [options]="selectOptions(row.field)"
                         optionLabel="label"
                         optionValue="value"
@@ -157,6 +159,7 @@
                     @case ('toggle') {
                       <div class="toggle-row">
                         <p-toggleswitch
+                          [ariaLabel]="row.Key"
                           [ngModel]="toggleValue(row)"
                           (ngModelChange)="setToggle(row.Key, $event)"
                         />
@@ -168,6 +171,7 @@
 
                     @default {
                       <input
+                        [attr.aria-label]="row.Key"
                         pInputText
                         class="text-input"
                         [ngModel]="row.draft"
@@ -191,3 +195,30 @@
     }
   </div>
 </div>
+
+<p-dialog
+  appOverlayFocus="Reset all playroom defaults"
+  [appOverlayVisible]="showResetConfirmation"
+  [(visible)]="showResetConfirmation"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  header="Reset all playroom defaults?"
+  [style]="{ width: 'var(--overlay-sm)' }"
+  appendTo="body"
+  styleClass="av-dialog"
+>
+  <p>
+    This clears every configured playroom default in the current CLI context and restores built-in
+    values, including in your terminal. Unsaved edits on this screen will also be discarded.
+  </p>
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      [outlined]="true"
+      (click)="showResetConfirmation = false"
+    />
+    <p-button label="Reset all defaults" severity="danger" (click)="resetAll()" />
+  </ng-template>
+</p-dialog>

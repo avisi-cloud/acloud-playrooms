@@ -8,6 +8,7 @@
   @for (value of values(); track $index) {
     <div class="repeat-row">
       <input
+        [attr.aria-label]="itemLabel + ' ' + ($index + 1)"
         pInputText
         class="flex-1"
         [ngModel]="value"

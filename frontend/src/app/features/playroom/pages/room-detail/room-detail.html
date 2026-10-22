@@ -16,6 +16,16 @@
       </div>
     </div>
     <div class="page-header-right">
+      <p-button
+        label="Refresh"
+        icon="pi pi-refresh"
+        size="small"
+        severity="secondary"
+        [outlined]="true"
+        [loading]="refreshing"
+        [disabled]="refreshing"
+        (click)="refreshRooms()"
+      />
       @if (room()) {
         <p-tag
           [value]="statusLabel()"
@@ -30,10 +40,20 @@
 
   <!-- Body -->
   <div class="page-body detail-body">
+    @if (failure) {
+      <div class="read-failure" role="alert">
+        <h2>Could not refresh playroom</h2>
+        <p>{{ failure }}</p>
+        @if (room()) {
+          <p>Showing the last known details; they may be out of date.</p>
+        }
+        <p-button label="Retry" size="small" [disabled]="refreshing" (click)="refreshRooms()" />
+      </div>
+    }
     @if (loading) {
       <!-- The shell's brand mark breathes instead; see PageLoadingService. -->
       <p class="sr-only" role="status">Loading playroom…</p>
-    } @else if (!room()) {
+    } @else if (!room() && !failure) {
       <div class="state-center">
         <div class="state-icon">
           <i class="pi pi-exclamation-circle" style="font-size: 1.75rem"></i>
@@ -49,7 +69,7 @@
           (click)="goBack()"
         />
       </div>
-    } @else {
+    } @else if (room()) {
       <div class="detail-column">
         <!-- Transitional status banner. The tone follows the status now; it used
              to bind [ngClass] to the status with no matching rules, so a room
@@ -66,7 +86,10 @@
 
         <!-- Action buttons -->
         <section class="actions-row">
-          @switch (room()!.status) {
+          @if (actions.pendingOperation(roomName()); as pending) {
+            <span role="status">{{ pending }}…</span>
+          }
+          @switch (actions.pendingOperation(roomName()) ? 'busy' : room()!.status) {
             @case ('ready') {
               <p-button
                 label="Connect"
@@ -123,6 +146,7 @@
           <div class="actions-end">
             <p-button
               icon="pi pi-ellipsis-h"
+              [disabled]="!!actions.pendingOperation(roomName())"
               size="small"
               severity="secondary"
               [text]="true"
@@ -140,7 +164,7 @@
           <div class="list-section">
             <div class="list-section-head">
               <div class="card-icon-wrap"><i class="pi pi-desktop card-icon"></i></div>
-              <span class="section-title">Connection</span>
+              <h2 class="section-title">Connection</h2>
             </div>
             <div class="list-row ssh-row">
               <span>SSH host</span>
@@ -170,7 +194,7 @@
           <div class="list-section">
             <div class="list-section-head">
               <div class="card-icon-wrap"><i class="pi pi-microchip card-icon"></i></div>
-              <span class="section-title">Resources</span>
+              <h2 class="section-title">Resources</h2>
             </div>
             <div class="list-row">
               <span>Image</span
@@ -197,7 +221,7 @@
           <div class="list-section">
             <div class="list-section-head">
               <div class="card-icon-wrap"><i class="pi pi-info-circle card-icon"></i></div>
-              <span class="section-title">Metadata</span>
+              <h2 class="section-title">Metadata</h2>
             </div>
             <div class="list-row">
               <span>Owner</span><strong>{{ room()!.owner }}</strong>

@@ -49,6 +49,32 @@ export class PlayroomLifecycleService {
     }, 10_000);
   }
 
+  private readonly pending = signal<Record<string, string>>({});
+
+  pendingOperation(name: string): string {
+    return this.pending()[`${this.state.scopeRevision()}:${this.state.playhouse()}:${name}`] ?? '';
+  }
+
+  private beginOperation(name: string, playhouse: string, label: string): (() => void) | null {
+    const key = `${this.state.scopeRevision()}:${playhouse}:${name}`;
+    if (this.pending()[key]) return null;
+    this.pending.update((operations) => ({ ...operations, [key]: label }));
+    return () =>
+      this.pending.update((operations) => {
+        const next = { ...operations };
+        delete next[key];
+        return next;
+      });
+  }
+
+  private async reloadAfterOperation(playhouse: string): Promise<void> {
+    try {
+      await this.reload(playhouse);
+    } catch (error) {
+      this.notify.failure('Could not refresh playrooms. Use Refresh to retry.', error);
+    }
+  }
+
   /** Optimistically patch a single room in the shared list. */
   patch(name: string, fields: Partial<Playroom>, playhouse = this.state.playhouse()): void {
     this.state.setRooms(
@@ -109,6 +135,8 @@ export class PlayroomLifecycleService {
   async stop(room: Playroom): Promise<void> {
     const selection = this.state.captureSelection();
     this.patch(room.name, { status: 'stopped', host: '', rawStatus: '' }, room.playhouse);
+    const finish = this.beginOperation(room.name, room.playhouse, 'Stopping');
+    if (!finish) return;
     let startedOperationId = '';
     try {
       await this.console.run(`Stopping "${room.name}"`, (operationId) => {
@@ -118,13 +146,17 @@ export class PlayroomLifecycleService {
       this.notify.toast(`Stopped "${room.name}" (storage retained)`, 'idle', startedOperationId);
     } catch (error) {
       this.notify.failure(`Could not stop "${room.name}"`, error, startedOperationId);
+    } finally {
       await this.reloadAfterMutation(selection);
+      finish();
     }
   }
 
   async start(room: Playroom): Promise<void> {
     const selection = this.state.captureSelection();
     this.patch(room.name, { status: 'starting', host: '', rawStatus: '' }, room.playhouse);
+    const finish = this.beginOperation(room.name, room.playhouse, 'Starting');
+    if (!finish) return;
     let startedOperationId = '';
     try {
       await this.console.run(`Starting "${room.name}"`, (operationId) => {
@@ -139,14 +171,18 @@ export class PlayroomLifecycleService {
       });
     } catch (error) {
       this.notify.failure(`Could not start "${room.name}"`, error, startedOperationId);
+    } finally {
+      await this.reloadAfterMutation(selection);
+      finish();
     }
-    await this.reloadAfterMutation(selection);
   }
 
   async update(form: UpdateForm): Promise<boolean> {
     const selection = this.state.captureSelection();
     this.patch(form.name, { status: 'starting' }, form.playhouse);
     let succeeded = false;
+    const finish = this.beginOperation(form.name, form.playhouse, 'Updating');
+    if (!finish) return false;
     let startedOperationId = '';
     try {
       await this.console.run(`Updating "${form.name}"`, (operationId) => {
@@ -158,8 +194,11 @@ export class PlayroomLifecycleService {
       succeeded = true;
     } catch (error) {
       this.notify.failure(`Could not update "${form.name}"`, error, startedOperationId);
+      return false;
+    } finally {
+      await this.reloadAfterMutation(selection);
+      finish();
     }
-    await this.reloadAfterMutation(selection);
     return succeeded;
   }
 
@@ -175,6 +214,8 @@ export class PlayroomLifecycleService {
   ): Promise<boolean> {
     const selection = this.state.captureSelection();
     this.patch(room.name, { status: 'deleting' }, room.playhouse);
+    const finish = this.beginOperation(room.name, room.playhouse, 'Deleting');
+    if (!finish) return false;
     let startedOperationId = '';
     try {
       await this.console.run(`Deleting "${room.name}"`, (operationId) => {
@@ -195,6 +236,8 @@ export class PlayroomLifecycleService {
       this.notify.failure(`Could not delete "${room.name}"`, error, startedOperationId);
       await this.reloadAfterMutation(selection);
       return false;
+    } finally {
+      finish();
     }
   }
 }

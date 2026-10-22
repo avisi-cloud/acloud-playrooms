@@ -1,5 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
+import {
+  Component,
+  DestroyRef,
+  OnInit,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
@@ -63,6 +72,14 @@ export class App implements OnInit {
    * any command the user started. Held to the end of the breath — see BREATH_MS.
    */
   readonly shellBusy = this._shellBusy.asReadonly();
+  readonly delayedBusy = signal(false);
+  private hasActivatedRoute = false;
+
+  focusRoutedContent(): void {
+    if (this.hasActivatedRoute)
+      setTimeout(() => document.getElementById('main-content')?.focus({ preventScroll: true }));
+    this.hasActivatedRoute = true;
+  }
 
   readonly authMenuItems = computed<MenuItem[]>(() =>
     this.state.loggedIn()
@@ -71,6 +88,17 @@ export class App implements OnInit {
   );
 
   constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      if (this.busyRelease) clearTimeout(this.busyRelease);
+    });
+    effect((onCleanup) => {
+      if (!this.pageLoading.active() && !this.console.isRunning()) {
+        this.delayedBusy.set(false);
+        return;
+      }
+      const timer = setTimeout(() => this.delayedBusy.set(true), 1200);
+      onCleanup(() => clearTimeout(timer));
+    });
     effect(() => {
       const busy = this.pageLoading.active() || this.console.isRunning();
       untracked(() => this.keepMarkBreathingUntilCycleEnds(busy));

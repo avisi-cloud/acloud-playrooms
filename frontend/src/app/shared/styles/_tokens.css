@@ -22,7 +22,8 @@
 
   --tx: #1a3440;
   --tx-2: #4d6975;
-  --tx-3: #87a0ac;
+  --tx-3: #526f7d;
+  --link: #08748f;
 
   --ok: #05b16a;
   --busy: #006a86;
@@ -38,7 +39,7 @@
   --busy-on-dark: #7dd7ea;
   --warn-on-dark: #e7b85b;
   --bad-on-dark: #f87171;
-  --idle-on-dark: rgba(255, 255, 255, 0.4);
+  --idle-on-dark: #9bb0bc;
 
   --r: 0.5rem;
   --r-sm: 0.375rem;
@@ -69,7 +70,8 @@ html.app-dark {
 
   --tx: #ebeeef;
   --tx-2: #9bb0bc;
-  --tx-3: #5d7a8a;
+  --tx-3: #91aab7;
+  --link: #7dd7ea;
 
   --ok: #1dd478;
   --busy: #1199bb;
@@ -99,4 +101,29 @@ html.app-dark {
    has too little contrast against it. */
 .sidebar :where(a, button, [tabindex]):focus-visible {
   outline-color: #7dd7ea;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 10000;
+  left: 12px;
+  top: -44px;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  background: var(--cyan);
+  color: #003345;
+  font-size: 12px;
+  transition: top 0.15s ease;
+}
+.skip-link:focus {
+  top: 12px;
+}
+.loading-label {
+  position: absolute;
+  top: 8px;
+  right: 18px;
+  z-index: 2;
+  margin: 0;
+  color: var(--tx-2);
+  font-size: 11px;
 }

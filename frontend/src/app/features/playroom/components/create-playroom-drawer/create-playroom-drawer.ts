@@ -4,6 +4,7 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   Output,
   SimpleChanges,
   inject,
@@ -21,6 +22,7 @@ import { PlayroomLifecycleService } from '../../../../core/services/playroom-lif
 import { PlayroomDefaultsService } from '../../../../core/services/playroom-defaults';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { ImageCatalogService } from '../../../../core/services/image-catalog';
+import { UiSessionService } from '../../../../core/services/ui-session';
 import { PlayroomCreateInput, wailsApi } from '../../../../core/services/wails-api';
 import {
   CommandPreviewComponent,
@@ -28,6 +30,7 @@ import {
   WizardStep,
   WizardStepper,
 } from '../../../../shared/components';
+import { OverlayFocusDirective } from '../../../../shared/directives';
 import { CAPABILITIES, EXPOSURES } from '../../../../shared/data';
 import { CreateForm, ImageEntry, Playroom } from '../../../../shared/models';
 import { NAME_RE, blankCreateForm, findImageEntry, updateCache } from '../../../../shared/utils';
@@ -51,11 +54,12 @@ type CreateStepKey = 'basics' | 'resources' | 'forwarding' | 'options' | 'review
     CommandPreviewComponent,
     StringListEditorComponent,
     WizardStepper,
+    OverlayFocusDirective,
   ],
   templateUrl: './create-playroom-drawer.html',
   styleUrl: './create-playroom-drawer.css',
 })
-export class CreatePlayroomDrawerComponent implements OnChanges {
+export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   private readonly state = inject(PlayroomStateService);
   private readonly actions = inject(PlayroomLifecycleService);
   private readonly notify = inject(ToastService);
@@ -63,6 +67,9 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
   private readonly defaults = inject(PlayroomDefaultsService);
   private readonly router = inject(Router);
   private readonly imageCatalog = inject(ImageCatalogService);
+  private readonly session = inject(UiSessionService);
+  submitting = false;
+  submitFailure = '';
 
   /**
    * The command preview comes from the backend, so what is shown is the arguments
@@ -91,12 +98,13 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible'] && this.visible) {
-      this.form = blankCreateForm(this.playhouse);
+      const draft = this.session.recall<{ form: CreateForm; step: number }>('create');
+      this.form = draft?.form ?? blankCreateForm(this.playhouse);
       this.touched = false;
-      this.step = 0;
+      this.step = draft?.step ?? 0;
       this.advancedSecurityOpenedFromImageError = false;
       void this.loadImages();
-      void this.seedFromDefaults();
+      if (!draft) void this.seedFromDefaults();
     }
   }
 
@@ -130,12 +138,36 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
   }
 
   onVisibleChange(value: boolean): void {
+    if (this.submitting) return;
+    if (!value) this.rememberDraft();
     this.visible = value;
     this.visibleChange.emit(value);
   }
 
   close(): void {
     this.onVisibleChange(false);
+  }
+
+  private rememberDraft(): void {
+    if (this.form.playhouse === this.state.playhouse())
+      this.session.remember('create', { form: this.form, step: this.step });
+  }
+
+  ngOnDestroy(): void {
+    if (this.visible) this.rememberDraft();
+  }
+
+  discardDraft(): void {
+    if (this.submitting) return;
+    this.session.forget('create');
+    this.form = blankCreateForm(this.playhouse, this.defaults);
+    this.step = 0;
+    this.touched = false;
+    this.submitFailure = '';
+  }
+
+  private focusName(): void {
+    setTimeout(() => document.getElementById('create-name')?.focus());
   }
 
   /**
@@ -185,12 +217,16 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
       this.step = Math.max(0, Math.min(index, this.steps.length - 1));
     } else {
       this.touched = true;
+      this.focusName();
     }
   }
 
   next(): void {
     this.touched = true;
-    if (!this.canLeaveStep()) return;
+    if (!this.canLeaveStep()) {
+      this.focusName();
+      return;
+    }
     this.step = Math.min(this.step + 1, this.steps.length - 1);
     this.touched = false;
   }
@@ -203,6 +239,11 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
   goToPrivilegedModeOnOptionsStep(): void {
     this.advancedSecurityOpenedFromImageError = true;
     this.goStep(this.steps.findIndex((step) => step.key === 'options'));
+    setTimeout(() => {
+      const target = document.getElementById('create-privileged');
+      target?.scrollIntoView({ block: 'center', behavior: 'instant' });
+      target?.focus({ preventScroll: true });
+    });
   }
 
   canLeaveStep(): boolean {
@@ -277,10 +318,14 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
   // ── Create ─────────────────────────────────────────────────────────────────
 
   async create(): Promise<void> {
+    if (this.submitting) return;
     this.touched = true;
     if (!this.canCreate()) return;
     const form = this.form;
-    this.close();
+    this.submitting = true;
+    this.submitFailure = '';
+    this.rememberDraft();
+    const scopeRevision = this.state.scopeRevision();
 
     const optimistic: Playroom = {
       name: form.name,
@@ -322,13 +367,30 @@ export class CreatePlayroomDrawerComponent implements OnChanges {
       });
       updateCache({ lastPlayroom: form.name, lastPlayhouse: form.playhouse });
       this.notify.toast(`Created "${form.name}"`, 'ok', startedOperationId);
-      void this.router.navigate(['/rooms', form.name]);
+      if (
+        this.state.scopeRevision() === scopeRevision &&
+        this.state.playhouse() === form.playhouse
+      ) {
+        this.session.forget('create');
+        this.submitting = false;
+        this.visible = false;
+        this.visibleChange.emit(false);
+        void this.router.navigate(['/rooms', form.name]);
+      }
       await this.actions.reload(form.playhouse);
     } catch (error) {
+      this.submitFailure =
+        'Creation did not finish. Your input is kept below. Check Activity before retrying: the playroom may already exist.';
       this.notify.failure(`Could not create "${form.name}"`, error, startedOperationId);
       // Creation can fail after the playroom exists — a wait-timeout is the
       // obvious case — so reload rather than assuming it never got made.
-      await this.actions.reload(form.playhouse);
+      try {
+        await this.actions.reload(form.playhouse);
+      } catch {
+        /* Keep the draft and original failure. */
+      }
+    } finally {
+      this.submitting = false;
     }
   }
 }

@@ -1,4 +1,6 @@
 <p-dialog
+  [appOverlayFocus]="'Connect to ' + room?.name"
+  [appOverlayVisible]="visible"
   [visible]="visible"
   (visibleChange)="onVisibleChange($event)"
   [modal]="true"
@@ -23,61 +25,86 @@
         (click)="close()"
       />
     </div>
-    <div class="tab-bar dialog-header-tabs">
-      <button type="button" [class.active]="tab === 'connect'" (click)="tab = 'connect'">
+    <div class="tab-bar dialog-header-tabs" role="tablist" aria-label="Connection method">
+      <button
+        id="connect-tab"
+        role="tab"
+        aria-controls="connection-panel"
+        [attr.aria-selected]="tab === 'connect'"
+        [tabIndex]="tab === 'connect' ? 0 : -1"
+        (keydown)="onTabKeydown($event)"
+        type="button"
+        [class.active]="tab === 'connect'"
+        (click)="tab = 'connect'"
+      >
         <i class="pi pi-terminal"></i> Connect
       </button>
-      <button type="button" [class.active]="tab === 'open'" (click)="tab = 'open'">
+      <button
+        id="open-tab"
+        role="tab"
+        aria-controls="connection-panel"
+        [attr.aria-selected]="tab === 'open'"
+        [tabIndex]="tab === 'open' ? 0 : -1"
+        (keydown)="onTabKeydown($event)"
+        type="button"
+        [class.active]="tab === 'open'"
+        (click)="tab = 'open'"
+      >
         <i class="pi pi-code"></i> Open
       </button>
     </div>
   </ng-template>
 
   @if (room) {
-    @if (tab === 'connect') {
-      <div class="field-group">
-        <label class="field-label" for="connect-user">User</label>
-        <input id="connect-user" pInputText class="w-full" [(ngModel)]="user" />
-      </div>
-      <div class="field-group">
-        <label class="field-label" for="connect-terminal">Terminal</label>
-        <p-select
-          [options]="terminals"
-          optionLabel="label"
-          optionValue="id"
-          inputId="connect-terminal"
-          [(ngModel)]="terminal"
-          [style]="{ width: '100%' }"
-          appendTo="body"
-        />
-      </div>
-      <label class="toggle-line">
-        <span>Forward SSH agent<small class="flag-ref">--forward-agent</small></span>
-        <p-toggleswitch [(ngModel)]="forwardAgent" />
-      </label>
-      <label class="toggle-line">
-        <span>Reach it over Tailscale<small class="flag-ref">--tunnel</small></span>
-        <p-toggleswitch [(ngModel)]="tunnel" />
-      </label>
-    } @else {
-      <div class="field-group">
-        <label class="field-label" for="connect-editor">Editor</label>
-        <p-select
-          [options]="editors"
-          optionLabel="label"
-          optionValue="id"
-          inputId="connect-editor"
-          [(ngModel)]="editor"
-          [style]="{ width: '100%' }"
-          appendTo="body"
-        />
-      </div>
-      <label class="toggle-line">
-        <span>Reach it over Tailscale<small class="flag-ref">--tunnel</small></span>
-        <p-toggleswitch [(ngModel)]="tunnel" />
-      </label>
-    }
-
+    <div
+      id="connection-panel"
+      role="tabpanel"
+      [attr.aria-labelledby]="tab === 'connect' ? 'connect-tab' : 'open-tab'"
+    >
+      @if (tab === 'connect') {
+        <div class="field-group">
+          <label class="field-label" for="connect-user">User</label>
+          <input id="connect-user" pInputText class="w-full" [(ngModel)]="user" />
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="connect-terminal">Terminal</label>
+          <p-select
+            [options]="terminals"
+            optionLabel="label"
+            optionValue="id"
+            inputId="connect-terminal"
+            [(ngModel)]="terminal"
+            [style]="{ width: '100%' }"
+            appendTo="body"
+          />
+        </div>
+        <label class="toggle-line">
+          <span>Forward SSH agent<small class="flag-ref">--forward-agent</small></span>
+          <p-toggleswitch [(ngModel)]="forwardAgent" />
+        </label>
+        <label class="toggle-line">
+          <span>Reach it over Tailscale<small class="flag-ref">--tunnel</small></span>
+          <p-toggleswitch [(ngModel)]="tunnel" />
+        </label>
+      } @else {
+        <div class="field-group">
+          <label class="field-label" for="connect-editor">Editor</label>
+          <p-select
+            [options]="editors"
+            optionLabel="label"
+            optionValue="id"
+            inputId="connect-editor"
+            [(ngModel)]="editor"
+            [style]="{ width: '100%' }"
+            appendTo="body"
+          />
+        </div>
+        <label class="toggle-line">
+          <span>Reach it over Tailscale<small class="flag-ref">--tunnel</small></span>
+          <p-toggleswitch [(ngModel)]="tunnel" />
+        </label>
+      }
+    </div>
     <!-- The one action that hands off to a real terminal, and the only surface
          in the app that did not show the command it would run. -->
     @if (tab === 'connect') {

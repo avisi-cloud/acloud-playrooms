@@ -39,18 +39,54 @@
         [ngModel]="query()"
         (ngModelChange)="query.set($event)"
         placeholder="Search playrooms"
+        aria-label="Search playrooms"
         class="search-input"
       />
     </p-iconfield>
     <label class="mine-toggle" for="mine-only">
       <p-toggleswitch
         inputId="mine-only"
+        ariaLabel="Show only my playrooms"
         [ngModel]="mineOnly()"
         (ngModelChange)="mineOnly.set($event)"
       />
       <span>Mine</span>
     </label>
 
+    <select
+      class="filter-select"
+      aria-label="Filter by status"
+      [ngModel]="statusFilter()"
+      (ngModelChange)="statusFilter.set($event)"
+    >
+      <option value="">All statuses</option>
+      <option value="ready">Ready</option>
+      <option value="stopped">Stopped</option>
+      <option value="starting">Starting</option>
+      <option value="creating">Creating</option>
+      <option value="failed">Failed</option>
+      <option value="unknown">Unknown</option>
+      <option value="no-host">No host</option>
+      <option value="deleting">Deleting</option>
+    </select>
+    <select
+      class="filter-select"
+      aria-label="Sort playrooms"
+      [ngModel]="sort()"
+      (ngModelChange)="sort.set($event)"
+    >
+      <option value="name">Name</option>
+      <option value="age">Newest first</option>
+      <option value="status">Status</option>
+    </select>
+    <button
+      class="page-back-btn"
+      type="button"
+      [attr.aria-pressed]="compact()"
+      (click)="compact.set(!compact())"
+    >
+      Compact
+    </button>
     <!-- The shortcuts exist; without this nothing tells you so. -->
     <span class="shortcut-hint" title="Keyboard shortcuts on this screen">
       <kbd>c</kbd> create <span class="shortcut-sep">·</span> <kbd>/</kbd> search
@@ -58,28 +94,29 @@
     </span>
   </div>
 
-  <section class="page-body content">
-    @if (actions.loadError()) {
-      <div class="empty-state" role="alert">
-        <h3 class="empty-state-title">Could not load playrooms</h3>
-        <p class="empty-state-text">
-          The list could not be refreshed. Previously loaded rooms may be out of date.
-        </p>
-        <p-button
-          label="Retry"
-          icon="pi pi-refresh"
-          [disabled]="refreshing()"
-          (click)="refreshRooms()"
-        />
+  <section
+    #listBody
+    class="page-body content"
+    aria-label="Playrooms"
+    (scroll)="rememberScroll($event)"
+  >
+    @if (failure()) {
+      <div class="read-failure" role="alert">
+        <h2>Could not load playrooms</h2>
+        <p>{{ failure() }}</p>
+        @if (loaded()) {
+          <p>The rooms below are from the last successful read and may be out of date.</p>
+        }
+        <p-button label="Retry" size="small" [disabled]="refreshing()" (click)="refreshRooms()" />
       </div>
     }
-    @if (!loaded() && !actions.loadError()) {
+    @if (!loaded() && !failure()) {
       <!-- Nothing is drawn while the first read runs: the brand mark in the
            shell breathes instead. This branch still has to exist, though —
            without it the "no playrooms yet" state rendered on every first load
            and every playhouse switch, before any data had arrived. -->
       <p class="sr-only" role="status">Loading playrooms…</p>
-    } @else if (loaded() && filteredRooms().length === 0 && !actions.loadError()) {
+    } @else if (loaded() && filteredRooms().length === 0) {
       <div class="empty-state">
         <div class="empty-state-icon">
           <i class="pi pi-desktop" style="font-size: 1.75rem"></i>
@@ -104,12 +141,14 @@
           </div>
         }
       </div>
-    } @else if (filteredRooms().length > 0) {
-      <div class="room-grid">
+    } @else if (loaded()) {
+      <div class="room-grid" [class.compact]="compact()">
         @for (room of filteredRooms(); track room.name) {
           <app-playroom-card
             [room]="room"
             [currentUser]="state.user()"
+            [pendingOperation]="actions.pendingOperation(room.name)"
+            [compact]="compact()"
             (openRoom)="openRoom($event)"
             (connectRoom)="openConnect($event, 'connect')"
             (openInEditor)="openConnect($event, 'open')"

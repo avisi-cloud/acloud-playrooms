@@ -3,6 +3,7 @@ import {
   EventEmitter,
   Input,
   OnChanges,
+  OnDestroy,
   Output,
   SimpleChanges,
   inject,
@@ -18,12 +19,15 @@ import {
   updateInputFor,
 } from '../../../core/services/playroom-lifecycle';
 import { ImageCatalogService } from '../../../core/services/image-catalog';
+import { PlayroomStateService } from '../../../core/services/playroom-state';
+import { UiSessionService } from '../../../core/services/ui-session';
 import { PlayroomUpdateInput, wailsApi } from '../../../core/services/wails-api';
 import { CAPABILITIES } from '../../data';
 import { ImageEntry, Playroom, UpdateForm } from '../../models';
 import { blankUpdateForm, findImageEntry, storageDoesNotGrow } from '../../utils';
 import { CommandPreviewComponent } from '../command-preview/command-preview';
 import { StringListEditorComponent } from '../string-list-editor/string-list-editor';
+import { OverlayFocusDirective } from '../../directives';
 
 /** Stands in for [room] until one is given, so the form always has every field. */
 const EMPTY_ROOM: Playroom = {
@@ -64,13 +68,18 @@ const EMPTY_ROOM: Playroom = {
     ToggleSwitchModule,
     CommandPreviewComponent,
     StringListEditorComponent,
+    OverlayFocusDirective,
   ],
   templateUrl: './playroom-update-drawer.html',
   styleUrl: './playroom-update-drawer.css',
 })
-export class PlayroomUpdateDrawerComponent implements OnChanges {
+export class PlayroomUpdateDrawerComponent implements OnChanges, OnDestroy {
   private readonly actions = inject(PlayroomLifecycleService);
   private readonly imageCatalog = inject(ImageCatalogService);
+  private readonly session = inject(UiSessionService);
+  private readonly state = inject(PlayroomStateService);
+  submitting = false;
+  submitFailure = '';
 
   /** Backend-generated, so the preview is the arguments that will run. */
   readonly previewUpdate = wailsApi.previewUpdatePlayroom;
@@ -87,7 +96,8 @@ export class PlayroomUpdateDrawerComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible'] && this.visible && this.room) {
-      this.form = blankUpdateForm(this.room);
+      this.form =
+        this.session.recall<UpdateForm>('update:' + this.room.name) ?? blankUpdateForm(this.room);
       this.storageTouched = false;
       void this.loadImages();
     }
@@ -149,6 +159,8 @@ export class PlayroomUpdateDrawerComponent implements OnChanges {
     return updateInputFor(this.form);
   }
   onVisibleChange(value: boolean): void {
+    if (this.submitting) return;
+    if (!value) this.rememberDraft();
     this.visible = value;
     this.visibleChange.emit(value);
   }
@@ -157,10 +169,42 @@ export class PlayroomUpdateDrawerComponent implements OnChanges {
     this.onVisibleChange(false);
   }
 
+  private rememberDraft(): void {
+    if (this.form.playhouse === this.state.playhouse())
+      this.session.remember('update:' + this.form.name, this.form);
+  }
+
+  ngOnDestroy(): void {
+    if (this.visible) this.rememberDraft();
+  }
+
+  discardDraft(): void {
+    if (!this.room || this.submitting) return;
+    this.session.forget('update:' + this.room.name);
+    this.form = blankUpdateForm(this.room);
+    this.storageTouched = false;
+    this.submitFailure = '';
+  }
+
   async save(): Promise<void> {
+    if (this.submitting) return;
+    this.storageTouched = true;
     if (this.blockingError()) return;
     const form = this.form;
-    this.close();
-    await this.actions.update(form);
+    this.submitting = true;
+    this.rememberDraft();
+    try {
+      if (await this.actions.update(form)) {
+        this.session.forget('update:' + form.name);
+        this.submitting = false;
+        this.visible = false;
+        this.visibleChange.emit(false);
+      } else {
+        this.submitFailure =
+          'Update failed. Your changes are kept; check Activity, then try again.';
+      }
+    } finally {
+      this.submitting = false;
+    }
   }
 }
