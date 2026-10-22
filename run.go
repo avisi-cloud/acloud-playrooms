@@ -22,7 +22,7 @@ func RunDesktopApplication() error {
 			application.NewService(&App{}),
 		},
 		Assets: application.AssetOptions{
-			Handler: application.BundledAssetFileServer(assets),
+			Handler: serveAppIndexForAngularRoutes(application.BundledAssetFileServer(assets)),
 		},
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: true,

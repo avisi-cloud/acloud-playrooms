@@ -23,6 +23,7 @@ it, update the entry.
 
 **Settled**
 
+- [A reload serves `index.html` for Angular routes](#a-reload-serves-indexhtml-for-angular-routes--2026-10-22)
 - [The GUI re-reads the CLI config on every lookup](#the-gui-re-reads-the-cli-config-on-every-lookup--2026-09-12)
 - [Windows packaging removed; macOS only in the tree as well as the prose](#windows-packaging-removed-macos-only-in-the-tree-as-well-as-the-prose--2026-09-12)
 - [The GUI names the acloud version it was verified against](#the-gui-names-the-acloud-version-it-was-verified-against--2026-09-12)
@@ -103,6 +104,17 @@ this is reachable from the CLI alone by scripting two commands in parallel.
 ---
 
 ## Settled
+
+### A reload serves `index.html` for Angular routes — 2026-10-22
+
+⌘+R on `/rooms` turned the window white: Wails answers only `/` with
+`index.html`, and there is no file called `rooms`. `assets.go` now answers a
+path without a file extension that the assets do not have with `index.html`, so
+a reload stays on the same screen and loads its data again. A missing file such
+as `/missing.js` still gets a 404.
+
+Hash routing (`withHashLocation()`) would also have fixed the reload, but it
+reads every `#` link as a route, which breaks the `#main-content` skip link.
 
 ### Public GitHub checks and automated releases - 2026-09-18
 
