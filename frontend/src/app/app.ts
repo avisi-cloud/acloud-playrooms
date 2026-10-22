@@ -12,8 +12,10 @@ import {
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
+import { PopoverModule } from 'primeng/popover';
 import { ToastModule } from 'primeng/toast';
 import { ToolStatus } from './shared/models';
+import { RELEASE_STAGE } from './shared/data';
 import { CliConsoleComponent } from './shared/components';
 import { PlayroomStateService } from './core/services/playroom-state';
 import { CliConsoleService } from './core/services/cli-console';
@@ -22,6 +24,7 @@ import { PageLoadingService } from './core/services/page-loading';
 import { AcloudSessionService } from './core/services/acloud-session';
 import { ScopeService } from './core/services/scope';
 import { WindowChromeService } from './core/services/window-chrome';
+import { wailsApi } from './core/services/wails-api';
 
 /**
  * One full breath of the brand mark: the period of both animations in
@@ -47,6 +50,7 @@ const PLAYHOUSE_MENU_MAX = 5;
     CommonModule,
     ToastModule,
     MenuModule,
+    PopoverModule,
     CliConsoleComponent,
   ],
   templateUrl: './app.html',
@@ -59,6 +63,7 @@ export class App implements OnInit {
   readonly pageLoading = inject(PageLoadingService);
   readonly session = inject(AcloudSessionService);
   readonly scope = inject(ScopeService);
+  readonly releaseStage = RELEASE_STAGE;
   private readonly windowChrome = inject(WindowChromeService);
   private readonly router = inject(Router);
   private readonly notify = inject(ToastService);
@@ -268,6 +273,16 @@ export class App implements OnInit {
       data: { operationId: result.operationId },
     });
     void this.router.navigate(['/playhouse']);
+  }
+
+  // ── Release stage ────────────────────────────────────────────────────────
+
+  async openFeedbackPageInDefaultBrowser(): Promise<void> {
+    try {
+      await wailsApi.openUrlInDefaultBrowser(this.releaseStage.feedbackUrl);
+    } catch (error) {
+      this.notify.failure('Could not open GitHub', error);
+    }
   }
 
   // ── Activity log ─────────────────────────────────────────────────────────

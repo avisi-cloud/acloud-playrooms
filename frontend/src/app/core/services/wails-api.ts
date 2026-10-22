@@ -1,3 +1,4 @@
+import { Browser } from '@wailsio/runtime';
 import type { ListingDto } from '../../shared/models';
 
 // Generated models keep frontend inputs aligned with the Go service.
@@ -62,6 +63,8 @@ export const wailsApi = {
   // Window
   getOperatingSystem: (): Promise<string> => app.GetOperatingSystem(),
   setWindowTheme: (theme: string): Promise<void> => app.SetWindowTheme(theme),
+  /** A plain link would load the page inside the app window, with no way back. */
+  openUrlInDefaultBrowser: (url: string): Promise<void> => Browser.OpenURL(url),
 
   // Auth
   /** Opens a terminal running the interactive login; poll isLoggedIn after. */

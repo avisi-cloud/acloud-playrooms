@@ -4,10 +4,16 @@
 
 [![Checks](https://github.com/avisi-cloud/acloud-playrooms/actions/workflows/ci.yml/badge.svg)](https://github.com/avisi-cloud/acloud-playrooms/actions/workflows/ci.yml)
 [![Latest release](https://img.shields.io/github/v/release/avisi-cloud/acloud-playrooms)](https://github.com/avisi-cloud/acloud-playrooms/releases/latest)
+![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
 ![macOS: Intel and Apple Silicon](https://img.shields.io/badge/macOS-Intel_%2B_Apple_Silicon-black)
 
 [Get started](#get-started) · [How it works](#how-it-works) · [Develop](#develop) · [Release](doc/RELEASING.md) · [Contribute](CONTRIBUTING.md)
+
+> [!WARNING]
+> This app is in alpha: it works, but it is still a work in progress. Things may
+> change or break between versions. Found a problem or have an idea?
+> [Open an issue on GitHub](https://github.com/avisi-cloud/acloud-playrooms/issues).
 
 ![Acloud Playrooms showing development environments and their status](assets/images/playrooms.png)
 
