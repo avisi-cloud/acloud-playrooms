@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.3](https://github.com/avisi-cloud/acloud-playrooms/compare/v0.28.2...v0.28.3) (2026-10-22)
+
+
+### Features
+
+* **dmg:** add branded macOS installer ([#15](https://github.com/avisi-cloud/acloud-playrooms/issues/15)) ([5a26944](https://github.com/avisi-cloud/acloud-playrooms/commit/5a26944ed5dcdeb9cd18b93b3adb89abc1cb2944))
+
 ## [0.28.2](https://github.com/avisi-cloud/acloud-playrooms/compare/v0.28.1...v0.28.2) (2026-10-09)
 
 
