@@ -39,6 +39,9 @@ final class ArtworkRenderer: NSObject, WKNavigationDelegate {
             const background = new Image();
             background.src = '../../../frontend/public/brand/AvisiBackground.webp';
             await background.decode();
+            const grain = new Image();
+            grain.src = '../../../frontend/public/brand/grain.png';
+            await grain.decode();
             if (!document.fonts.check('600 32px Poppins')) throw new Error('Poppins did not load');
             return true;
             """, arguments: [:], in: nil, in: .page) { result in

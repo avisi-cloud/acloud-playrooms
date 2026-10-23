@@ -10,7 +10,9 @@
 .main-panel {
   flex: 1;
   min-width: 0;
-  background: var(--win);
+  /* Same grain tile as the shell, over the theme colour. The tile holds both
+     light and dark grains, so it reads on --win in either theme. */
+  background: url('/brand/grain.png') 0 0 / 128px 128px repeat var(--win);
   border-radius: 18px;
   border: 1px solid var(--border);
   overflow: hidden;

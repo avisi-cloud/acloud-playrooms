@@ -33,8 +33,12 @@
         position: relative;
         font-family: Poppins, sans-serif;
         color: #f5f7fa;
-        background: #003345 url('../../../frontend/public/brand/AvisiBackground.webp') center /
-          cover;
+        /* Grain on top of the brand artwork, the same tile the app shell uses.
+           Drawn at 128px from a 256px tile, so it stays one device pixel per
+           grain in the 2x snapshot. */
+        background:
+          url('../../../frontend/public/brand/grain.png') 0 0 / 128px 128px repeat,
+          url('../../../frontend/public/brand/AvisiBackground.webp') center / cover #003345;
         -webkit-font-smoothing: antialiased;
       }
       .brand {
@@ -91,10 +95,12 @@
         top: 217px;
         width: 180px;
         height: 180px;
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        /* Glass, not a light card: a faint fill and edge are enough to frame
+           Finder's icons, and the grain shows through. */
+        border: 1px solid rgba(255, 255, 255, 0.14);
         border-radius: 24px;
-        background: linear-gradient(145deg, #f0f3f6, #c5d6df);
-        box-shadow: 0 12px 30px rgba(0, 15, 25, 0.12);
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+        box-shadow: 0 12px 30px rgba(0, 15, 25, 0.18);
       }
       .app {
         left: 100px;
@@ -143,7 +149,7 @@
     <span class="eyebrow">YOUR CLOUD WORKSPACE</span>
     <h1>Acloud Playrooms<span style="color: #1dd478">.</span></h1>
     <p class="instruction">Drag to Applications to install</p>
-    <!-- Light wells extend behind Finder's real icons and dark filename labels. -->
+    <!-- Glass wells sit behind Finder's real icons and filename labels. -->
     <div class="well app"></div>
     <svg class="arrow" viewBox="0 0 80 32" fill="none" aria-hidden="true">
       <path
