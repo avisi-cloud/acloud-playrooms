@@ -20,9 +20,7 @@ func (app *App) DeletePlayhouse(operationID string, input playhouse.DeleteInput)
 	return playhouse.Delete(app.commandContext(), operationID, input)
 }
 
-// UpdatePlayhouse converges an existing playhouse. There is no
-// `playhouse update`; see backend/playhouse/update.go for why this is a
-// `playhouse create` re-run and which settings it can actually change.
+// UpdatePlayhouse runs `acloud playhouse update`, which converges an existing playhouse.
 func (app *App) UpdatePlayhouse(operationID string, input playhouse.UpdateInput) error {
 	return playhouse.Update(app.commandContext(), operationID, input)
 }

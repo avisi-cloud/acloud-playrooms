@@ -39,6 +39,11 @@ export class AcloudBinaryCardComponent implements OnInit {
   readonly expanded = signal(false);
 
   readonly found = computed(() => this.status()?.Found === true);
+  /** Set when the acloud in use lacks commands these screens run. */
+  readonly minimumVersionNotMet = computed(() => {
+    const compatibility = this.session.compatibility();
+    return compatibility?.RunningVersionIsOlderThanMinimum ? compatibility.MinimumVersion : '';
+  });
   readonly pinnedByEnvironment = computed(() => this.status()?.EnvironmentOverride === true);
   readonly hasSavedPath = computed(() => (this.status()?.ConfiguredPath ?? '') !== '');
   readonly canSave = computed(
@@ -160,6 +165,6 @@ export class AcloudBinaryCardComponent implements OnInit {
   private apply(status: AcloudBinaryStatus): void {
     this.status.set(status);
     this.draft.set(status.ConfiguredPath || status.Path || '');
-    this.session.setBinaryStatus(status);
+    void this.session.setBinaryStatus(status);
   }
 }

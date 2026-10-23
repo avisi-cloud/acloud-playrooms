@@ -356,3 +356,21 @@
     padding-top: 18px;
   }
 }
+
+/* The layout badge sits next to the status; an outdated one opens Edit playhouse. */
+.status-cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+.layout-badge-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 999px;
+}
+.layout-badge-button:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 30%, transparent);
+}

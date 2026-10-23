@@ -16,7 +16,20 @@ type PlayhouseEntry struct {
 	Status   string
 	Region   string
 	Version  string
+	// LayoutVersion is null when the playhouse carries no layout stamp or it could not be read.
+	LayoutVersion *int
+	LayoutStatus  LayoutStatus
 }
+
+// LayoutStatus compares a playhouse's layout with the one the installed acloud ships.
+type LayoutStatus string
+
+const (
+	LayoutCurrent  LayoutStatus = "current"
+	LayoutOutdated LayoutStatus = "outdated"
+	LayoutNewer    LayoutStatus = "newer"
+	LayoutUnknown  LayoutStatus = "unknown"
+)
 
 // List runs `acloud playhouse list -o json` and decodes it, so the list comes
 // from the CLI code path rather than a separate query.

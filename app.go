@@ -52,8 +52,8 @@ func (app *App) GetAcloudVersion() string {
 	return local.AcloudVersion()
 }
 
-// GetAcloudCompatibility reports whether the installed acloud is newer than the
-// one this GUI was verified against, so the sidebar can say so.
+// GetAcloudCompatibility reports whether the installed acloud is too old for, or
+// newer than, the one this GUI was verified against, so the sidebar can say so.
 func (app *App) GetAcloudCompatibility() local.AcloudCompatibility {
 	return local.DescribeAcloudCompatibility()
 }

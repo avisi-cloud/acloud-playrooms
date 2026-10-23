@@ -42,8 +42,8 @@ export class AcloudSessionService {
   readonly acloudIsMissing = computed<boolean>(() => this._binary()?.Found === false);
 
   /**
-   * Set only when the running acloud is newer than the version this GUI was
-   * verified against. Null the rest of the time, unreadable versions included.
+   * Set only when the running acloud is older than this GUI needs, or newer than
+   * the version it was verified against. Null otherwise, unreadable versions included.
    */
   readonly compatibility = this._compatibility.asReadonly();
 
@@ -75,9 +75,15 @@ export class AcloudSessionService {
     }
   }
 
-  /** Records a status the settings screen already has, to save a round trip. */
-  setBinaryStatus(status: AcloudBinaryStatus): void {
+  /**
+   * Records a status the settings screen already has, to save a round trip. A
+   * different binary can be a different version, so that is read again.
+   */
+  setBinaryStatus(status: AcloudBinaryStatus): Promise<void> {
     this._binary.set(status);
+    return Promise.all([this.loadAcloudVersion(), this.loadCompatibilityWarning()]).then(
+      () => undefined,
+    );
   }
 
   private async loadAcloudVersion(): Promise<void> {
@@ -92,7 +98,10 @@ export class AcloudSessionService {
     try {
       const compatibility = await wailsApi.getAcloudCompatibility();
       this._compatibility.set(
-        compatibility.RunningVersionIsNewerThanVerified ? compatibility : null,
+        compatibility.RunningVersionIsOlderThanMinimum ||
+          compatibility.RunningVersionIsNewerThanVerified
+          ? compatibility
+          : null,
       );
     } catch {
       this._compatibility.set(null);

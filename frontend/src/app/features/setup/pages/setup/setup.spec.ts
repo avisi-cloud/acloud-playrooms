@@ -29,7 +29,7 @@ function binary(found: boolean): AcloudBinaryStatus {
     Path: found ? '/opt/homebrew/bin/acloud' : '',
     Source: found ? 'path' : 'none',
     Found: found,
-    Version: found ? '0.37.0' : '',
+    Version: found ? '0.39.0' : '',
     Message: '',
     ConfiguredPath: '',
     EnvironmentOverride: false,

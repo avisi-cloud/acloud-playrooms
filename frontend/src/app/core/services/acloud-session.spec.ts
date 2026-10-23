@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { AcloudSessionService } from './acloud-session';
-import { wailsApi } from './wails-api';
+import { AcloudCompatibility, wailsApi } from './wails-api';
 
 describe('AcloudSessionService', () => {
   let session: AcloudSessionService;
@@ -43,5 +43,60 @@ describe('AcloudSessionService', () => {
 
     expect(terminalOpened).not.toHaveBeenCalled();
     expect(session.signingInOrOut()).toBe(false);
+  });
+
+  describe('compatibility notice', () => {
+    function loadWith(compatibility: Partial<AcloudCompatibility>): Promise<void> {
+      vi.spyOn(wailsApi, 'getAcloudBinaryStatus').mockResolvedValue({
+        Found: true,
+      } as Awaited<ReturnType<typeof wailsApi.getAcloudBinaryStatus>>);
+      vi.spyOn(wailsApi, 'getAcloudVersion').mockResolvedValue('0.37.0');
+      vi.spyOn(wailsApi, 'getToolStatuses').mockResolvedValue([]);
+      vi.spyOn(wailsApi, 'getAcloudCompatibility').mockResolvedValue({
+        RunningVersion: '0.37.0',
+        VerifiedVersion: '0.37.0',
+        MinimumVersion: '0.39.0',
+        RunningVersionIsNewerThanVerified: false,
+        RunningVersionIsOlderThanMinimum: false,
+        Explanation: '',
+        ...compatibility,
+      });
+      return session.loadInstallationFacts();
+    }
+
+    // Too old means commands fail, so it must reach the sidebar.
+    it('shows an acloud older than the minimum', async () => {
+      await loadWith({ RunningVersionIsOlderThanMinimum: true, Explanation: 'needs 0.39.0' });
+      expect(session.compatibility()?.RunningVersionIsOlderThanMinimum).toBe(true);
+    });
+
+    it('shows an acloud newer than verified', async () => {
+      await loadWith({ RunningVersion: '0.40.0', RunningVersionIsNewerThanVerified: true });
+      expect(session.compatibility()?.RunningVersionIsNewerThanVerified).toBe(true);
+    });
+
+    it('stays quiet in between', async () => {
+      await loadWith({});
+      expect(session.compatibility()).toBeNull();
+    });
+
+    // Picking another acloud in Defaults can change the version under the notice.
+    it('reads the version again when the binary changes', async () => {
+      await loadWith({});
+      vi.spyOn(wailsApi, 'getAcloudCompatibility').mockResolvedValue({
+        RunningVersion: '0.37.0',
+        VerifiedVersion: '0.37.0',
+        MinimumVersion: '0.39.0',
+        RunningVersionIsNewerThanVerified: false,
+        RunningVersionIsOlderThanMinimum: true,
+        Explanation: 'needs 0.39.0',
+      });
+
+      await session.setBinaryStatus({ Found: true } as Awaited<
+        ReturnType<typeof wailsApi.getAcloudBinaryStatus>
+      >);
+
+      expect(session.compatibility()?.RunningVersionIsOlderThanMinimum).toBe(true);
+    });
   });
 });

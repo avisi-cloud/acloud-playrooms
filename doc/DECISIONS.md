@@ -23,6 +23,7 @@ it, update the entry.
 
 **Settled**
 
+- [Playhouse edits run `playhouse update`; acloud 0.39 is the minimum](#playhouse-edits-run-playhouse-update-acloud-039-is-the-minimum--2026-10-23)
 - [A reload serves `index.html` for Angular routes](#a-reload-serves-indexhtml-for-angular-routes--2026-10-22)
 - [The GUI re-reads the CLI config on every lookup](#the-gui-re-reads-the-cli-config-on-every-lookup--2026-09-12)
 - [Windows packaging removed; macOS only in the tree as well as the prose](#windows-packaging-removed-macos-only-in-the-tree-as-well-as-the-prose--2026-09-12)
@@ -104,6 +105,21 @@ this is reachable from the CLI alone by scripting two commands in parallel.
 ---
 
 ## Settled
+
+### Playhouse edits run `playhouse update`; acloud 0.39 is the minimum — 2026-10-23
+
+Until acloud 0.38, `playhouse create` with an existing name converged that
+playhouse, so the edit drawer re-ran create. 0.38 added `playhouse update` and
+made create refuse an existing name, which broke every edit.
+
+The GUI now runs `playhouse update` and needs acloud 0.39 or later
+(`backend/local.MinimumAcloudVersion`). There is no fallback to the old create
+path for an older acloud: choosing a command by version would put CLI behaviour
+in the GUI, and the argument builders would stop being plain serialization.
+
+The minimum is a separate notice from "checked against". That one says a flag
+may be missing from the screens; this one says some commands will fail. Like
+the other, it is quiet for an unreadable version and never blocks a command.
 
 ### A reload serves `index.html` for Angular routes — 2026-10-22
 

@@ -12,7 +12,7 @@ function binary(found: boolean): AcloudBinaryStatus {
     Path: found ? '/opt/homebrew/bin/acloud' : '',
     Source: found ? 'path' : 'none',
     Found: found,
-    Version: found ? '0.37.0' : '',
+    Version: found ? '0.39.0' : '',
     Message: '',
     ConfiguredPath: '',
     EnvironmentOverride: false,
@@ -77,7 +77,7 @@ describe('SetupService', () => {
 
     it('calls the tools done only once every tool is installed', async () => {
       vi.spyOn(wailsApi, 'getAcloudBinaryStatus').mockResolvedValue(binary(true));
-      vi.spyOn(wailsApi, 'getAcloudVersion').mockResolvedValue('0.37.0');
+      vi.spyOn(wailsApi, 'getAcloudVersion').mockResolvedValue('0.39.0');
       vi.spyOn(wailsApi, 'getAcloudCompatibility').mockRejectedValue(new Error('unused'));
       const getToolStatuses = vi
         .spyOn(wailsApi, 'getToolStatuses')

@@ -1,6 +1,9 @@
 package local
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestIsVersionNewerThan(t *testing.T) {
 	for _, test := range []struct {
@@ -38,6 +41,48 @@ func TestVerifiedAgainstAcloudVersionIsReadable(t *testing.T) {
 	}
 }
 
+// A typo here would silently disable the too-old notice for every user.
+func TestMinimumAcloudVersionIsReadable(t *testing.T) {
+	if _, readable := releaseNumbers(MinimumAcloudVersion); !readable {
+		t.Fatalf("MinimumAcloudVersion = %q, which is not a readable version", MinimumAcloudVersion)
+	}
+}
+
+func TestDescribeAcloudCompatibility(t *testing.T) {
+	for _, test := range []struct {
+		name, running   string
+		older, newer    bool
+		explanationNeed string
+	}{
+		{"an acloud from before playhouse update is too old", "0.37.0", true, false, "needs acloud " + MinimumAcloudVersion},
+		{"a newer acloud than verified warns softly", "99.0.0", false, true, "checked against acloud " + VerifiedAgainstAcloudVersion},
+		{"an unreadable version stays quiet", "dirty", false, false, ""},
+		{"no version stays quiet", "", false, false, ""},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			compatibility := describeAcloudCompatibility(test.running)
+			if compatibility.RunningVersionIsOlderThanMinimum != test.older {
+				t.Errorf("older than minimum = %v, want %v", compatibility.RunningVersionIsOlderThanMinimum, test.older)
+			}
+			if compatibility.RunningVersionIsNewerThanVerified != test.newer {
+				t.Errorf("newer than verified = %v, want %v", compatibility.RunningVersionIsNewerThanVerified, test.newer)
+			}
+			if !strings.Contains(compatibility.Explanation, test.explanationNeed) {
+				t.Errorf("explanation = %q, want it to contain %q", compatibility.Explanation, test.explanationNeed)
+			}
+			if test.explanationNeed == "" && compatibility.Explanation != "" {
+				t.Errorf("explanation = %q, want none", compatibility.Explanation)
+			}
+		})
+	}
+}
+
+func TestTheMinimumVersionIsNotTooOld(t *testing.T) {
+	if describeAcloudCompatibility(MinimumAcloudVersion).RunningVersionIsOlderThanMinimum {
+		t.Fatalf("acloud %s is reported as older than itself", MinimumAcloudVersion)
+	}
+}
+
 // An unstamped build is the normal case in development and must not warn.
 func TestCompatibilityStaysQuietForAnUnstampedBuild(t *testing.T) {
 	compatibility := DescribeAcloudCompatibility()
@@ -45,7 +90,7 @@ func TestCompatibilityStaysQuietForAnUnstampedBuild(t *testing.T) {
 		t.Skipf("this build reports acloud %q, so there is nothing to assert",
 			compatibility.RunningVersion)
 	}
-	if compatibility.RunningVersionIsNewerThanVerified || compatibility.Explanation != "" {
+	if compatibility.RunningVersionIsNewerThanVerified || compatibility.RunningVersionIsOlderThanMinimum || compatibility.Explanation != "" {
 		t.Fatalf("an unstamped build warned: %+v", compatibility)
 	}
 }

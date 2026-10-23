@@ -320,6 +320,23 @@ export class EnvironmentEntry {
 }
 
 /**
+ * LayoutStatus compares a playhouse's layout with the one the installed acloud ships.
+ * @readonly
+ * @enum {string}
+ */
+export const LayoutStatus = {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero: "",
+
+    LayoutCurrent: "current",
+    LayoutOutdated: "outdated",
+    LayoutNewer: "newer",
+    LayoutUnknown: "unknown",
+};
+
+/**
  * PlayhouseEntry is a slim view of a playhouse cluster for the GUI. The field
  * names match the JSON `playhouse list -o json` emits.
  */
@@ -364,6 +381,21 @@ export class PlayhouseEntry {
              */
             this["Version"] = "";
         }
+        if (!("LayoutVersion" in $$source)) {
+            /**
+             * LayoutVersion is null when the playhouse carries no layout stamp or it could not be read.
+             * @member
+             * @type {number | null}
+             */
+            this["LayoutVersion"] = null;
+        }
+        if (!("LayoutStatus" in $$source)) {
+            /**
+             * @member
+             * @type {LayoutStatus}
+             */
+            this["LayoutStatus"] = LayoutStatus.$zero;
+        }
 
         Object.assign(this, $$source);
     }
@@ -380,8 +412,11 @@ export class PlayhouseEntry {
 }
 
 /**
- * UpdateInput is what the GUI sends to converge an existing playhouse. A blank
- * or zero field is omitted, which leaves that setting as it is.
+ * UpdateInput is what the GUI sends for `acloud playhouse update`. A blank or
+ * zero field is omitted, which keeps the playhouse's current value.
+ * 
+ * The update's node-type flags and --node-count are left out: they only size a
+ * node pool that has to be added, and acloud picks the same defaults as create.
  */
 export class UpdateInput {
     /**
@@ -396,11 +431,18 @@ export class UpdateInput {
              */
             this["Name"] = "";
         }
+        if (!("UpdateChannel" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["UpdateChannel"] = "";
+        }
         if (!("Exposure" in $$source)) {
             /**
              * Exposure re-bootstraps the playhouse's SSH connectivity. Switching to
              * tailscale on a playhouse that never had it also needs the credentials
-             * below; they are stored in-cluster, so a later converge can omit them.
+             * below; they are stored in-cluster, so a later update can omit them.
              * @member
              * @type {string}
              */
@@ -422,8 +464,6 @@ export class UpdateInput {
         }
         if (!("MaxPlayroomNodes" in $$source)) {
             /**
-             * The ceilings are written to each pool's max-nodes annotation, which is
-             * what a scale-up restores, rather than to the pool's MaxSize.
              * @member
              * @type {number}
              */

@@ -10,8 +10,7 @@
     <div class="drawer-head">
       <div class="drawer-title">Edit playhouse<span class="punt">.</span></div>
       <div class="drawer-subtitle">
-        <code>{{ playhouse?.Slug }}</code> — re-runs <code>acloud playhouse create</code> to
-        converge it.
+        <code>{{ playhouse?.Slug }}</code> — runs <code>acloud playhouse update</code>.
       </div>
     </div>
   </ng-template>
@@ -71,6 +70,23 @@
   </section>
 
   <section class="ph-update-card">
+    <div class="ph-update-card-head">Updates</div>
+    <div class="field-group">
+      <label class="field-label" for="ph-update-channel">Update channel</label>
+      <input
+        pInputText
+        id="ph-update-channel"
+        class="w-full"
+        [(ngModel)]="form.updateChannel"
+        placeholder="keep the current channel"
+        spellcheck="false"
+        autocomplete="off"
+      />
+      <small class="field-hint">The AME release channel the playhouse follows.</small>
+    </div>
+  </section>
+
+  <section class="ph-update-card">
     <div class="ph-update-card-head">Capacity</div>
     <div class="field-row">
       <div class="field-group">
@@ -94,20 +110,15 @@
         />
       </div>
     </div>
-    <small class="field-hint"
-      >Zero leaves a ceiling as it is. These set each pool's max-nodes annotation, which is what a
-      scale-up restores.</small
-    >
+    <small class="field-hint">Zero keeps the current maximum of that node pool.</small>
   </section>
 
-  <!-- Said plainly, because the omission is the surprising part: a converge
-       takes the node sizes from the live pools, and reads the version and
-       channel only when provisioning a new cluster. -->
+  <!-- Said plainly, because the omission is the surprising part. -->
   <section class="ph-update-card ph-update-note">
     <i class="pi pi-info-circle"></i>
     <div>
-      Node types, node count, AME version, update channel and maintenance schedule cannot be changed
-      on an existing playhouse. Recreate it, or change the cluster in the Avisi Cloud console.
+      Existing node pools keep their node type and size. Change the Kubernetes version with
+      <code>acloud cluster upgrade</code> or in the Avisi Cloud console.
     </div>
   </section>
 
@@ -115,13 +126,13 @@
 
   <ng-template pTemplate="footer">
     <p-button
-      label="Upgrade only"
+      label="Bring up to date"
       icon="pi pi-refresh"
       severity="secondary"
       [outlined]="true"
       size="small"
-      title="Converge with no changes: backfill missing node pools and re-run the bootstrap"
-      (click)="submitUpgradeOnly()"
+      title="Update with no changes: converge to the playhouse layout this acloud ships"
+      (click)="submitBringUpToDate()"
     />
     <p-button label="Cancel" severity="secondary" [text]="true" size="small" (click)="close()" />
     <p-button

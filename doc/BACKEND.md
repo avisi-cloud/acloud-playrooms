@@ -316,13 +316,13 @@ The emulator choice is a GUI concept and is never passed to acloud.
 The only code here that does not go through a command. It is small on purpose,
 and it lives in one package so the exceptions are easy to count.
 
-|                    |                                                                                              |
-| ------------------ | -------------------------------------------------------------------------------------------- |
-| `session.go`       | cached playhouse, current user's email, logged-in check, acloud version                      |
-| `images.go`        | a small, locally maintained catalog of image aliases                                         |
-| `tools.go`         | a `$PATH` probe for tailscale and ssh                                                        |
-| `theme.go`         | the remembered theme — the one write                                                         |
-| `compatibility.go` | the acloud release these screens were verified against, and whether the running one is newer |
+|                    |                                                                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------- |
+| `session.go`       | cached playhouse, current user's email, logged-in check, acloud version                           |
+| `images.go`        | a small, locally maintained catalog of image aliases                                              |
+| `tools.go`         | a `$PATH` probe for tailscale and ssh                                                             |
+| `theme.go`         | the remembered theme — the one write                                                              |
+| `compatibility.go` | the acloud release these screens need and were verified against, and how the running one compares |
 
 The config helpers read the CLI's YAML file on each lookup; they do not import
 private config packages or retain a startup snapshot. The version helper runs
@@ -338,10 +338,12 @@ deliberately does not live in `~/.acloud.yaml` — that file is the CLI's.
 `VerifiedAgainstAcloudVersion` is a hand-maintained constant — the release whose
 flags and defaults someone last checked the screens against — and
 `DescribeAcloudCompatibility` reports whether the running acloud is newer than
-it. It stays silent for an equal or older version and for any version it cannot
-parse, so a development build never warns its own developer. Raise the constant
-when you have re-checked the screens, not when the release number moves. The
-reasoning is in [DECISIONS.md](DECISIONS.md).
+it. `MinimumAcloudVersion` is the oldest acloud that has every command the
+screens run, and the same function reports a running acloud below it. Both stay
+silent for any version they cannot parse, so a development build never warns its
+own developer. Raise the verified constant when you have re-checked the screens,
+not when the release number moves. The reasoning is in
+[DECISIONS.md](DECISIONS.md).
 
 The rule governing what is allowed in here is in
 [ARCHITECTURE.md](ARCHITECTURE.md#what-may-bypass-the-cli). Read it before

@@ -87,6 +87,7 @@ const WIRED: Record<string, string[]> = {
   'playhouse.DeleteInput': ['Name', 'Force', 'NoWait', 'WaitTimeout'],
   'playhouse.UpdateInput': [
     'Name',
+    'UpdateChannel',
     'Exposure',
     'TailscaleOAuthClientID',
     'TailscaleOAuthClientSecret',

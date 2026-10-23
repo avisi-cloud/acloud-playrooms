@@ -141,13 +141,16 @@
         @if (session.version()) {
           <span class="sidebar-brand-version">acloud&nbsp;&nbsp;{{ session.version() }}</span>
         }
-        <!-- Only ever set when the running acloud is newer than the version
-             these screens were checked against. Everything still works — the
-             commands are real — but a flag added since may have no control. -->
+        <!-- Only ever set when the running acloud is too old for these screens,
+             or newer than the version they were checked against. -->
         @if (session.compatibility(); as compatibility) {
           <span class="sidebar-brand-warning" [title]="compatibility.Explanation">
             <i class="pi pi-exclamation-triangle"></i>
-            <span>checked against {{ compatibility.VerifiedVersion }}</span>
+            @if (compatibility.RunningVersionIsOlderThanMinimum) {
+              <span>needs {{ compatibility.MinimumVersion }} or later</span>
+            } @else {
+              <span>checked against {{ compatibility.VerifiedVersion }}</span>
+            }
           </span>
         }
       </div>

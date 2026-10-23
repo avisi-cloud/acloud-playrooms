@@ -55,18 +55,31 @@ describe('Update playhouse drawer', () => {
     expect(component.previewInput().TailscaleOAuthClientID).toBe('id');
   });
 
-  // "Upgrade only" is the input-free converge the outdated-layout warning asks
-  // for: it must not carry whatever was typed into the form first.
-  it('emits a bare converge for an upgrade', () => {
+  // A channel switch is a change on its own; blank keeps the current one.
+  it('counts an update channel as a change and trims it', () => {
     const component = drawer();
+    component.form.updateChannel = '  ';
+    expect(component.hasChanges()).toBe(false);
+    component.form.updateChannel = ' rapid ';
+    expect(component.hasChanges()).toBe(true);
+    expect(component.previewInput().UpdateChannel).toBe('rapid');
+  });
+
+  // "Bring up to date" is the input-free update an outdated layout asks for:
+  // it must not carry whatever was typed into the form first.
+  it('emits a bare update to bring the layout up to date', () => {
+    const component = drawer();
+    component.form.updateChannel = 'rapid';
     component.form.exposure = 'tailscale';
     component.form.maxPlayroomNodes = 9;
 
-    let emitted: { Exposure?: string; MaxPlayroomNodes?: number } | null = null;
+    let emitted: { UpdateChannel?: string; Exposure?: string; MaxPlayroomNodes?: number } | null =
+      null;
     component.update.subscribe((event) => (emitted = event.input));
-    component.submitUpgradeOnly();
+    component.submitBringUpToDate();
 
     expect(emitted).not.toBeNull();
+    expect(emitted!.UpdateChannel).toBe('');
     expect(emitted!.Exposure).toBe('');
     expect(emitted!.MaxPlayroomNodes).toBe(0);
   });

@@ -17,8 +17,8 @@ func TestExplanationKeepsTheWholeMessageTheCLIEndedOn(t *testing.T) {
 		},
 		{
 			name:   "keeps the continuation a multi-line failure printed after itself",
-			stderr: "Error: cluster did not start within timeout\n\nThis is always safe to re-run to resume where it left off:\n  acloud playhouse create demo\n",
-			want:   "cluster did not start within timeout\n\nThis is always safe to re-run to resume where it left off:\n  acloud playhouse create demo",
+			stderr: "Error: cluster did not start within timeout\n\nThis is always safe to re-run to resume where it left off:\n  acloud playhouse update demo\n",
+			want:   "cluster did not start within timeout\n\nThis is always safe to re-run to resume where it left off:\n  acloud playhouse update demo",
 		},
 		{
 			name:   "falls back to the tail when nothing marks the failure",

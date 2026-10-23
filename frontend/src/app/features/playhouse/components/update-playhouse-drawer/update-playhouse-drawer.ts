@@ -14,6 +14,7 @@ import {
 } from '../../../../core/services/wails-api';
 
 interface UpdatePlayhouseForm {
+  updateChannel: string;
   exposure: string;
   tailscaleOAuthClientID: string;
   tailscaleOAuthClientSecret: string;
@@ -25,6 +26,7 @@ interface UpdatePlayhouseForm {
 /** Nothing chosen means "leave it as it is", so the form starts empty. */
 function blankForm(): UpdatePlayhouseForm {
   return {
+    updateChannel: '',
     exposure: '',
     tailscaleOAuthClientID: '',
     tailscaleOAuthClientSecret: '',
@@ -34,16 +36,7 @@ function blankForm(): UpdatePlayhouseForm {
   };
 }
 
-/**
- * "Edit playhouse": the three settings a converge can actually change.
- *
- * There is no `acloud playhouse update` — re-running `playhouse create` with an
- * existing name converges it. On that path the node types and node count are
- * taken from the live pools, and the version, update channel and maintenance
- * schedule are only read while provisioning a new cluster, so offering them
- * would offer settings that silently do not apply. The drawer says as much
- * rather than leaving the omission to be discovered.
- */
+/** "Edit playhouse": the settings `acloud playhouse update` can change on an existing playhouse. */
 @Component({
   selector: 'app-update-playhouse-drawer',
   imports: [
@@ -96,6 +89,7 @@ export class UpdatePlayhouseDrawerComponent implements OnChanges {
   /** Whether anything would actually change. */
   hasChanges(): boolean {
     return (
+      this.form.updateChannel.trim() !== '' ||
       this.form.exposure !== '' ||
       this.form.maxPlayroomNodes > 0 ||
       this.form.maxPrivilegedNodes > 0
@@ -105,6 +99,7 @@ export class UpdatePlayhouseDrawerComponent implements OnChanges {
   previewInput(): Partial<PlayhouseUpdateInput> {
     return {
       Name: this.shortName(),
+      UpdateChannel: this.form.updateChannel.trim(),
       Exposure: this.form.exposure,
       TailscaleOAuthClientID: this.showsTailscaleCredentials()
         ? this.form.tailscaleOAuthClientID
@@ -118,8 +113,8 @@ export class UpdatePlayhouseDrawerComponent implements OnChanges {
     };
   }
 
-  /** Converges with no settings at all: backfill pools, re-run the bootstrap. */
-  submitUpgradeOnly(): void {
+  /** An update with no settings converges the playhouse to the layout this acloud ships. */
+  submitBringUpToDate(): void {
     this.form = blankForm();
     this.emit();
   }
