@@ -22,6 +22,76 @@ export const BinarySource = {
     SourceNone: "none",
 };
 
+export class T3CodePathStatus {
+    /**
+     * Creates a new T3CodePathStatus instance.
+     * @param {Partial<T3CodePathStatus>} [$$source = {}] - The source object to create the T3CodePathStatus.
+     */
+    constructor($$source = {}) {
+        if (!("Path" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Path"] = "";
+        }
+        if (!("Source" in $$source)) {
+            /**
+             * @member
+             * @type {BinarySource}
+             */
+            this["Source"] = BinarySource.$zero;
+        }
+        if (!("Found" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["Found"] = false;
+        }
+        if (!("Version" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Version"] = "";
+        }
+        if (!("Message" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Message"] = "";
+        }
+        if (!("ConfiguredPath" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["ConfiguredPath"] = "";
+        }
+        if (!("IsApplication" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["IsApplication"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new T3CodePathStatus instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {T3CodePathStatus}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new T3CodePathStatus(/** @type {Partial<T3CodePathStatus>} */($$parsedSource));
+    }
+}
+
 export class TailscaleBinaryStatus {
     /**
      * Creates a new TailscaleBinaryStatus instance.

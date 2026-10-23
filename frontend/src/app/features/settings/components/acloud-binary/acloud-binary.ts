@@ -9,14 +9,7 @@ import { ToastService } from '../../../../core/services/toast';
 import { AcloudBinaryStatus, wailsApi } from '../../../../core/services/wails-api';
 import { explainFailure } from '../../../../shared/utils';
 
-/**
- * Where the acloud command lives, and how to correct it.
- *
- * This must keep working when nothing else does: every other screen is empty
- * without acloud, and the defaults on this very page cannot load either, so an
- * app that only reported the problem would leave no way to fix it. The card
- * therefore renders from its own read and never waits on the defaults.
- */
+/** Settings and setup must stay usable even when Acloud cannot run. */
 @Component({
   selector: 'app-acloud-binary',
   imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, TagModule],

@@ -33,10 +33,17 @@ export const routes: Routes = [
     canActivate: [playhouseGuard],
   },
   {
-    path: 'settings',
+    path: 'defaults',
     loadComponent: () =>
       import('./features/defaults/pages/defaults/defaults').then(
         (module) => module.DefaultsPageComponent,
+      ),
+  },
+  {
+    path: 'settings',
+    loadComponent: () =>
+      import('./features/settings/pages/settings/settings').then(
+        (module) => module.SettingsPageComponent,
       ),
   },
   { path: '**', redirectTo: '/rooms' },

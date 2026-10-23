@@ -23,6 +23,20 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
+  it('has separate sidebar links for Defaults and Settings', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const links = (fixture.nativeElement as HTMLElement).querySelectorAll<HTMLAnchorElement>(
+      '.sidebar-nav a',
+    );
+    expect(
+      [...links].find((link) => link.textContent?.includes('Defaults'))?.getAttribute('href'),
+    ).toBe('/defaults');
+    expect(
+      [...links].find((link) => link.textContent?.includes('Settings'))?.getAttribute('href'),
+    ).toBe('/settings');
+  });
+
   it('should render title', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();

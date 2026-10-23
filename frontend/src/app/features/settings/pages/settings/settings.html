@@ -1,0 +1,36 @@
+<div class="page-shell">
+  <header class="page-header">
+    <div class="page-header-left">
+      <button class="page-back-btn" (click)="goBack()">
+        <i class="pi pi-arrow-left" aria-hidden="true"></i>
+        <span>Back</span>
+      </button>
+      <div class="page-header-divider"></div>
+      <div class="page-header-stack">
+        <h1 class="page-header-title">Settings<span class="punt">.</span></h1>
+        <p class="page-header-sub">Local tools and preferences for this app.</p>
+      </div>
+    </div>
+    <div class="page-header-actions">
+      <p-button
+        label="Run setup again"
+        icon="pi pi-replay"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        (click)="runSetupAgain()"
+      />
+    </div>
+  </header>
+  <div class="page-body app-settings-body">
+    <div class="app-settings-column">
+      <h2 class="settings-section-title">Tool paths</h2>
+      <p class="settings-section-description">
+        Detected automatically. Set a path when you want to use a specific installation.
+      </p>
+      <app-acloud-binary />
+      <app-tailscale-binary />
+      <app-t3-code-path />
+    </div>
+  </div>
+</div>

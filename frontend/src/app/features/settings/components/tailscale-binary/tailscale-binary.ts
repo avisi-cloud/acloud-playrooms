@@ -8,6 +8,7 @@ import { ToastService } from '../../../../core/services/toast';
 import { TailscaleBinaryStatus, wailsApi } from '../../../../core/services/wails-api';
 import { explainFailure } from '../../../../shared/utils';
 
+/** Settings owns the remembered Tailscale executable. */
 @Component({
   selector: 'app-tailscale-binary',
   imports: [FormsModule, ButtonModule, InputTextModule, TagModule],

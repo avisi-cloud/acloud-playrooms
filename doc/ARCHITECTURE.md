@@ -102,12 +102,18 @@ change applies to the next command rather than the next launch.
 
 It executes that binary with an argument array, not a shell command string.
 
-Tailscale has its own saved path in Defaults. `backend/tools` checks that path,
+Tailscale has its own saved path in Settings. `backend/tools` checks that path,
 then PATH and the standard Homebrew/MacPorts locations. A selected path is
 validated with `tailscale version` and stored beside the GUI preferences. A small
 launcher passes that exact executable to acloud through the child process PATH;
 terminal connections receive the same choice without changing the user's shell
 configuration. A broken saved path is reported instead of choosing another binary.
+
+Settings also remembers an optional T3 Code app or command path in
+`gui-t3-code-path`. Desktop apps are found in Applications, including Homebrew's
+Beta and older Alpha bundle names. App metadata is checked without launching it;
+the `t3` command is checked with `--version`. This preference does not yet launch
+T3 Code, change PATH, or affect playroom connections.
 
 Calls with an `OperationID` stream events to the activity log and can be
 cancelled. Cancellation interrupts the process, allows a five-second cleanup

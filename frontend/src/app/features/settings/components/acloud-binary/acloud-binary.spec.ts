@@ -24,7 +24,7 @@ async function render(initial: AcloudBinaryStatus) {
   return fixture;
 }
 
-describe('Acloud binary card', () => {
+describe('Acloud command path', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AcloudBinaryCardComponent],

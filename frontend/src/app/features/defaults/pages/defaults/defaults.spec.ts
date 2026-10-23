@@ -79,28 +79,10 @@ describe('Defaults field registry', () => {
 
 describe('Defaults sliders', () => {
   beforeEach(async () => {
-    vi.spyOn(wailsApi, 'getTailscaleBinaryStatus').mockResolvedValue({
-      Found: true,
-      Path: '/mock/tailscale',
-      ConfiguredPath: '',
-      Source: 'path',
-      Version: '1.104.2',
-      Message: '',
-    });
-    vi.spyOn(wailsApi, 'getToolStatuses').mockResolvedValue([]);
     vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([
       { Key: 'storage', Value: '1Gi', Builtin: '1Gi', Source: 'built-in' },
     ]);
     vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
-    vi.spyOn(wailsApi, 'getAcloudBinaryStatus').mockResolvedValue({
-      Found: true,
-      Path: '/mock/acloud',
-      Version: '0.39.0',
-      Source: 'path',
-      Message: '',
-      ConfiguredPath: '',
-      EnvironmentOverride: false,
-    });
     await TestBed.configureTestingModule({
       imports: [DefaultsPageComponent],
       providers: [MessageService, provideRouter([])],
@@ -108,6 +90,17 @@ describe('Defaults sliders', () => {
   });
 
   afterEach(() => vi.restoreAllMocks());
+
+  it('keeps command paths on Settings instead of mixing them with room defaults', async () => {
+    const fixture = TestBed.createComponent(DefaultsPageComponent);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('p-slider')).not.toBeNull();
+    expect(root.querySelector('app-acloud-binary')).toBeNull();
+    expect(root.querySelector('app-tailscale-binary')).toBeNull();
+    expect(root.querySelector('app-t3-code-path')).toBeNull();
+  });
 
   function sliderFor(key = 'storage') {
     const fixture = TestBed.createComponent(DefaultsPageComponent);
@@ -182,6 +175,7 @@ describe('Defaults sliders', () => {
   it('wires fine movement separately from releasing the rendered slider', async () => {
     const fixture = TestBed.createComponent(DefaultsPageComponent);
     await fixture.whenStable();
+    fixture.detectChanges();
     const component = fixture.componentInstance;
     const slider = fixture.debugElement.query(By.directive(Slider)).componentInstance as Slider;
     expect(slider.step).toBe(0.01);
@@ -197,6 +191,7 @@ describe('Defaults sliders', () => {
   it('keeps keyboard navigation at whole settings despite fine pointer movement', async () => {
     const fixture = TestBed.createComponent(DefaultsPageComponent);
     await fixture.whenStable();
+    fixture.detectChanges();
     const component = fixture.componentInstance;
     const handle = fixture.nativeElement.querySelector('[role="slider"]') as HTMLElement;
     for (const [key, expectedStop] of [

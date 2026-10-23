@@ -10,8 +10,6 @@ import { SelectModule } from 'primeng/select';
 import { SliderModule } from 'primeng/slider';
 import { TagModule } from 'primeng/tag';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { AcloudBinaryCardComponent } from '../../components/acloud-binary/acloud-binary';
-import { TailscaleBinaryCardComponent } from '../../components/tailscale-binary/tailscale-binary';
 import { CliConsoleService } from '../../../../core/services/cli-console';
 import { ImageCatalogService } from '../../../../core/services/image-catalog';
 import { PageLoadingService } from '../../../../core/services/page-loading';
@@ -152,8 +150,6 @@ const SLIDER_STEP = 0.01;
     SliderModule,
     TagModule,
     ToggleSwitchModule,
-    AcloudBinaryCardComponent,
-    TailscaleBinaryCardComponent,
     OverlayFocusDirective,
   ],
   templateUrl: './defaults.html',
@@ -423,10 +419,6 @@ export class DefaultsPageComponent implements OnInit, OnDestroy {
 
   goBack(): void {
     void this.router.navigate(['/rooms']);
-  }
-
-  runSetupAgain(): void {
-    void this.router.navigate(['/setup']);
   }
 
   sourceSeverity(source: string): 'success' | 'secondary' | 'info' {
