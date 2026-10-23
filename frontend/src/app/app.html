@@ -34,6 +34,55 @@
   <aside class="sidebar">
     <div class="traffic-zone"></div>
 
+    <!-- Original Avisi Cloud robot from the website's Logo.tsx. Kept inline
+         so its eyes and float share the app's motion preferences. -->
+    <div class="sidebar-mascot" [class.is-paused]="mascotMotionPaused()" aria-hidden="true">
+      <svg class="sidebar-mascot-robot" viewBox="0 0 100 100" fill="none" focusable="false">
+        <defs>
+          <linearGradient id="sidebar-helmet-gradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#2484E4" />
+            <stop offset="100%" stop-color="#0056A6" />
+          </linearGradient>
+          <linearGradient id="sidebar-visor-gradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1D2C6B" />
+            <stop offset="100%" stop-color="#0D143D" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M80 40C80 25 70 15 50 15C30 15 20 25 20 40V60C20 75 30 85 50 85C70 85 80 75 80 60V40Z"
+          fill="url(#sidebar-helmet-gradient)"
+          stroke="#1A6BBF"
+          stroke-width="2"
+        />
+        <path
+          d="M75 45C75 35 65 30 50 30C35 30 25 35 25 45V55C25 65 35 70 50 70C65 70 75 65 75 55V45Z"
+          fill="url(#sidebar-visor-gradient)"
+        />
+        <g class="sidebar-mascot-eyes" fill="white">
+          <rect x="35" y="40" width="8" height="20" rx="4" />
+          <rect x="57" y="40" width="8" height="20" rx="4" />
+        </g>
+        <path
+          d="M45 10H55C58 10 60 12 60 15V15C60 18 58 20 55 20H45C42 20 40 18 40 15V15C40 12 42 10 45 10Z"
+          fill="url(#sidebar-helmet-gradient)"
+          stroke="#1A6BBF"
+          stroke-width="2"
+        />
+        <path
+          d="M15 45C12 45 10 47 10 50V50C10 53 12 55 15 55H20V45H15Z"
+          fill="url(#sidebar-helmet-gradient)"
+          stroke="#1A6BBF"
+          stroke-width="2"
+        />
+        <path
+          d="M85 45C88 45 90 47 90 50V50C90 53 88 55 85 55H80V45H85Z"
+          fill="url(#sidebar-helmet-gradient)"
+          stroke="#1A6BBF"
+          stroke-width="2"
+        />
+      </svg>
+    </div>
+
     <div class="sidebar-brand">
       <!-- Always the white mark: the sidebar keeps its brand background and
            light text in both themes, so there is no light-mode variant to

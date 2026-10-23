@@ -47,6 +47,62 @@
   --wails-draggable: drag;
 }
 
+/* One small brand moment above the title. Only transforms animate; the
+   reserved space stays fixed so the scope pickers never move with the robot. */
+.sidebar-mascot {
+  display: flex;
+  justify-content: center;
+  flex: 0 0 76px;
+  pointer-events: none;
+  --wails-draggable: drag;
+}
+
+.sidebar-mascot-robot {
+  display: block;
+  width: 80px;
+  height: 80px;
+  animation: sidebar-robot-float 6s ease-in-out infinite;
+}
+
+.sidebar-mascot-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: sidebar-robot-blink 5s ease-in-out infinite;
+}
+
+@keyframes sidebar-robot-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes sidebar-robot-blink {
+  0%,
+  92%,
+  100% {
+    transform: scaleY(1);
+  }
+  96% {
+    transform: scaleY(0.1);
+  }
+}
+
+.sidebar-mascot.is-paused .sidebar-mascot-robot,
+.sidebar-mascot.is-paused .sidebar-mascot-eyes {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-mascot-robot,
+  .sidebar-mascot-eyes {
+    animation: none;
+  }
+}
+
 .sidebar-brand {
   display: flex;
   align-items: center;

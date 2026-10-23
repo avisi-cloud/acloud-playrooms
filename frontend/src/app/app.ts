@@ -42,6 +42,9 @@ const PLAYHOUSE_MENU_MAX = 5;
  */
 @Component({
   selector: 'app-root',
+  host: {
+    '(document:visibilitychange)': 'updateMascotMotionForDocumentVisibility()',
+  },
   // No PrimeNG controls live in the sidebar: on a permanently dark column they
   // take PrimeNG's light-mode hover surface.
   imports: [
@@ -65,6 +68,7 @@ export class App implements OnInit {
   readonly session = inject(AcloudSessionService);
   readonly scope = inject(ScopeService);
   readonly releaseStage = RELEASE_STAGE;
+  readonly mascotMotionPaused = signal(document.hidden);
   private readonly setup = inject(SetupService);
   private readonly windowChrome = inject(WindowChromeService);
   private readonly router = inject(Router);
@@ -81,6 +85,10 @@ export class App implements OnInit {
   readonly shellBusy = this._shellBusy.asReadonly();
   readonly delayedBusy = signal(false);
   private hasActivatedRoute = false;
+
+  updateMascotMotionForDocumentVisibility(): void {
+    this.mascotMotionPaused.set(document.hidden);
+  }
 
   focusRoutedContent(): void {
     if (this.hasActivatedRoute)
