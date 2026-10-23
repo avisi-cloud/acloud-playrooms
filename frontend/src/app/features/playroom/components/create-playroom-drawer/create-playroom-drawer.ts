@@ -89,6 +89,8 @@ function createInputFor(form: CreateForm): Partial<PlayroomCreateInput> {
     Ports: form.ports.filter(Boolean),
     ProxyGroup: form.proxyGroup,
     Exposure: form.exposure,
+    // acloud refuses it on a nodeport room, whose SSH already is a NodePort.
+    NodePortSSH: form.nodePortSSH && form.exposure !== 'nodeport',
     Capabilities: form.capabilities,
     CapAdd: form.capAdd.filter(Boolean),
     Ephemeral: form.ephemeral,

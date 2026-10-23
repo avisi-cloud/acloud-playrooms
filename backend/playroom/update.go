@@ -36,6 +36,9 @@ type UpdateInput struct {
 	// CapAdd replaces the whole set of additions, like Ports.
 	ChangeCapAdd bool
 	CapAdd       []string
+	// Turning NodePortSSH off removes the room's extra NodePort SSH Service.
+	ChangeNodePortSSH bool
+	NodePortSSH       bool
 	// Turning WorkspaceNamespace off deletes that namespace and everything in it.
 	ChangeWorkspaceNamespace bool
 	WorkspaceNamespace       bool
@@ -82,6 +85,9 @@ func buildUpdateArguments(input UpdateInput) []string {
 	}
 	if input.ChangeCapAdd {
 		arguments.Add(replacementArguments("--cap-add", input.CapAdd)...)
+	}
+	if input.ChangeNodePortSSH {
+		arguments.Explicit("--nodeport-ssh", input.NodePortSSH)
 	}
 	if input.ChangeWorkspaceNamespace {
 		arguments.Explicit("--workspace-namespace", input.WorkspaceNamespace)

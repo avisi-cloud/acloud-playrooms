@@ -32,7 +32,7 @@ func TestBuildCreateArguments(t *testing.T) {
 				CPURequest: "250m", CPULimit: "4", MemoryRequest: "2Gi", MemoryLimit: "4Gi",
 				SSHKey: "/k.pub", EnvVars: []string{"A=B", "C=D"}, GitRepos: []string{"https://g"},
 				Copies: []string{"src:dst"}, Ports: []string{"80", "443:8443"},
-				ProxyGroup: "pg", Exposure: ExposureNodePort, Capabilities: CapabilitiesStandard,
+				ProxyGroup: "pg", Exposure: ExposurePortForward, NodePortSSH: true, Capabilities: CapabilitiesStandard,
 				CapAdd: []string{"NET_ADMIN", "SYS_PTRACE"}, Ephemeral: true, ReadOnly: true,
 				Privileged: true, WorkspaceNamespace: true, NoWait: true, WaitTimeout: "5m", ForceInstall: true,
 			},
@@ -46,7 +46,7 @@ func TestBuildCreateArguments(t *testing.T) {
 				"--git", "https://g",
 				"--copy", "src:dst",
 				"--port", "80", "--port", "443:8443",
-				"--proxy-group", "pg", "--exposure", "nodeport",
+				"--proxy-group", "pg", "--exposure", "portforward", "--nodeport-ssh",
 				"--capabilities", "standard", "--cap-add", "NET_ADMIN", "--cap-add", "SYS_PTRACE",
 				"--wait-timeout", "5m", "--ephemeral",
 				"--read-only=true", "--privileged=true", "--workspace-namespace=true",
@@ -163,6 +163,17 @@ func TestBuildUpdateArguments(t *testing.T) {
 			want:  []string{"playroom", "update", "demo", "--playhouse", "ph", "--workspace-namespace=false"},
 		},
 		{
+			name:  "NodePort SSH is only sent when the toggle was touched",
+			input: UpdateInput{Name: "demo", Playhouse: "ph", NodePortSSH: true},
+			want:  []string{"playroom", "update", "demo", "--playhouse", "ph"},
+		},
+		{
+			// A bare --nodeport-ssh cannot say "remove it", so off is spelled out.
+			name:  "turning NodePort SSH off sends it explicitly",
+			input: UpdateInput{Name: "demo", Playhouse: "ph", ChangeNodePortSSH: true, NodePortSSH: false},
+			want:  []string{"playroom", "update", "demo", "--playhouse", "ph", "--nodeport-ssh=false"},
+		},
+		{
 			name:  "an unset exposure keeps the current one",
 			input: UpdateInput{Name: "demo", Playhouse: "ph"},
 			want:  []string{"playroom", "update", "demo", "--playhouse", "ph"},
@@ -175,6 +186,7 @@ func TestBuildUpdateArguments(t *testing.T) {
 				Exposure: ExposureTailscale, Storage: "40Gi", Capabilities: CapabilitiesStandard,
 				ChangeReadOnly: true, ReadOnly: true, ChangePorts: true, Ports: []string{"80"},
 				ChangeCapAdd: true, CapAdd: []string{"NET_ADMIN"},
+				ChangeNodePortSSH: true, NodePortSSH: true,
 				ChangeWorkspaceNamespace: true, WorkspaceNamespace: true,
 				Force: true, NoWait: true, WaitTimeout: "5m", ForceInstall: true,
 			},
@@ -184,7 +196,7 @@ func TestBuildUpdateArguments(t *testing.T) {
 				"--memory-request", "2Gi", "--memory-limit", "4Gi",
 				"--exposure", "tailscale", "--storage", "40Gi", "--capabilities", "standard",
 				"--read-only=true", "--port", "80", "--cap-add", "NET_ADMIN",
-				"--workspace-namespace=true",
+				"--nodeport-ssh=true", "--workspace-namespace=true",
 				"--wait-timeout", "5m", "--force", "--no-wait", "--force-install",
 			},
 		},
@@ -245,8 +257,13 @@ func TestBuildListArguments(t *testing.T) {
 
 func TestBuildOpenAndConnectArguments(t *testing.T) {
 	t.Run("open with every field set", func(t *testing.T) {
-		assertArguments(t, buildOpenArguments(OpenInput{Name: "demo", Playhouse: "ph", Editor: "vscode", Tunnel: true}),
-			[]string{"playroom", "open", "demo", "--playhouse", "ph", "--editor", "vscode", "--tunnel"})
+		assertArguments(t, buildOpenArguments(OpenInput{Name: "demo", Playhouse: "ph", Editor: "vscode", Via: ExposurePortForward}),
+			[]string{"playroom", "open", "demo", "--playhouse", "ph", "--editor", "vscode", "--via", "portforward"})
+	})
+
+	t.Run("a blank connection path leaves it to the room", func(t *testing.T) {
+		assertArguments(t, buildOpenArguments(OpenInput{Name: "demo", Playhouse: "ph"}),
+			[]string{"playroom", "open", "demo", "--playhouse", "ph"})
 	})
 
 	t.Run("connect always states forward-agent", func(t *testing.T) {
@@ -258,11 +275,21 @@ func TestBuildOpenAndConnectArguments(t *testing.T) {
 	t.Run("connect with every field set", func(t *testing.T) {
 		assertArguments(t, buildConnectArguments(ConnectInput{
 			Name: "demo", Playhouse: "ph", User: "playroom",
-			ForwardAgent: true, Tunnel: true, ForceInstall: true, Terminal: "iterm",
+			ForwardAgent: true, Via: ExposureNodePort, ForceInstall: true, Terminal: "iterm",
 		}), []string{
 			"playroom", "connect", "demo", "--playhouse", "ph", "--user", "playroom",
-			"--forward-agent=true", "--tunnel", "--force-install",
+			"--forward-agent=true", "--via", "nodeport", "--force-install",
 		})
+	})
+
+	// The entry points refuse a path acloud would reject, before anything opens.
+	t.Run("an unknown connection path is refused", func(t *testing.T) {
+		if err := Connect(ConnectInput{Name: "demo", Via: "tunnel"}); err == nil {
+			t.Fatal("Connect() accepted --via tunnel")
+		}
+		if err := Open(t.Context(), "", OpenInput{Name: "demo", Via: "tunnel"}); err == nil {
+			t.Fatal("Open() accepted --via tunnel")
+		}
 	})
 
 	t.Run("the chosen terminal is not a CLI flag", func(t *testing.T) {

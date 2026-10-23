@@ -66,7 +66,7 @@ the playroom pools' settings and re-runs the bootstrap. Run with no settings
 
 The drawer offers what update can change on an existing playhouse: the update
 channel, `--exposure` (with the Tailscale credentials, which are stored
-in-cluster after first use) and the two node ceilings. Update's node-type flags
+in-cluster after first use), the IP allowlist and the two node ceilings. Update's node-type flags
 and `--node-count` only size a pool that has to be added, so the drawer leaves
 them to acloud's defaults and says that existing pools keep their size.
 
@@ -74,6 +74,12 @@ them to acloud's defaults and says that existing pools keep their size.
 0.39 is the minimum version (see [Decisions](DECISIONS.md)). Update has no
 `--yes` and no `--no-default`: it never prompts without a terminal and never
 changes the default playhouse.
+
+acloud offers to add your current IP to the IP allowlist only when it can ask
+in a terminal, and create's `--yes` skips the offer too. So the create and edit
+drawers turn "Add my current public IP" (`--allow-current-ip`) on when NodePort
+is chosen; you can see it, and switch it off. The drawers cannot show the
+current entries yet, because no CLI command returns them (issue #34).
 
 `playhouse list -o json` reports each playhouse's layout status. An outdated
 layout shows "update available" in the list, which opens the drawer.

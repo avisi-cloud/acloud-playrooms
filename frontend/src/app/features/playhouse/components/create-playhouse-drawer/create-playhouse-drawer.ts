@@ -6,8 +6,13 @@ import { DrawerModule } from 'primeng/drawer';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { PLAYHOUSE_EXPOSURES } from '../../../../shared/data';
-import { CommandPreviewComponent, WizardStep, WizardStepper } from '../../../../shared/components';
+import { IP_ALLOWLIST_HINT, PLAYHOUSE_EXPOSURES } from '../../../../shared/data';
+import {
+  CommandPreviewComponent,
+  StringListEditorComponent,
+  WizardStep,
+  WizardStepper,
+} from '../../../../shared/components';
 import { TypeToFilterSelectDirective } from '../../../../shared/directives';
 import { PlayhouseCreateInput, wailsApi } from '../../../../core/services/wails-api';
 import { CloudAccountEntry, EnvironmentEntry } from '../../../../shared/models';
@@ -30,6 +35,9 @@ interface CreatePlayhouseForm {
   maxPlayroomNodes: number;
   maxPrivilegedNodes: number;
   exposure: string;
+  /** `--allow-ip` entries for the IP allowlist. */
+  allowIPs: string[];
+  allowCurrentIP: boolean;
   tailscaleOAuthClientID: string;
   tailscaleOAuthClientSecret: string;
   waitTimeout: string;
@@ -58,6 +66,8 @@ function blankForm(): CreatePlayhouseForm {
     // Blank is not a valid --exposure, so the form carries the CLI's own
     // default rather than pretending "unset" means something here.
     exposure: 'tailscale',
+    allowIPs: [''],
+    allowCurrentIP: false,
     tailscaleOAuthClientID: '',
     tailscaleOAuthClientSecret: '',
     waitTimeout: '20m',
@@ -92,6 +102,7 @@ export function normalizePlayhouseSlug(name: string): string {
     SelectModule,
     ToggleSwitchModule,
     CommandPreviewComponent,
+    StringListEditorComponent,
     WizardStepper,
     TypeToFilterSelectDirective,
   ],
@@ -119,6 +130,7 @@ export class CreatePlayhouseDrawerComponent implements OnChanges {
   touched = false;
 
   readonly exposureOptions = [...PLAYHOUSE_EXPOSURES];
+  readonly ipAllowlistHint = IP_ALLOWLIST_HINT;
 
   cloudAccounts: CloudAccountEntry[] = [];
   cloudAccountsLoading = false;
@@ -279,6 +291,22 @@ export class CreatePlayhouseDrawerComponent implements OnChanges {
     return this.form.exposure === 'tailscale';
   }
 
+  /** --yes skips acloud's offer of your IP for a NodePort playhouse, so the toggle makes it instead. */
+  onExposureChange(exposure: string): void {
+    this.form.exposure = exposure;
+    if (exposure === 'nodeport') this.form.allowCurrentIP = true;
+  }
+
+  filledAllowIPs(): string[] {
+    return this.form.allowIPs.map((value) => value.trim()).filter(Boolean);
+  }
+
+  allowlistSummary(): string {
+    const entries = [...this.filledAllowIPs()];
+    if (this.form.allowCurrentIP) entries.push('your current IP');
+    return entries.length ? entries.join(', ') : 'empty';
+  }
+
   /** From the same list the Edit playhouse drawer shows, so both describe an exposure alike. */
   selectedExposureHint(): string {
     return this.exposureOptions.find((exposure) => exposure.id === this.form.exposure)?.hint ?? '';
@@ -346,6 +374,8 @@ export class CreatePlayhouseDrawerComponent implements OnChanges {
       MaxPlayroomNodes: f.maxPlayroomNodes,
       MaxPrivilegedNodes: f.advancedCapacity ? f.maxPrivilegedNodes : 0,
       Exposure: f.exposure,
+      AllowIPs: this.filledAllowIPs(),
+      AllowCurrentIP: f.allowCurrentIP,
       TailscaleOAuthClientID: f.tailscaleOAuthClientID,
       TailscaleOAuthClientSecret: f.tailscaleOAuthClientSecret,
       WaitTimeout: f.advancedCapacity ? f.waitTimeout : '20m',

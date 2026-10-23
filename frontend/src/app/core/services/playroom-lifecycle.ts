@@ -265,6 +265,8 @@ export function updateInputFor(form: UpdateForm): Partial<PlayroomUpdateInput> {
     CapAdd: form.clearCapAdd ? [] : form.capAdd.filter(Boolean),
     ChangeWorkspaceNamespace: form.changeWorkspaceNamespace,
     WorkspaceNamespace: form.workspaceNamespace,
+    ChangeNodePortSSH: form.changeNodePortSSH,
+    NodePortSSH: form.nodePortSSH,
     // tailscale is the only target the command accepts; empty keeps the current.
     Exposure: form.moveToTailscale ? 'tailscale' : '',
     NoWait: form.noWait,

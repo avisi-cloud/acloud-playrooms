@@ -25,10 +25,13 @@ type CreateInput struct {
 	MaxPlayroomNodes            int
 	MaxPrivilegedNodes          int
 	Exposure                    string
-	TailscaleOAuthClientID      string
-	TailscaleOAuthClientSecret  string
-	WaitTimeout                 string
-	NoDefault                   bool
+	// --yes skips acloud's offer to add the current IP, so AllowCurrentIP asks for it instead.
+	AllowIPs                   []string
+	AllowCurrentIP             bool
+	TailscaleOAuthClientID     string
+	TailscaleOAuthClientSecret string
+	WaitTimeout                string
+	NoDefault                  bool
 }
 
 // Create runs `acloud playhouse create`, streaming its progress to the UI. The
@@ -63,6 +66,8 @@ func buildCreateArguments(input CreateInput) []string {
 		Int("--max-playroom-nodes", input.MaxPlayroomNodes).
 		Int("--max-privileged-nodes", input.MaxPrivilegedNodes).
 		Str("--exposure", input.Exposure).
+		Repeat("--allow-ip", input.AllowIPs).
+		Flag("--allow-current-ip", input.AllowCurrentIP).
 		Str("--tailscale-oauth-client-id", input.TailscaleOAuthClientID).
 		Str("--tailscale-oauth-client-secret", input.TailscaleOAuthClientSecret).
 		Str("--wait-timeout", input.WaitTimeout).

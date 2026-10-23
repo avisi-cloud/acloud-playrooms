@@ -59,7 +59,7 @@ command applies its own default — including anything the user configured with
 | `Positional(v)`         | `v`, even when blank                   | required positionals — dropping a blank one shifts every later argument into the wrong slot, so it goes through and the command rejects it |
 | `OptionalPositional(v)` | `v` when non-blank                     | positionals with a command-side default                                                                                                    |
 | `Str(flag, v)`          | `--flag v` when non-blank              | ordinary string flags                                                                                                                      |
-| `Repeat(flag, vs)`      | one `--flag v` per non-blank value     | `--env`, `--git`, `--copy`, `--port`, `--cap-add`                                                                                          |
+| `Repeat(flag, vs)`      | one `--flag v` per non-blank value     | `--env`, `--git`, `--copy`, `--port`, `--cap-add`, `--allow-ip`, `--remove-ip`                                                             |
 | `Int(flag, n)`          | `--flag n` when `n > 0`                | counts; zero means "not set"                                                                                                               |
 | `Flag(flag, b)`         | bare `--flag` when true                | presence-only booleans: `--ephemeral`, `--no-wait`, `--force`                                                                              |
 | `Explicit(flag, b)`     | `--flag=true` / `--flag=false`, always | booleans whose CLI default is true, or that the command reads through `flag.Changed`                                                       |
@@ -69,7 +69,8 @@ command applies its own default — including anything the user configured with
 `--workspace-namespace` and `--forward-agent` use it. All four can be defaulted
 to true through `playroom config`, so a bare `--flag` cannot express "the user turned this off" and
 omitting it cannot express "the user deliberately left it on". A definite toggle
-in the UI has to send a definite value.
+in the UI has to send a definite value. `playroom update --nodeport-ssh` uses it
+too, because `--nodeport-ssh=false` is how the update removes it.
 
 `CommandArguments` is pure serialization — no defaults, no validation, no behaviour. That is
 what makes the argument tests straightforward. A fixed set of values, such as

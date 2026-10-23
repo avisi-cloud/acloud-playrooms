@@ -219,6 +219,23 @@ describe('Create playroom drawer', () => {
     });
   });
 
+  describe('NodePort SSH', () => {
+    it('is sent for a playroom that is not a NodePort one', () => {
+      const component = drawer();
+      component.form.exposure = 'portforward';
+      component.form.nodePortSSH = true;
+      expect(component.toInput().NodePortSSH).toBe(true);
+    });
+
+    // acloud refuses --nodeport-ssh on a nodeport room, whose SSH already is one.
+    it('is not sent for a NodePort playroom', () => {
+      const component = drawer();
+      component.form.exposure = 'nodeport';
+      component.form.nodePortSSH = true;
+      expect(component.toInput().NodePortSSH).toBe(false);
+    });
+  });
+
   describe('an image that needs privileged mode', () => {
     it('shows the error in Easy before anything is touched, with Create disabled', () => {
       const component = drawer();
@@ -294,6 +311,7 @@ describe('Create playroom drawer', () => {
       Ports: [],
       ProxyGroup: 'team',
       Exposure: '',
+      NodePortSSH: false,
       Capabilities: 'standard',
       CapAdd: [],
       Ephemeral: false,

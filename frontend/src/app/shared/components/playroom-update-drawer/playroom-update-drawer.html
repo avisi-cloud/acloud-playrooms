@@ -267,6 +267,24 @@
         >
       </div>
     }
+    <label class="toggle-line" for="update-change-nodeport-ssh"
+      ><span>Change NodePort SSH</span
+      ><p-toggleswitch inputId="update-change-nodeport-ssh" [(ngModel)]="form.changeNodePortSSH"
+    /></label>
+    @if (form.changeNodePortSSH) {
+      <div class="toggle-children">
+        <label class="toggle-line" for="update-nodeport-ssh"
+          ><span
+            >{{ optionTexts['nodeport-ssh'].label
+            }}<small class="flag-ref">--nodeport-ssh</small></span
+          ><p-toggleswitch inputId="update-nodeport-ssh" [(ngModel)]="form.nodePortSSH"
+        /></label>
+        <small class="field-hint"
+          >Applies without a restart; off removes it. A NodePort playroom already has its SSH on a
+          NodePort.</small
+        >
+      </div>
+    }
   </section>
 
   @if (submitFailure) {

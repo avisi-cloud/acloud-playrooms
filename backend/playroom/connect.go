@@ -11,7 +11,8 @@ type ConnectInput struct {
 	Playhouse    string
 	User         string
 	ForwardAgent bool
-	Tunnel       bool
+	// Via picks the connection path; blank uses the room's own exposure.
+	Via          Exposure
 	ForceInstall bool
 
 	// Terminal picks the emulator to open. Not a CLI flag.
@@ -21,6 +22,9 @@ type ConnectInput struct {
 // Connect opens the user's terminal running `acloud playroom connect`, which is
 // an interactive SSH session and so needs a real TTY.
 func Connect(input ConnectInput) error {
+	if err := input.Via.Validate(); err != nil {
+		return err
+	}
 	return terminal.Open(terminal.Emulator(input.Terminal), buildConnectArguments(input))
 }
 
@@ -30,7 +34,7 @@ func buildConnectArguments(input ConnectInput) []string {
 		Str("--user", input.User).
 		// forward-agent can default to true, so presence alone cannot express off.
 		Explicit("--forward-agent", input.ForwardAgent).
-		Flag("--tunnel", input.Tunnel).
+		Str("--via", string(input.Via)).
 		Flag("--force-install", input.ForceInstall).
 		Build()
 }

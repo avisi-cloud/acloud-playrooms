@@ -87,12 +87,32 @@
               [options]="exposureOptions"
               optionLabel="label"
               optionValue="id"
-              [(ngModel)]="form.exposure"
+              [ngModel]="form.exposure"
+              (ngModelChange)="onExposureChange($event)"
               [style]="{ width: '100%' }"
               appendTo="body"
             />
             <small class="field-hint">{{ selectedExposureHint() }}.</small>
           </div>
+
+          <div class="section-label">IP allowlist</div>
+          <small class="field-hint">{{ ipAllowlistHint }}</small>
+          <label class="toggle-line mt-2" for="create-allow-current-ip"
+            ><span>Add my current public IP<small class="flag-ref">--allow-current-ip</small></span
+            ><p-toggleswitch inputId="create-allow-current-ip" [(ngModel)]="form.allowCurrentIP"
+          /></label>
+          @if (form.exposure === 'nodeport') {
+            <small class="field-hint"
+              >Without your IP, NodePort playrooms cannot be reached from your Mac.</small
+            >
+          }
+          <app-string-list-editor
+            label="Other IP addresses or ranges"
+            [(values)]="form.allowIPs"
+            placeholder="198.51.100.0/24"
+            addLabel="add address"
+            itemLabel="IP address or range"
+          />
 
           <!-- Only the tailscale exposure needs credentials. Asking for them
                unconditionally is what used to make the other two unreachable. -->
@@ -400,6 +420,9 @@
             </div>
             <div>
               <span>Exposure</span><strong>{{ form.exposure }}</strong>
+            </div>
+            <div>
+              <span>IP allowlist</span><strong>{{ allowlistSummary() }}</strong>
             </div>
             <div>
               <span>Tailscale</span
