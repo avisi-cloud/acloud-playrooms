@@ -21,6 +21,8 @@
     }
     @if (!found() && status()) {
       <span class="binary-nudge">Every screen stays empty until this is set</span>
+    } @else if (minimumVersionNotMet(); as minimumVersion) {
+      <span class="binary-nudge">Needs acloud {{ minimumVersion }} or later</span>
     }
   </button>
 

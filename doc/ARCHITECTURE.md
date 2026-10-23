@@ -59,22 +59,24 @@ could otherwise override the user's choice.
 
 ## Editing a playhouse
 
-There is no `acloud playhouse update`. `playhouse create` is the update: run
-with an existing name it reports "already exists — updating it" and converges
-the playhouse, backfilling missing node pools, re-stamping the playroom pools
-and re-running the bootstrap.
+The edit drawer runs `acloud playhouse update`. It converges the playhouse to
+the layout the installed acloud ships: it adds any missing node pool, re-applies
+the playroom pools' settings and re-runs the bootstrap. Run with no settings
+("Bring up to date"), it only does that.
 
-Only three settings change on that path, and the edit drawer offers only those:
-`--exposure` (with the Tailscale credentials, which are stored in-cluster after
-first use) and the two node ceilings, which are written to each pool's
-max-nodes annotation. The node types and node count are taken from the live
-pools by the converge, and the version, update channel and maintenance schedule
-are read only while provisioning a new cluster, so passing them to an existing
-playhouse silently does nothing. The drawer states that rather than leaving it
-to be discovered.
+The drawer offers what update can change on an existing playhouse: the update
+channel, `--exposure` (with the Tailscale credentials, which are stored
+in-cluster after first use) and the two node ceilings. Update's node-type flags
+and `--node-count` only size a pool that has to be added, so the drawer leaves
+them to acloud's defaults and says that existing pools keep their size.
 
-The edit always passes `--no-default`: `create` makes its playhouse the default
-otherwise, and editing one the user is not scoped to would switch them over.
+`playhouse create` refuses an existing name since acloud 0.38, which is why
+0.39 is the minimum version (see [Decisions](DECISIONS.md)). Update has no
+`--yes` and no `--no-default`: it never prompts without a terminal and never
+changes the default playhouse.
+
+`playhouse list -o json` reports each playhouse's layout status. An outdated
+layout shows "update available" in the list, which opens the drawer.
 
 ## Running commands
 

@@ -115,8 +115,8 @@ export function GetAcloudBinaryStatus() {
 }
 
 /**
- * GetAcloudCompatibility reports whether the installed acloud is newer than the
- * one this GUI was verified against, so the sidebar can say so.
+ * GetAcloudCompatibility reports whether the installed acloud is too old for, or
+ * newer than, the one this GUI was verified against, so the sidebar can say so.
  * @returns {$CancellablePromise<local$0.AcloudCompatibility>}
  */
 export function GetAcloudCompatibility() {
@@ -450,9 +450,7 @@ export function UnsetPlayroomDefault(operationID, key) {
 }
 
 /**
- * UpdatePlayhouse converges an existing playhouse. There is no
- * `playhouse update`; see backend/playhouse/update.go for why this is a
- * `playhouse create` re-run and which settings it can actually change.
+ * UpdatePlayhouse runs `acloud playhouse update`, which converges an existing playhouse.
  * @param {string} operationID
  * @param {playhouse$0.UpdateInput} input
  * @returns {$CancellablePromise<void>}

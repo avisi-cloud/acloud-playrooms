@@ -4,7 +4,14 @@ export interface PlayhouseEntry {
   Status: string;
   Region: string;
   Version: string;
+  /** Null when the playhouse carries no layout stamp or it could not be read. */
+  LayoutVersion: number | null;
+  /** A `LayoutStatus`; the generated binding types it as a plain string. */
+  LayoutStatus: string;
 }
+
+/** How a playhouse's layout compares with the one the installed acloud ships. */
+export type LayoutStatus = 'current' | 'outdated' | 'newer' | 'unknown';
 
 export interface Playhouse {
   slug: string;

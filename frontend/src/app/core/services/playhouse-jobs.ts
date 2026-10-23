@@ -25,7 +25,7 @@ export class PlayhouseJobsService {
   readonly provisioning = this._provisioning.asReadonly();
   /** Slugs currently being deleted. */
   readonly deleting = this._deleting.asReadonly();
-  /** Slugs currently being converged by an edit. */
+  /** Slugs currently being updated by an edit. */
   readonly converging = this._converging.asReadonly();
 
   /** Whether anything is in flight, i.e. whether the list is worth polling. */
@@ -106,9 +106,8 @@ export class PlayhouseJobsService {
   }
 
   /**
-   * Starts a converge and returns immediately. This is `playhouse create` on an
-   * existing playhouse, so it runs the same bootstrap as a creation and takes
-   * minutes rather than seconds; playrooms keep running throughout.
+   * Starts a `playhouse update` and returns immediately. It re-runs the bootstrap,
+   * so it takes minutes rather than seconds; playrooms keep running throughout.
    */
   update(slug: string, input: Partial<PlayhouseUpdateInput>): void {
     if (this._converging().includes(slug)) return;
@@ -116,7 +115,7 @@ export class PlayhouseJobsService {
     this.notify.show({
       severity: 'info',
       summary: 'Updating playhouse',
-      detail: `${slug} is being converged. Playrooms keep running; this can take a few minutes.`,
+      detail: `${slug} is being updated. Playrooms keep running; this can take a few minutes.`,
       life: 6000,
     });
     void this.run(
@@ -126,7 +125,7 @@ export class PlayhouseJobsService {
         this.notify.show({
           severity: 'success',
           summary: 'Playhouse updated',
-          detail: `${slug} was converged.`,
+          detail: `${slug} is up to date.`,
           life: 5000,
           data: { operationId },
         }),

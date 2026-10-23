@@ -85,35 +85,35 @@ func TestBuildDeleteArguments(t *testing.T) {
 }
 
 func TestBuildUpdateArguments(t *testing.T) {
-	// An update is a `playhouse create` re-run, which converges the existing
-	// playhouse. With nothing else set it is a pure converge: backfill the
-	// missing node pools and re-bootstrap.
-	t.Run("a bare converge passes only the name", func(t *testing.T) {
+	// With nothing set it converges to the layout this acloud ships.
+	t.Run("a bare update passes only the name", func(t *testing.T) {
 		assertArguments(t, buildUpdateArguments(UpdateInput{Name: "e2e-default"}),
-			[]string{"playhouse", "create", "e2e-default", "--no-default", "--yes"})
+			[]string{"playhouse", "update", "e2e-default"})
 	})
 
-	// create makes its playhouse the default unless told not to, so an edit of
-	// a playhouse the user is not scoped to must not switch them over.
-	t.Run("never re-points the default playhouse", func(t *testing.T) {
+	// update has neither flag; acloud rejects an unknown one.
+	t.Run("never sends the create-only flags", func(t *testing.T) {
 		arguments := buildUpdateArguments(UpdateInput{Name: "other", Exposure: "tailscale"})
-		if !slices.Contains(arguments, "--no-default") {
-			t.Fatalf("arguments = %s, want --no-default", strings.Join(arguments, " "))
+		for _, createOnly := range []string{"--yes", "--no-default"} {
+			if slices.Contains(arguments, createOnly) {
+				t.Fatalf("arguments = %s, must not contain %s", strings.Join(arguments, " "), createOnly)
+			}
 		}
 	})
 
 	t.Run("every field set", func(t *testing.T) {
 		assertArguments(t, buildUpdateArguments(UpdateInput{
-			Name: "e2e-default", Exposure: "tailscale",
+			Name: "e2e-default", UpdateChannel: "rapid", Exposure: "tailscale",
 			TailscaleOAuthClientID: "id", TailscaleOAuthClientSecret: "secret",
 			MaxPlayroomNodes: 5, MaxPrivilegedNodes: 2, WaitTimeout: "20m",
 		}), []string{
-			"playhouse", "create", "e2e-default",
+			"playhouse", "update", "e2e-default",
+			"--update-channel", "rapid",
 			"--exposure", "tailscale",
 			"--tailscale-oauth-client-id", "id",
 			"--tailscale-oauth-client-secret", "secret",
 			"--max-playroom-nodes", "5", "--max-privileged-nodes", "2",
-			"--wait-timeout", "20m", "--no-default", "--yes",
+			"--wait-timeout", "20m",
 		})
 	})
 }

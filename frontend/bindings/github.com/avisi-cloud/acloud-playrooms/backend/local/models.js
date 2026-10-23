@@ -8,7 +8,7 @@ import { Create as $Create } from "@wailsio/runtime";
 
 /**
  * AcloudCompatibility says whether the acloud the GUI is running inside is
- * newer than the one the GUI was verified against.
+ * older than it needs, or newer than the one the GUI was verified against.
  */
 export class AcloudCompatibility {
     /**
@@ -34,13 +34,29 @@ export class AcloudCompatibility {
              */
             this["VerifiedVersion"] = "";
         }
+        if (!("MinimumVersion" in $$source)) {
+            /**
+             * MinimumVersion is MinimumAcloudVersion, for the same reason.
+             * @member
+             * @type {string}
+             */
+            this["MinimumVersion"] = "";
+        }
         if (!("RunningVersionIsNewerThanVerified" in $$source)) {
             /**
-             * RunningVersionIsNewerThanVerified is the only field the UI acts on.
              * @member
              * @type {boolean}
              */
             this["RunningVersionIsNewerThanVerified"] = false;
+        }
+        if (!("RunningVersionIsOlderThanMinimum" in $$source)) {
+            /**
+             * RunningVersionIsOlderThanMinimum means some commands will fail; its
+             * explanation wins over the newer-than-verified one.
+             * @member
+             * @type {boolean}
+             */
+            this["RunningVersionIsOlderThanMinimum"] = false;
         }
         if (!("Explanation" in $$source)) {
             /**

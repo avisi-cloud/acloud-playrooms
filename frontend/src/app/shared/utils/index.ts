@@ -7,3 +7,4 @@ export * from './playroom-display';
 export * from './command-preview';
 export * from './forms';
 export * from './playroom-size';
+export * from './playhouse-layout';

@@ -95,7 +95,7 @@ export const wailsApi = {
     app.CreatePlayhouse(operationID, new playhouseInput.CreateInput(input)),
   deletePlayhouse: (operationID: string, input: Partial<PlayhouseDeleteInput>): Promise<void> =>
     app.DeletePlayhouse(operationID, new playhouseInput.DeleteInput(input)),
-  /** Converges an existing playhouse; `playhouse create` is the update command. */
+  /** Runs `acloud playhouse update`, which converges an existing playhouse. */
   updatePlayhouse: (operationID: string, input: Partial<PlayhouseUpdateInput>): Promise<void> =>
     app.UpdatePlayhouse(operationID, new playhouseInput.UpdateInput(input)),
 

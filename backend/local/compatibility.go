@@ -15,8 +15,13 @@ import (
 // --workspace-namespace and `update --storage` flags.
 const VerifiedAgainstAcloudVersion = "0.37.0"
 
+// MinimumAcloudVersion is the oldest acloud that has every command these
+// screens run: 0.39.0 added the IP allowlist, NodePort SSH and --via, and
+// 0.38.0 `playhouse update`, while create stopped updating an existing playhouse.
+const MinimumAcloudVersion = "0.39.0"
+
 // AcloudCompatibility says whether the acloud the GUI is running inside is
-// newer than the one the GUI was verified against.
+// older than it needs, or newer than the one the GUI was verified against.
 type AcloudCompatibility struct {
 	// RunningVersion is the acloud build this GUI is part of, empty in a
 	// development build.
@@ -24,29 +29,44 @@ type AcloudCompatibility struct {
 	// VerifiedVersion is VerifiedAgainstAcloudVersion, so the frontend keeps no
 	// copy of its own.
 	VerifiedVersion string
-	// RunningVersionIsNewerThanVerified is the only field the UI acts on.
+	// MinimumVersion is MinimumAcloudVersion, for the same reason.
+	MinimumVersion                    string
 	RunningVersionIsNewerThanVerified bool
+	// RunningVersionIsOlderThanMinimum means some commands will fail; its
+	// explanation wins over the newer-than-verified one.
+	RunningVersionIsOlderThanMinimum bool
 	// Explanation is a ready-to-show sentence, empty when there is nothing to say.
 	Explanation string
 }
 
-// DescribeAcloudCompatibility compares the running acloud against the version
-// this GUI was verified against, staying quiet unless the running one is newer.
+// DescribeAcloudCompatibility compares the running acloud against the versions
+// this GUI needs and was verified against, staying quiet when it is in between.
 func DescribeAcloudCompatibility() AcloudCompatibility {
-	running := AcloudVersion()
+	return describeAcloudCompatibility(AcloudVersion())
+}
+
+func describeAcloudCompatibility(running string) AcloudCompatibility {
 	compatibility := AcloudCompatibility{
-		RunningVersion:  running,
-		VerifiedVersion: VerifiedAgainstAcloudVersion,
+		RunningVersion:                    running,
+		VerifiedVersion:                   VerifiedAgainstAcloudVersion,
+		MinimumVersion:                    MinimumAcloudVersion,
+		RunningVersionIsNewerThanVerified: isVersionNewerThan(running, VerifiedAgainstAcloudVersion),
+		RunningVersionIsOlderThanMinimum:  isVersionNewerThan(MinimumAcloudVersion, running),
 	}
-	if !isVersionNewerThan(running, VerifiedAgainstAcloudVersion) {
-		return compatibility
+	switch {
+	case compatibility.RunningVersionIsOlderThanMinimum:
+		compatibility.Explanation = fmt.Sprintf(
+			"This interface needs acloud %s or later, and you are running %s. "+
+				"Some screens run commands your acloud does not have yet. "+
+				"Upgrade it with: brew upgrade --cask acloud",
+			MinimumAcloudVersion, running)
+	case compatibility.RunningVersionIsNewerThanVerified:
+		compatibility.Explanation = fmt.Sprintf(
+			"This interface was checked against acloud %s, and you are running %s. "+
+				"Anything added to the CLI since then may be missing from these screens. "+
+				"Commands themselves are unaffected — they run the real acloud.",
+			VerifiedAgainstAcloudVersion, running)
 	}
-	compatibility.RunningVersionIsNewerThanVerified = true
-	compatibility.Explanation = fmt.Sprintf(
-		"This interface was checked against acloud %s, and you are running %s. "+
-			"Anything added to the CLI since then may be missing from these screens. "+
-			"Commands themselves are unaffected — they run the real acloud.",
-		VerifiedAgainstAcloudVersion, running)
 	return compatibility
 }
 

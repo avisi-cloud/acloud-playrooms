@@ -31,12 +31,12 @@ describe('explainFailure', () => {
 
   it('takes the lines a failure printed after itself as the remedy', () => {
     const message =
-      'cluster did not start within timeout\n\nThis is always safe to re-run to resume where it left off:\n  acloud playhouse create demo';
+      'cluster did not start within timeout\n\nThis is always safe to re-run to resume where it left off:\n  acloud playhouse update demo';
 
     expect(explainFailure(message)).toEqual({
       problem: 'Cluster did not start within timeout',
       remedy:
-        'This is always safe to re-run to resume where it left off: acloud playhouse create demo',
+        'This is always safe to re-run to resume where it left off: acloud playhouse update demo',
     });
   });
 
