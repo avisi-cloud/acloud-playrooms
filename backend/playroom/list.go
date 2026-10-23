@@ -31,7 +31,14 @@ type Listing struct {
 	DiskSize   string    `json:"DiskSize"`
 	DiskType   string    `json:"DiskType"`
 	System     string    `json:"System"`
-	Ports      string    `json:"Ports"`
+	// Ports is null when only SSH is exposed.
+	Ports []PortForward `json:"Ports"`
+}
+
+// PortForward is one forwarded port; TargetPort equals Port unless the pod listens elsewhere.
+type PortForward struct {
+	Port       int32 `json:"Port"`
+	TargetPort int32 `json:"TargetPort"`
 }
 
 // List runs `acloud playroom list -o json` and decodes it. No operation id: it

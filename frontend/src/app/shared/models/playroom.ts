@@ -128,5 +128,10 @@ export interface ListingDto {
   DiskSize?: string;
   DiskType?: string;
   System?: string;
-  Ports?: string;
+  Ports?: PortForwardDto[] | null;
+}
+
+export interface PortForwardDto {
+  Port: number;
+  TargetPort: number;
 }
