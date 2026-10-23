@@ -1,4 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { failureSaysResumeWithPlayhouseUpdate } from '../../shared/utils';
 import { CliConsoleService } from './cli-console';
 import { ToastService } from './toast';
 import {
@@ -20,6 +21,11 @@ export class PlayhouseJobsService {
   private readonly _provisioning = signal<string[]>([]);
   private readonly _deleting = signal<string[]>([]);
   private readonly _converging = signal<string[]>([]);
+  /**
+   * Creates that failed after the cluster was made, with what `playhouse update`
+   * needs to finish them. In memory only: it can hold Tailscale credentials.
+   */
+  private readonly _resumable = signal<Record<string, Partial<PlayhouseUpdateInput>>>({});
 
   /** Slugs currently being created. */
   readonly provisioning = this._provisioning.asReadonly();
@@ -51,6 +57,16 @@ export class PlayhouseJobsService {
     return this._converging().includes(slug);
   }
 
+  canResume(slug: string): boolean {
+    return slug in this._resumable();
+  }
+
+  /** Finishes a failed create with `playhouse update`, as acloud's error says to. */
+  resume(slug: string): void {
+    const input = this._resumable()[slug];
+    if (input) this.update(slug, input);
+  }
+
   /** Starts a create and returns immediately; progress goes to the log. */
   create(slug: string, input: Partial<PlayhouseCreateInput>): void {
     if (this._provisioning().includes(slug)) return;
@@ -72,8 +88,11 @@ export class PlayhouseJobsService {
           life: 5000,
           data: { operationId },
         }),
-      (operationId, error) =>
-        this.notify.failure(`Could not create playhouse "${slug}"`, error, operationId),
+      (operationId, error) => {
+        if (failureSaysResumeWithPlayhouseUpdate(error))
+          this._resumable.update((all) => ({ ...all, [slug]: resumeInputFor(slug, input) }));
+        this.notify.failure(`Could not create playhouse "${slug}"`, error, operationId);
+      },
       () => this._provisioning.update((list) => list.filter((trackedSlug) => trackedSlug !== slug)),
     );
   }
@@ -91,14 +110,16 @@ export class PlayhouseJobsService {
     void this.run(
       `Deleting playhouse "${slug}"`,
       (operationId) => wailsApi.deletePlayhouse(operationId, input),
-      (operationId) =>
+      (operationId) => {
+        this.forgetResume(slug);
         this.notify.show({
           severity: 'success',
           summary: 'Playhouse deleted',
           detail: `${slug} was deleted.`,
           life: 5000,
           data: { operationId },
-        }),
+        });
+      },
       (operationId, error) =>
         this.notify.failure(`Could not delete playhouse "${slug}"`, error, operationId),
       () => this._deleting.update((list) => list.filter((trackedSlug) => trackedSlug !== slug)),
@@ -121,18 +142,28 @@ export class PlayhouseJobsService {
     void this.run(
       `Updating playhouse "${slug}"`,
       (operationId) => wailsApi.updatePlayhouse(operationId, input),
-      (operationId) =>
+      (operationId) => {
+        this.forgetResume(slug);
         this.notify.show({
           severity: 'success',
           summary: 'Playhouse updated',
           detail: `${slug} is up to date.`,
           life: 5000,
           data: { operationId },
-        }),
+        });
+      },
       (operationId, error) =>
         this.notify.failure(`Could not update playhouse "${slug}"`, error, operationId),
       () => this._converging.update((list) => list.filter((trackedSlug) => trackedSlug !== slug)),
     );
+  }
+
+  private forgetResume(slug: string): void {
+    this._resumable.update((all) => {
+      const remaining = { ...all };
+      delete remaining[slug];
+      return remaining;
+    });
   }
 
   /** The shared shape of every job: run, report, untrack, announce completion. */
@@ -157,4 +188,20 @@ export class PlayhouseJobsService {
       this._completed.update((count) => count + 1);
     }
   }
+}
+
+/** The settings acloud's own resume command repeats: connectivity, its credentials and the ceilings. */
+function resumeInputFor(
+  slug: string,
+  create: Partial<PlayhouseCreateInput>,
+): Partial<PlayhouseUpdateInput> {
+  return {
+    Name: slug,
+    Exposure: create.Exposure ?? '',
+    TailscaleOAuthClientID: create.TailscaleOAuthClientID ?? '',
+    TailscaleOAuthClientSecret: create.TailscaleOAuthClientSecret ?? '',
+    MaxPlayroomNodes: create.MaxPlayroomNodes ?? 0,
+    MaxPrivilegedNodes: create.MaxPrivilegedNodes ?? 0,
+    WaitTimeout: create.WaitTimeout ?? '',
+  };
 }

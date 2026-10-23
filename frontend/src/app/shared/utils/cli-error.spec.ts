@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { describeError, explainFailure } from './cli-error';
+import { describeError, explainFailure, failureSaysResumeWithPlayhouseUpdate } from './cli-error';
 
 describe('explainFailure', () => {
   it('splits the CLI template into what went wrong and what to do about it', () => {
@@ -68,5 +68,24 @@ describe('describeError', () => {
 
   it('truncates a message too long for the space it has', () => {
     expect(describeError('a'.repeat(400)).length).toBe(160);
+  });
+});
+
+describe('failureSaysResumeWithPlayhouseUpdate', () => {
+  // What acloud 0.39 prints when create fails after the cluster was made.
+  const createdButNotSetUp =
+    'Error: the cluster did not start within 20m0s\n\nThe playhouse was created but not fully set up. This is safe to resume with:\n  /opt/homebrew/bin/acloud playhouse update demo --exposure nodeport';
+
+  it('recognises a create that got as far as the cluster, whatever path acloud ran from', () => {
+    expect(failureSaysResumeWithPlayhouseUpdate(new Error(createdButNotSetUp))).toBe(true);
+  });
+
+  it('does not offer a resume for a create that made nothing', () => {
+    expect(
+      failureSaysResumeWithPlayhouseUpdate(
+        'playhouse "playhouse-demo" already exists\n\nTo bring it up to date with this acloud, run:\n  acloud playhouse update demo',
+      ),
+    ).toBe(false);
+    expect(failureSaysResumeWithPlayhouseUpdate('no cloud account found')).toBe(false);
   });
 });

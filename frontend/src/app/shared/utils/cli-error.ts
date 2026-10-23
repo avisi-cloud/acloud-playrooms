@@ -49,6 +49,16 @@ export function describeError(value: unknown): string {
 const FAILED_WITHOUT_SAYING_WHY = 'The command failed. Open Activity for the output.';
 
 /**
+ * Whether acloud said a create got as far as making the playhouse, so
+ * `playhouse update` can finish it. Read from the whole message, not the toast's truncated remedy.
+ */
+export function failureSaysResumeWithPlayhouseUpdate(value: unknown): boolean {
+  const text = cliErrorText(value);
+  // acloud names itself by the path it was run as, so only the subcommand is matched.
+  return /safe to resume with/i.test(text) && /\bplayhouse update\s/.test(text);
+}
+
+/**
  * The message inside whatever was thrown, with a JS error prefix, binding JSON
  * or HTML error page taken off.
  */
