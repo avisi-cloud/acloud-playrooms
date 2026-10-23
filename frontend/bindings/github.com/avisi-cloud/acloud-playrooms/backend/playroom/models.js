@@ -602,10 +602,11 @@ export class Listing {
         }
         if (!("Ports" in $$source)) {
             /**
+             * Ports is null when only SSH is exposed.
              * @member
-             * @type {string}
+             * @type {PortForward[]}
              */
-            this["Ports"] = "";
+            this["Ports"] = [];
         }
 
         Object.assign(this, $$source);
@@ -617,7 +618,11 @@ export class Listing {
      * @returns {Listing}
      */
     static createFrom($$source = {}) {
+        const $$createField13_0 = $$createType2;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("Ports" in $$parsedSource) {
+            $$parsedSource["Ports"] = $$createField13_0($$parsedSource["Ports"]);
+        }
         return new Listing(/** @type {Partial<Listing>} */($$parsedSource));
     }
 }
@@ -672,6 +677,44 @@ export class OpenInput {
     static createFrom($$source = {}) {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new OpenInput(/** @type {Partial<OpenInput>} */($$parsedSource));
+    }
+}
+
+/**
+ * PortForward is one forwarded port; TargetPort equals Port unless the pod listens elsewhere.
+ */
+export class PortForward {
+    /**
+     * Creates a new PortForward instance.
+     * @param {Partial<PortForward>} [$$source = {}] - The source object to create the PortForward.
+     */
+    constructor($$source = {}) {
+        if (!("Port" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["Port"] = 0;
+        }
+        if (!("TargetPort" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["TargetPort"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new PortForward instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {PortForward}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new PortForward(/** @type {Partial<PortForward>} */($$parsedSource));
     }
 }
 
@@ -1007,3 +1050,5 @@ export class UpdateInput {
 
 // Private type creation functions
 const $$createType0 = $Create.Array($Create.Any);
+const $$createType1 = PortForward.createFrom;
+const $$createType2 = $Create.Array($$createType1);
