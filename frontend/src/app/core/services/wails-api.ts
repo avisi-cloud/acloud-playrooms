@@ -32,6 +32,7 @@ export type ToolStatus = localModels.ToolStatus;
 export type AcloudCompatibility = localModels.AcloudCompatibility;
 export type AcloudBinaryStatus = cliModels.BinaryStatus;
 export type TailscaleBinaryStatus = toolsModels.TailscaleBinaryStatus;
+export type T3CodePathStatus = toolsModels.T3CodePathStatus;
 
 /** Identifies a command for output streaming and cancellation. */
 export function newOperationId(): string {
@@ -65,6 +66,10 @@ export const wailsApi = {
   setTailscaleBinary: (path: string): Promise<void> => app.SetTailscaleBinary(path),
   clearTailscaleBinary: (): Promise<void> => app.ClearTailscaleBinary(),
   browseForTailscaleBinary: (): Promise<string> => app.BrowseForTailscaleBinary(),
+  getT3CodePathStatus: (): Promise<T3CodePathStatus> => app.GetT3CodePathStatus(),
+  setT3CodePath: (path: string): Promise<void> => app.SetT3CodePath(path),
+  clearT3CodePath: (): Promise<void> => app.ClearT3CodePath(),
+  browseForT3CodePath: (): Promise<string> => app.BrowseForT3CodePath(),
 
   // Window
   getOperatingSystem: (): Promise<string> => app.GetOperatingSystem(),

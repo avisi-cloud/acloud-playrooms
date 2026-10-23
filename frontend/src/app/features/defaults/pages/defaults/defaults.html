@@ -21,14 +21,6 @@
         <span class="dirty-count">{{ dirtyCount() }} unsaved</span>
       }
       <p-button
-        label="Run setup again"
-        icon="pi pi-replay"
-        severity="secondary"
-        [outlined]="true"
-        size="small"
-        (click)="runSetupAgain()"
-      />
-      <p-button
         label="Reset all"
         severity="secondary"
         [outlined]="true"
@@ -49,12 +41,6 @@
   </header>
 
   <div class="page-body settings-body">
-    <!-- Outside the loading and failure branches on purpose: without acloud the
-         defaults below cannot load either, and a card nested in that failure
-         would hide the one control that fixes it. -->
-    <app-acloud-binary />
-    <app-tailscale-binary />
-
     @if (loading()) {
       <!-- The shell's brand mark breathes instead; see PageLoadingService. -->
       <p class="sr-only" role="status">Loading defaults…</p>

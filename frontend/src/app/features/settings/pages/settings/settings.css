@@ -1,0 +1,23 @@
+:host {
+  display: block;
+  height: 100%;
+}
+.app-settings-body {
+  padding: 22px 28px 40px;
+}
+.app-settings-column {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+.settings-section-title {
+  margin: 0 0 6px;
+  color: var(--tx);
+  font-size: 15px;
+  font-weight: 600;
+}
+.settings-section-description {
+  margin: 0 0 20px;
+  color: var(--tx-2);
+  font-size: 12.5px;
+  line-height: 1.5;
+}

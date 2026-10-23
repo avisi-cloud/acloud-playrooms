@@ -330,6 +330,11 @@ Tailscale discovery and its saved GUI-only path live in `backend/tools`. The
 runner and terminal hand-off use its PATH setup, and `local.ToolStatuses` uses
 the same resolver so the sidebar reports the executable commands will use.
 
+`tools/t3code.go` owns the optional T3 Code preference, desktop-app metadata
+checks and CLI discovery. The app's bundle identifier and executable are checked
+without starting it. Its saved path is not currently consumed by connections or
+the runner, and an invalid saved path never switches to another installation.
+
 The config helpers read the CLI's YAML file on each lookup; they do not import
 private config packages or retain a startup snapshot. The version helper runs
 `acloud version`, tool probes inspect `PATH`, and image aliases are maintained

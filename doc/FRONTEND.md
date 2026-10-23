@@ -47,13 +47,14 @@ src/app/
 `/` redirects to `/setup` until setup has been completed once, and to `/rooms`
 after that.
 
-| Route          | Screen                    |
-| -------------- | ------------------------- |
-| `/setup`       | setup                     |
-| `/playhouse`   | playhouse selection       |
-| `/rooms`       | playroom list (guarded)   |
-| `/rooms/:name` | playroom detail (guarded) |
-| `/settings`    | defaults                  |
+| Route          | Screen                       |
+| -------------- | ---------------------------- |
+| `/setup`       | setup                        |
+| `/playhouse`   | playhouse selection          |
+| `/rooms`       | playroom list (guarded)      |
+| `/rooms/:name` | playroom detail (guarded)    |
+| `/defaults`    | playroom defaults            |
+| `/settings`    | local tools and app settings |
 
 `core/guards/playhouse-guard.ts` sends the user to `/playhouse` when no
 playhouse is selected and the backend has no cached one.
@@ -191,11 +192,14 @@ the gap macOS traffic lights need, and the background colour behind the page.
 Both have to happen in the window rather than in CSS, because the background is
 what shows at launch before the first paint and in the gap during a live resize.
 
-Defaults shows separate Acloud command and Tailscale command cards. Each supports
+Settings shows separate Acloud command, Tailscale command and T3 Code path cards. Each supports
 a typed path, a native file picker, checking again, and returning to automatic
 lookup. The Tailscale choice is remembered across launches and applies to acloud
 subprocesses and terminal connections. Saving or clearing it refreshes the sidebar
-tool status. Both cards use `shared/styles/_binary-card.css`.
+tool status. The cards live in `features/settings/components` and use
+`shared/styles/_binary-card.css`; setup reuses the Acloud card. T3 Code is optional:
+the saved app or CLI path is reserved for future integration and is not launched
+or added to the command environment. Defaults remains dedicated to playroom defaults.
 
 `core/services/playroom-state.ts` holds the selected playhouse, user, theme and
 room list as signals. Two fields there exist because of specific bugs:

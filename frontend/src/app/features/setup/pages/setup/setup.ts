@@ -21,7 +21,7 @@ import {
 } from '../../../../shared/data';
 import { ToolStatus } from '../../../../shared/models';
 import { describeError } from '../../../../shared/utils';
-import { AcloudBinaryCardComponent } from '../../../defaults/components/acloud-binary/acloud-binary';
+import { AcloudBinaryCardComponent } from '../../../settings/components/acloud-binary/acloud-binary';
 
 interface SetupStep extends WizardStep {
   key: SetupStepKey;

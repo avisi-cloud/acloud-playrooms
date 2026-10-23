@@ -80,7 +80,7 @@ describe('AcloudSessionService', () => {
       expect(session.compatibility()).toBeNull();
     });
 
-    // Picking another acloud in Defaults can change the version under the notice.
+    // Picking another acloud in Settings can change the version under the notice.
     it('reads the version again when the binary changes', async () => {
       await loadWith({});
       vi.spyOn(wailsApi, 'getAcloudCompatibility').mockResolvedValue({

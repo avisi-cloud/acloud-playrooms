@@ -4,5 +4,6 @@
 
 export {
     BinarySource,
+    T3CodePathStatus,
     TailscaleBinaryStatus
 } from "./models.js";

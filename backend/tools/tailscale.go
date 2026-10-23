@@ -172,14 +172,14 @@ func SaveTailscaleBinary(binaryPath string) error {
 	}
 	// The launcher preserves the chosen executable even when its filename is not tailscale.
 	script := "#!/bin/sh\nIFS= read -r tailscale_binary < " + quoteShellArgument(store) + " || { printf '%s\\n' 'Cannot read the saved Tailscale path.' >&2; exit 127; }\nexec \"$tailscale_binary\" \"$@\"\n"
-	if err := writeTailscaleFile(filepath.Join(tailscaleLauncherDirectory(), "tailscale"), script, 0o700); err != nil {
+	if err := writeToolFile(filepath.Join(tailscaleLauncherDirectory(), "tailscale"), script, 0o700); err != nil {
 		return err
 	}
-	return writeTailscaleFile(store, absolutePath+"\n", 0o600)
+	return writeToolFile(store, absolutePath+"\n", 0o600)
 }
 
-func writeTailscaleFile(destination, contents string, permissions os.FileMode) error {
-	file, err := os.CreateTemp(filepath.Dir(destination), ".tailscale-*")
+func writeToolFile(destination, contents string, permissions os.FileMode) error {
+	file, err := os.CreateTemp(filepath.Dir(destination), ".tool-path-*")
 	if err != nil {
 		return err
 	}
@@ -222,7 +222,7 @@ func ValidateTailscaleCommandEnvironment() error {
 	launcher := filepath.Join(tailscaleLauncherDirectory(), "tailscale")
 	info, err := os.Stat(launcher)
 	if err != nil || info.IsDir() || info.Mode().Perm()&0o111 == 0 {
-		return errors.New("the saved Tailscale launcher is unavailable; save the Tailscale path again in Defaults")
+		return errors.New("the saved Tailscale launcher is unavailable; save the Tailscale path again in Settings")
 	}
 	return nil
 }
