@@ -299,6 +299,15 @@ supported. Room cards show update availability, and room details show configurat
 status. Outdated disposable rooms say Recreate to update; no numeric room version
 is inferred from the CLI's `Outdated` flag.
 
+Room details separate Connection, Resources, Storage & security, and Metadata.
+They retain the reported creation time and individual port mappings, show CLI
+failure reasons, and explain disposable home-folder retention. The copyable
+connection command comes from the backend builder with agent forwarding off;
+preview failures are visible and retryable. Resource values are allocations,
+not live measurements. Room Activity jumps to the latest retained command for
+that room, playhouse and scope revision in this app session; it is not a durable
+history. Switching scope never reassigns an in-flight command's association.
+
 Rooms reload every 10 seconds while any room is in a transitional state. A tick
 that arrives while the previous read is still running is dropped rather than
 queued, so a slow list cannot stack subprocesses behind itself. A read the

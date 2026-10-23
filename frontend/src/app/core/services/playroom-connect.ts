@@ -3,6 +3,7 @@ import { ConnectionPath, Playroom } from '../../shared/models';
 import { updateCache } from '../../shared/utils';
 import { CliConsoleService } from './cli-console';
 import { PlayroomConnectInput, wailsApi } from './wails-api';
+import { PlayroomStateService } from './playroom-state';
 
 /**
  * The "connect in terminal" and "open in editor" flows, plus the cache writes
@@ -11,6 +12,7 @@ import { PlayroomConnectInput, wailsApi } from './wails-api';
 @Injectable({ providedIn: 'root' })
 export class PlayroomConnectService {
   private readonly console = inject(CliConsoleService);
+  private readonly state = inject(PlayroomStateService);
 
   /**
    * Hands `acloud playroom connect` to the user's terminal, since an SSH session
@@ -23,6 +25,11 @@ export class PlayroomConnectService {
     forwardAgent: boolean,
     via: ConnectionPath = '',
   ): Promise<string> {
+    const scope = {
+      name: room.name,
+      playhouse: room.playhouse,
+      scopeRevision: this.state.scopeRevision(),
+    };
     const input: Partial<PlayroomConnectInput> = {
       Name: room.name,
       Playhouse: room.playhouse,
@@ -33,19 +40,30 @@ export class PlayroomConnectService {
     };
     await wailsApi.connectPlayroom(input);
     updateCache({ lastPlayroom: room.name, lastPlayhouse: room.playhouse, lastTerminal: terminal });
-    return this.console.recordHandoff(await this.commandFor(input), terminal || 'your terminal');
+    const operationId = this.console.recordHandoff(
+      await this.commandFor(input),
+      terminal || 'your terminal',
+    );
+    this.console.associatePlayroom(operationId, scope);
+    return operationId;
   }
 
   /** Opens the playroom in a desktop editor. No TTY needed, so it streams. */
   async open(room: Playroom, editor: string, via: ConnectionPath = ''): Promise<void> {
-    await this.console.run(`Opening "${room.name}" in ${editor}`, (operationId) =>
-      wailsApi.openPlayroomInEditor(operationId, {
+    const scope = {
+      name: room.name,
+      playhouse: room.playhouse,
+      scopeRevision: this.state.scopeRevision(),
+    };
+    await this.console.run(`Opening "${room.name}" in ${editor}`, (operationId) => {
+      this.console.associatePlayroom(operationId, scope);
+      return wailsApi.openPlayroomInEditor(operationId, {
         Name: room.name,
         Playhouse: room.playhouse,
         Editor: editor,
         Via: via,
-      }),
-    );
+      });
+    });
     updateCache({ lastPlayroom: room.name, lastPlayhouse: room.playhouse, lastEditor: editor });
   }
 

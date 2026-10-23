@@ -90,15 +90,26 @@
       </div>
     } @else if (room()) {
       <div class="detail-column">
-        <!-- Transitional status banner. The tone follows the status now; it used
-             to bind [ngClass] to the status with no matching rules, so a room
-             being torn down looked exactly like one being provisioned. -->
-        @if (isTransitional()) {
-          <div class="status-banner" [ngClass]="statusTone()">
-            <i class="pi pi-spin pi-spinner"></i>
-            <span>{{ statusDescription() }}</span>
+        <!-- Keep the CLI's reason visible for failures as well as pending states. -->
+        @if (isTransitional() || room()!.status === 'failed') {
+          <div class="status-banner" [ngClass]="statusTone()" role="status">
+            <i
+              [class]="
+                room()!.status === 'failed' ? 'pi pi-exclamation-circle' : 'pi pi-spin pi-spinner'
+              "
+              aria-hidden="true"
+            ></i>
+            <span>{{
+              room()!.status === 'failed'
+                ? room()!.rawStatus
+                  ? 'Playroom failed. Reported status:'
+                  : 'Playroom failed. Check Activity for command output.'
+                : statusDescription()
+            }}</span>
             @if (room()!.rawStatus) {
-              <code>{{ room()!.rawStatus }}</code>
+              <code [attr.aria-label]="'Reported status: ' + room()!.rawStatus">{{
+                room()!.rawStatus
+              }}</code>
             }
           </div>
         }
@@ -205,8 +216,51 @@
                 }
               </div>
             </div>
-            <div class="list-row">
-              <span>Ports</span><strong>{{ room()!.ports || '—' }}</strong>
+            @if (room()!.portForwards; as forwards) {
+              @for (forward of forwards; track $index) {
+                <div class="list-row port-row">
+                  <span>Port {{ forward.Port }}</span
+                  ><strong>→ Container port {{ forward.TargetPort }}</strong>
+                </div>
+              } @empty {
+                <div class="list-row"><span>Forwarded ports</span><strong>None</strong></div>
+              }
+            } @else {
+              <div class="list-row">
+                <span>Forwarded ports</span><strong>{{ room()!.ports || 'Not reported' }}</strong>
+              </div>
+            }
+            <div class="connection-command">
+              <div class="connection-command-head">
+                <span>Connection command</span>
+                <p-button
+                  [label]="commandCopied() ? 'Copied' : 'Copy'"
+                  icon="pi pi-copy"
+                  severity="secondary"
+                  [text]="true"
+                  size="small"
+                  [disabled]="!connectionCommand()"
+                  (click)="copyConnectionCommand()"
+                />
+              </div>
+              @if (connectionCommandFailure()) {
+                <p class="command-failure" role="alert">{{ connectionCommandFailure() }}</p>
+                <p-button
+                  label="Try again"
+                  severity="secondary"
+                  [text]="true"
+                  size="small"
+                  (click)="retryConnectionCommand()"
+                />
+              } @else if (connectionCommand()) {
+                <code class="connection-command-text">{{ connectionCommand() }}</code>
+              } @else {
+                <p class="section-note" role="status">Building connection command…</p>
+              }
+              <p class="section-note">
+                For the selected context and organisation. SSH agent forwarding is off; use Connect
+                for other options.
+              </p>
             </div>
           </div>
 
@@ -222,22 +276,46 @@
               }}</strong>
             </div>
             <div class="list-row">
-              <span>CPU request / limit</span
-              ><strong>{{ room()!.cpuReq }} / {{ room()!.cpuLim }}</strong>
+              <span>CPU reserved</span><strong>{{ room()!.cpuReq || 'Not reported' }}</strong>
             </div>
             <div class="list-row">
-              <span>Memory request / limit</span
-              ><strong>{{ room()!.memReq }} / {{ room()!.memLim }}</strong>
+              <span>CPU limit</span><strong>{{ room()!.cpuLim || 'Not reported' }}</strong>
             </div>
             <div class="list-row">
-              <span>Storage</span><strong>{{ room()!.disk }} · {{ room()!.diskType }}</strong>
+              <span>Memory reserved</span><strong>{{ room()!.memReq || 'Not reported' }}</strong>
             </div>
             <div class="list-row">
-              <span>System</span><strong>{{ room()!.system || '—' }}</strong>
+              <span>Memory limit</span><strong>{{ room()!.memLim || 'Not reported' }}</strong>
+            </div>
+            <p class="section-note section-note--padded">
+              Configured allocations, not live usage. “none” means that reservation or limit is not
+              set.
+            </p>
+          </div>
+
+          <div class="list-section">
+            <div class="list-section-head">
+              <div class="card-icon-wrap"><i class="pi pi-shield card-icon"></i></div>
+              <h2 class="section-title">Storage &amp; security</h2>
+            </div>
+            <div class="list-row">
+              <span>Home folder</span><strong>{{ room()!.disk || 'Not reported' }}</strong>
+            </div>
+            <div class="list-row">
+              <span>Storage type</span><strong>{{ room()!.diskType || 'Not reported' }}</strong>
+            </div>
+            <div class="list-row">
+              <span>System files</span><strong>{{ room()!.system || 'Not reported' }}</strong>
             </div>
             <div class="list-row">
               <span>Capabilities</span><strong>{{ renderCapabilities(room()!) || '—' }}</strong>
             </div>
+            @if (room()!.ephemeral) {
+              <p class="storage-warning">
+                <i class="pi pi-info-circle" aria-hidden="true"></i>Your home folder is wiped
+                whenever this playroom restarts.
+              </p>
+            }
           </div>
 
           <div class="list-section">
@@ -260,11 +338,39 @@
               }
             </div>
             <div class="list-row">
-              <span>Age</span><strong>{{ ageLabel() }}</strong>
+              <span>Created</span>
+              @if (room()!.createdAt; as createdAt) {
+                <strong
+                  ><time [attr.datetime]="createdAt">{{
+                    createdAt | date: 'd MMM y, HH:mm z'
+                  }}</time></strong
+                >
+              } @else {
+                <strong>Not reported</strong>
+              }
             </div>
             <div class="list-row">
-              <span>Ephemeral</span><strong>{{ room()!.ephemeral ? 'yes' : 'no' }}</strong>
+              <span>Age</span><strong>{{ ageLabel() }}</strong>
             </div>
+            <div class="list-row activity-row">
+              <span>Activity</span>
+              @if (latestActivityId()) {
+                <p-button
+                  label="View latest command"
+                  icon="pi pi-history"
+                  severity="secondary"
+                  [text]="true"
+                  size="small"
+                  title="Jump to this room's latest command in the shared Activity log"
+                  (click)="openRoomActivity()"
+                />
+              } @else {
+                <strong>No commands this session</strong>
+              }
+            </div>
+            <p class="section-note section-note--padded">
+              Activity covers this app session and scope only, not the room's full history.
+            </p>
           </div>
         </div>
       </div>

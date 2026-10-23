@@ -15,6 +15,16 @@ export interface RunningOperation {
   title: string;
 }
 
+export interface PlayroomActivityScope {
+  name: string;
+  playhouse: string;
+  scopeRevision: number;
+}
+
+interface PlayroomOperation extends PlayroomActivityScope {
+  operationId: string;
+}
+
 /** Mirrors gui/backend/cli.Event. */
 interface CliEvent {
   operationId?: string;
@@ -43,6 +53,7 @@ export class CliConsoleService {
   private readonly _visible = signal(false);
   private readonly _lastFailed = signal(false);
   private readonly _focus = signal('');
+  private readonly playroomOperations = signal<PlayroomOperation[]>([]);
 
   /**
    * Operations the user asked to stop. A cancelled command still exits non-zero,
@@ -115,6 +126,32 @@ export class CliConsoleService {
     this._visible.set(true);
   }
 
+  associatePlayroom(operationId: string, scope: PlayroomActivityScope): void {
+    this.playroomOperations.update((operations) =>
+      [
+        ...operations.filter((operation) => operation.operationId !== operationId),
+        { ...scope, operationId },
+      ].slice(-MAX_LINES),
+    );
+  }
+
+  /** Scope is captured when the command starts, not when its output arrives. */
+  latestPlayroomOperation(scope: PlayroomActivityScope): string {
+    const retainedOperations = new Set(this.lines().map((line) => line.operationId));
+    return (
+      this.playroomOperations()
+        .slice()
+        .reverse()
+        .find(
+          (operation) =>
+            operation.name === scope.name &&
+            operation.playhouse === scope.playhouse &&
+            operation.scopeRevision === scope.scopeRevision &&
+            retainedOperations.has(operation.operationId),
+        )?.operationId ?? ''
+    );
+  }
+
   close(): void {
     this._visible.set(false);
   }
@@ -129,6 +166,7 @@ export class CliConsoleService {
 
   clearLog(): void {
     this._lines.set([]);
+    this.playroomOperations.set([]);
     this._lastFailed.set(false);
   }
 

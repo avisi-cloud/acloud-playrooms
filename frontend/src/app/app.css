@@ -21,15 +21,22 @@
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  /* Two layers: a tiled grain on top of the brand artwork. The grain is a
-     256px texture drawn at 128px, so each grain is one device pixel on a
-     Retina display (the Arc/Dia look). Strength is baked into the PNG's
-     alpha; regenerate it to change how strong the grain is. */
-  background:
-    url('/brand/grain.png') 0 0 / 128px 128px repeat,
-    url('/brand/AvisiBackground.webp') center / cover no-repeat var(--surf-1);
+  position: relative;
+  isolation: isolate;
+  background: url('/brand/AvisiBackground.webp') center / cover no-repeat var(--surf-1);
   padding: 10px 10px 10px 0;
   font-family: var(--font-sans);
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Keep the outer grain quieter than the content panel without dimming the artwork. */
+.app-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: url('/brand/grain.png') 0 0 / 128px 128px repeat;
+  opacity: 0.4;
 }
