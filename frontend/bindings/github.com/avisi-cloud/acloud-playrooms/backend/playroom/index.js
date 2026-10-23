@@ -12,6 +12,7 @@ export {
     ListInput,
     Listing,
     OpenInput,
+    PortForward,
     StartInput,
     StopInput,
     UpdateInput

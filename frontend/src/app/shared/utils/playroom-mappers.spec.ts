@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ListingDto } from '../models/playroom';
-import { listingToRoom, mapStatus } from './playroom-mappers';
+import { listingToRoom, mapStatus, renderPortForwards } from './playroom-mappers';
+import { parseRenderedPorts } from './forms';
 import { isTransitional } from './playroom-display';
 
 describe('mapStatus', () => {
@@ -71,6 +72,21 @@ describe('listingToRoom', () => {
   it('reads ephemeral from the disk type', () => {
     expect(listingToRoom({ ...base, DiskType: 'ephemeral' }, 'ph').ephemeral).toBe(true);
     expect(listingToRoom({ ...base, DiskType: 'persistent' }, 'ph').ephemeral).toBe(false);
+  });
+
+  it('renders forwarded ports the way the update form reads them back', () => {
+    const ports = [
+      { Port: 3000, TargetPort: 3000 },
+      { Port: 80, TargetPort: 8080 },
+    ];
+    const rendered = listingToRoom({ ...base, Ports: ports }, 'ph').ports;
+    expect(rendered).toBe('3000, 80 → 8080');
+    expect(parseRenderedPorts(rendered)).toEqual(['3000', '80:8080']);
+  });
+
+  it('renders no ports for an SSH-only room', () => {
+    expect(listingToRoom({ ...base, Ports: null }, 'ph').ports).toBe('');
+    expect(renderPortForwards(undefined)).toBe('');
   });
 
   it('defaults a missing disk type to persistent rather than blank', () => {

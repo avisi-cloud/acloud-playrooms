@@ -1,4 +1,4 @@
-import { ListingDto, Playroom, StatusKey } from '../models/playroom';
+import { ListingDto, Playroom, PortForwardDto, StatusKey } from '../models/playroom';
 
 const FAILED_STATES = new Set([
   'CrashLoopBackOff',
@@ -50,7 +50,7 @@ export function listingToRoom(listing: ListingDto, playhouse: string): Playroom 
     cpuLim: listing.CPULimit || '',
     memReq: listing.MemRequest || '',
     memLim: listing.MemLimit || '',
-    ports: listing.Ports || '',
+    ports: renderPortForwards(listing.Ports),
     system: listing.System || '',
     playhouse,
     ephemeral: listing.DiskType === 'ephemeral',
@@ -58,4 +58,15 @@ export function listingToRoom(listing: ListingDto, playhouse: string): Playroom 
     git: [],
     copy: [],
   };
+}
+
+/** Rendered like acloud's PORTS column, which `parseRenderedPorts` reads back. */
+export function renderPortForwards(ports: PortForwardDto[] | null | undefined): string {
+  return (ports ?? [])
+    .map((forward) =>
+      forward.TargetPort === forward.Port
+        ? `${forward.Port}`
+        : `${forward.Port} → ${forward.TargetPort}`,
+    )
+    .join(', ');
 }
