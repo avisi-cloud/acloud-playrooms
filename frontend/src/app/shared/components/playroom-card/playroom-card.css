@@ -279,3 +279,21 @@
   justify-content: center;
   flex-shrink: 0;
 }
+
+/* An outdated room: a link to Update, or a note when only a recreate helps. */
+.card-outdated {
+  padding: 1px 7px;
+  border: 1px solid color-mix(in srgb, var(--cyan) 45%, transparent);
+  border-radius: 999px;
+  background: none;
+  color: var(--cyan);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+button.card-outdated {
+  cursor: pointer;
+}
+button.card-outdated:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 30%, transparent);
+}

@@ -26,7 +26,26 @@
         [disabled]="refreshing"
         (click)="refreshRooms()"
       />
-      @if (room()) {
+      @if (room(); as current) {
+        @if (describeOutdated(current); as badge) {
+          @if (badge.opensUpdate) {
+            <p-button
+              [label]="badge.label"
+              icon="pi pi-sync"
+              size="small"
+              [title]="badge.hint"
+              (click)="openUpdate()"
+            />
+          } @else {
+            <p-tag
+              [value]="badge.label"
+              severity="warn"
+              [rounded]="true"
+              [title]="badge.hint"
+              styleClass="detail-tag"
+            />
+          }
+        }
         <p-tag
           [value]="statusLabel()"
           [severity]="statusSeverity()"
@@ -215,6 +234,9 @@
             </div>
             <div class="list-row">
               <span>System</span><strong>{{ room()!.system || '—' }}</strong>
+            </div>
+            <div class="list-row">
+              <span>Capabilities</span><strong>{{ renderCapabilities(room()!) || '—' }}</strong>
             </div>
           </div>
 

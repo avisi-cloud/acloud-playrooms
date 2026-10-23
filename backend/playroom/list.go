@@ -31,6 +31,11 @@ type Listing struct {
 	DiskSize   string    `json:"DiskSize"`
 	DiskType   string    `json:"DiskType"`
 	System     string    `json:"System"`
+	// CapabilityProfile is "default" for a room from before capability profiles.
+	CapabilityProfile   string   `json:"CapabilityProfile"`
+	CapabilityAdditions []string `json:"CapabilityAdditions"`
+	// Outdated means an older acloud rendered the room; `playroom update` rolls out the new one.
+	Outdated bool `json:"Outdated"`
 	// Ports is null when only SSH is exposed.
 	Ports []PortForward `json:"Ports"`
 }
