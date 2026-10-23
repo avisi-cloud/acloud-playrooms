@@ -11,6 +11,7 @@ import { SliderModule } from 'primeng/slider';
 import { TagModule } from 'primeng/tag';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { AcloudBinaryCardComponent } from '../../components/acloud-binary/acloud-binary';
+import { TailscaleBinaryCardComponent } from '../../components/tailscale-binary/tailscale-binary';
 import { CliConsoleService } from '../../../../core/services/cli-console';
 import { ImageCatalogService } from '../../../../core/services/image-catalog';
 import { PageLoadingService } from '../../../../core/services/page-loading';
@@ -132,11 +133,8 @@ export function labelSpellsOutKey(key: string): boolean {
 }
 const FIELD_BY_KEY = new Map(DEFAULT_FIELDS.map((field) => [field.key, field]));
 
-/**
- * Sliders move in fine increments and snap on release, because PrimeNG floors
- * the position to the step rather than rounding it.
- */
-const SLIDER_STEP = 0.02;
+// Thumb movement stays separate from choosing the nearest supported setting.
+const SLIDER_STEP = 0.01;
 
 /**
  * Defaults screen: shows built-in, cached, and configured playroom-creation
@@ -155,6 +153,7 @@ const SLIDER_STEP = 0.02;
     TagModule,
     ToggleSwitchModule,
     AcloudBinaryCardComponent,
+    TailscaleBinaryCardComponent,
     OverlayFocusDirective,
   ],
   templateUrl: './defaults.html',
@@ -306,23 +305,50 @@ export class DefaultsPageComponent implements OnInit, OnDestroy {
     return (index / (count - 1)) * 100;
   }
 
-  /**
-   * The label under the handle while dragging: the nearest stop, not the one you
-   * have fully passed.
-   */
+  /** The nearest setting is shown while the thumb moves freely between stops. */
   sliderCurrentLabel(row: DefaultViewRow): string {
     const idx = Math.round(this.sliderValues[row.Key] ?? 0);
     return this.sliderOptions(row.field)[idx] ?? '';
   }
 
-  /** Committed on release: snap to the nearest stop and store its value. */
-  onSliderChange(row: DefaultViewRow, idx: number | number[]): void {
-    const raw = Array.isArray(idx) ? idx[0] : idx;
+  onSliderChange(row: DefaultViewRow, sliderPosition: number | number[]): void {
+    const position = Array.isArray(sliderPosition) ? sliderPosition[0] : sliderPosition;
     const options = this.sliderOptions(row.field);
-    const snapped = Math.min(Math.max(Math.round(raw), 0), Math.max(0, options.length - 1));
-    // Writing the rounded value back settles the handle onto the stop.
-    this.sliderValues[row.Key] = snapped;
-    this.markDirty(row.Key, options[snapped] ?? '');
+    const boundedPosition = Math.min(Math.max(position, 0), this.sliderMax(row.field));
+    this.sliderValues[row.Key] = boundedPosition;
+    this.markDirty(row.Key, options[Math.round(boundedPosition)] ?? '');
+  }
+
+  onSliderEnd(row: DefaultViewRow, sliderPosition: number | number[]): void {
+    this.onSliderChange(row, sliderPosition);
+    this.sliderValues[row.Key] = Math.round(this.sliderValues[row.Key]);
+  }
+
+  onSliderKeydown(row: DefaultViewRow, event: KeyboardEvent): void {
+    const currentStop = Math.round(this.sliderValues[row.Key]);
+    let nextStop: number;
+    switch (event.key) {
+      case 'ArrowRight':
+      case 'ArrowUp':
+      case 'PageUp':
+        nextStop = currentStop + 1;
+        break;
+      case 'ArrowLeft':
+      case 'ArrowDown':
+      case 'PageDown':
+        nextStop = currentStop - 1;
+        break;
+      case 'Home':
+        nextStop = 0;
+        break;
+      case 'End':
+        nextStop = this.sliderMax(row.field);
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+    this.onSliderEnd(row, nextStop);
   }
 
   selectOptions(field: DefaultField): { label: string; value: string }[] {

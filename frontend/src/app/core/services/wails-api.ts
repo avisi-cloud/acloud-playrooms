@@ -8,6 +8,7 @@ import * as playroomModels from '../../../../bindings/github.com/avisi-cloud/acl
 import * as localModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/local/models.js';
 import * as configModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/config/models.js';
 import * as cliModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/cli/models.js';
+import * as toolsModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/tools/models.js';
 
 export type PlayroomCreateInput = playroomModels.CreateInput;
 export type PlayroomUpdateInput = playroomModels.UpdateInput;
@@ -30,6 +31,7 @@ export type ImageEntry = localModels.ImageEntry;
 export type ToolStatus = localModels.ToolStatus;
 export type AcloudCompatibility = localModels.AcloudCompatibility;
 export type AcloudBinaryStatus = cliModels.BinaryStatus;
+export type TailscaleBinaryStatus = toolsModels.TailscaleBinaryStatus;
 
 /** Identifies a command for output streaming and cancellation. */
 export function newOperationId(): string {
@@ -59,6 +61,10 @@ export const wailsApi = {
   clearAcloudBinary: (): Promise<AcloudBinaryStatus> => app.ClearAcloudBinary(),
   /** Native file picker; resolves to '' when cancelled. */
   browseForAcloudBinary: (): Promise<string> => app.BrowseForAcloudBinary(),
+  getTailscaleBinaryStatus: (): Promise<TailscaleBinaryStatus> => app.GetTailscaleBinaryStatus(),
+  setTailscaleBinary: (path: string): Promise<void> => app.SetTailscaleBinary(path),
+  clearTailscaleBinary: (): Promise<void> => app.ClearTailscaleBinary(),
+  browseForTailscaleBinary: (): Promise<string> => app.BrowseForTailscaleBinary(),
 
   // Window
   getOperatingSystem: (): Promise<string> => app.GetOperatingSystem(),

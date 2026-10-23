@@ -76,7 +76,7 @@ describe('PlayroomCardComponent', () => {
 
     expect(fixture.nativeElement.querySelector('button.card-outdated')).toBeNull();
     expect(fixture.nativeElement.querySelector('.card-outdated')?.textContent).toContain(
-      'outdated',
+      'Recreate to update',
     );
   });
 });

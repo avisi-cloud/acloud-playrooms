@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"strings"
 	"time"
+
+	"github.com/avisi-cloud/acloud-playrooms/backend/tools"
 )
 
 // ToolStatus reports whether an external tool a playroom depends on is usable.
@@ -39,6 +41,16 @@ func ToolStatuses() []ToolStatus {
 }
 
 func checkTool(tool toolCheck) ToolStatus {
+	if tool.command == "tailscale" {
+		binary := tools.DescribeTailscaleBinary()
+		state := "missing"
+		if binary.Found {
+			state = "installed"
+		} else if binary.Path != "" || binary.Source == tools.SourceConfigured {
+			state = "unknown"
+		}
+		return ToolStatus{Name: tool.name, Command: tool.command, State: state, Path: binary.Path, Message: binary.Message}
+	}
 	path, err := exec.LookPath(tool.command)
 	if err != nil {
 		return ToolStatus{

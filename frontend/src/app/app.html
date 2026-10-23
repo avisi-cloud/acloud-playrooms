@@ -1,6 +1,15 @@
 <p-toast position="bottom-right" [breakpoints]="{ '720px': { width: '92vw' } }">
   <ng-template let-message pTemplate="message">
-    <div class="toast-body" [class.toast-body--linked]="!!message.data?.operationId">
+    <div
+      class="toast-body"
+      [class.toast-body--linked]="!!message.data?.operationId"
+      [attr.role]="message.data?.operationId ? 'button' : null"
+      [attr.tabindex]="message.data?.operationId ? 0 : null"
+      [attr.aria-description]="message.data?.operationId ? 'Open Activity for this command' : null"
+      (click)="openToastActivity(message.data?.operationId)"
+      (keydown.enter)="openToastActivity(message.data?.operationId)"
+      (keydown.space)="$event.preventDefault(); openToastActivity(message.data?.operationId)"
+    >
       @if (message.summary) {
         <!-- PrimeNG's own classes are kept so severity colouring still applies
              to our replacement template. -->
@@ -12,16 +21,6 @@
            reads as an instruction only when it is set apart from it. -->
       @if (message.data?.remedy) {
         <span class="toast-remedy">{{ message.data.remedy }}</span>
-      }
-      @if (message.data?.operationId) {
-        <button
-          type="button"
-          class="toast-link"
-          [attr.aria-label]="'View command: ' + (message.summary || message.detail)"
-          (click)="openActivity(message.data.operationId)"
-        >
-          View command
-        </button>
       }
     </div>
   </ng-template>
@@ -335,9 +334,6 @@
        data, or a command running. It is the app's only first-load indicator —
        screens render nothing while they wait. -->
   <main id="main-content" tabindex="-1" class="main-panel" [class.is-loading]="shellBusy()">
-    @if (delayedBusy()) {
-      <p class="loading-label" role="status">Working… You can follow progress in Activity.</p>
-    }
     <router-outlet (activate)="focusRoutedContent()" />
   </main>
 </div>

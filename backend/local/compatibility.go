@@ -6,14 +6,8 @@ import (
 	"strings"
 )
 
-// VerifiedAgainstAcloudVersion is the acloud release whose flags and defaults
-// someone last checked the screens against by hand. Raise it when you re-check.
-//
-// 0.36.0 removed `playroom play`, which the GUI no longer offered. 0.37.0 added
-// the claude-code-rootless and claude-code-dind images (dind needs
-// --privileged). The same check wired the older --capabilities, --cap-add,
-// --workspace-namespace and `update --storage` flags.
-const VerifiedAgainstAcloudVersion = "0.37.0"
+// VerifiedAgainstAcloudVersion records the CLI contract last checked against the screens.
+const VerifiedAgainstAcloudVersion = "0.39.0"
 
 // MinimumAcloudVersion is the oldest acloud that has every command these
 // screens run: 0.39.0 added the IP allowlist, NodePort SSH and --via, and

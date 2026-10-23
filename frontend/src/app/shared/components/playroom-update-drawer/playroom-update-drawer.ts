@@ -81,8 +81,11 @@ export class PlayroomUpdateDrawerComponent implements OnChanges, OnDestroy {
   private readonly imageCatalog = inject(ImageCatalogService);
   private readonly session = inject(UiSessionService);
   private readonly state = inject(PlayroomStateService);
-  submitting = false;
   submitFailure = '';
+
+  get submitting(): boolean {
+    return !!this.actions.pendingOperation(this.form.name);
+  }
 
   /** Backend-generated, so the preview is the arguments that will run. */
   readonly previewUpdate = wailsApi.previewUpdatePlayroom;
@@ -103,6 +106,7 @@ export class PlayroomUpdateDrawerComponent implements OnChanges, OnDestroy {
       this.form =
         this.session.recall<UpdateForm>('update:' + this.room.name) ?? blankUpdateForm(this.room);
       this.storageTouched = false;
+      this.submitFailure = '';
       void this.loadImages();
     }
   }
@@ -163,7 +167,6 @@ export class PlayroomUpdateDrawerComponent implements OnChanges, OnDestroy {
     return updateInputFor(this.form);
   }
   onVisibleChange(value: boolean): void {
-    if (this.submitting) return;
     if (!value) this.rememberDraft();
     this.visible = value;
     this.visibleChange.emit(value);
@@ -190,25 +193,17 @@ export class PlayroomUpdateDrawerComponent implements OnChanges, OnDestroy {
     this.submitFailure = '';
   }
 
-  async save(): Promise<void> {
+  save(): void {
     if (this.submitting) return;
     this.storageTouched = true;
     if (this.blockingError()) return;
-    const form = this.form;
-    this.submitting = true;
+    this.submitFailure = '';
     this.rememberDraft();
-    try {
-      if (await this.actions.update(form)) {
-        this.session.forget('update:' + form.name);
-        this.submitting = false;
-        this.visible = false;
-        this.visibleChange.emit(false);
-      } else {
-        this.submitFailure =
-          'Update failed. Your changes are kept; check Activity, then try again.';
-      }
-    } finally {
-      this.submitting = false;
+    if (!this.actions.startUpdate(this.form)) {
+      this.submitFailure = 'This room is already being changed, or the selected playhouse changed.';
+      return;
     }
+    this.visible = false;
+    this.visibleChange.emit(false);
   }
 }

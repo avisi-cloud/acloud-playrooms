@@ -1,5 +1,13 @@
-import { updateInputFor } from './playroom-lifecycle';
+import { TestBed } from '@angular/core/testing';
+import { MessageService } from 'primeng/api';
+import { PlayroomLifecycleService, updateInputFor } from './playroom-lifecycle';
 import { UpdateForm } from '../../shared/models';
+import { blankCreateForm, listingToRoom, readCache } from '../../shared/utils';
+import { PlayroomStateService } from './playroom-state';
+import { UiSessionService } from './ui-session';
+import { ToastService } from './toast';
+import { CliConsoleService } from './cli-console';
+import { wailsApi } from './wails-api';
 
 function form(overrides: Partial<UpdateForm> = {}): UpdateForm {
   return {
@@ -90,4 +98,162 @@ describe('updateInputFor', () => {
     expect(input.ChangeWorkspaceNamespace).toBe(true);
     expect(input.WorkspaceNamespace).toBe(false);
   });
+});
+
+describe('Background room changes', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({ providers: [MessageService] });
+    TestBed.inject(PlayroomStateService).selectPlayhouse('ph');
+    TestBed.inject(PlayroomLifecycleService);
+    TestBed.tick();
+    vi.spyOn(wailsApi, 'listPlayrooms').mockResolvedValue([]);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+  });
+
+  function prepareChange(kind: 'create' | 'update') {
+    const state = TestBed.inject(PlayroomStateService);
+    const actions = TestBed.inject(PlayroomLifecycleService);
+    const session = TestBed.inject(UiSessionService);
+    const submittedForm = kind === 'create' ? blankCreateForm('ph') : form();
+    submittedForm.name = 'demo';
+    const draftKey = kind === 'create' ? 'create' : 'update:demo';
+    session.remember(draftKey, submittedForm);
+    state.setRooms([listingToRoom({ Name: 'demo', Status: 'Ready' }, 'ph')]);
+    let resolveCommand = () => {};
+    let rejectCommand = (_error: Error) => {};
+    const command = new Promise<void>((resolve, reject) => {
+      resolveCommand = resolve;
+      rejectCommand = reject;
+    });
+    const execute = vi
+      .spyOn(wailsApi, kind === 'create' ? 'createPlayroom' : 'updatePlayroom')
+      .mockReturnValue(command);
+    const start = () =>
+      kind === 'create'
+        ? actions.startCreate(submittedForm as ReturnType<typeof blankCreateForm>)
+        : actions.startUpdate(submittedForm as UpdateForm);
+    return {
+      actions,
+      state,
+      session,
+      submittedForm,
+      draftKey,
+      execute,
+      start,
+      resolveCommand,
+      rejectCommand,
+    };
+  }
+
+  describe.each(['create', 'update'] as const)('%s', (kind) => {
+    it('accepts immediately, snapshots input and rejects a duplicate without changing state', async () => {
+      const change = prepareChange(kind);
+      expect(change.start()).toBe(true);
+      const pendingStatus = change.state.rooms()[0].status;
+      change.submittedForm.image = 'edited-after-submission';
+      change.submittedForm.ports.push('8080');
+      expect(change.start()).toBe(false);
+      expect(change.execute).toHaveBeenCalledTimes(1);
+      expect(change.execute.mock.calls[0][1].Image).not.toBe('edited-after-submission');
+      expect(change.execute.mock.calls[0][1].Ports).not.toContain('8080');
+      expect(change.state.rooms()[0].status).toBe(pendingStatus);
+      expect(change.actions.pendingOperation('demo')).not.toBe('');
+      const toast = vi.spyOn(TestBed.inject(ToastService), 'toast');
+      change.submittedForm.name = 'renamed-after-submission';
+      change.resolveCommand();
+      await vi.waitFor(() => expect(change.actions.pendingOperation('demo')).toBe(''));
+      expect(change.session.recall(change.draftKey)).toBeUndefined();
+      expect(toast).toHaveBeenCalledWith(
+        kind === 'create' ? 'Created "demo"' : 'Updated "demo"',
+        'ok',
+        expect.any(String),
+      );
+    });
+
+    it('retains a failed submission and reloads because the CLI may already have changed the room', async () => {
+      const change = prepareChange(kind);
+      const reportFailure = vi.spyOn(TestBed.inject(ToastService), 'failure');
+      change.start();
+      change.rejectCommand(new Error('wait timed out'));
+      await vi.waitFor(() => expect(change.actions.pendingOperation('demo')).toBe(''));
+      expect(change.session.recall(change.draftKey)).toEqual(change.submittedForm);
+      expect(wailsApi.listPlayrooms).toHaveBeenCalledWith({ Playhouse: 'ph' });
+      expect(reportFailure).toHaveBeenCalledWith(
+        expect.stringContaining('demo'),
+        expect.any(Error),
+        expect.any(String),
+      );
+    });
+
+    it('does not erase a newer draft when the command succeeds', async () => {
+      const change = prepareChange(kind);
+      change.start();
+      change.session.remember(change.draftKey, { ...change.submittedForm, image: 'new-draft' });
+      change.resolveCommand();
+      await vi.waitFor(() => expect(change.actions.pendingOperation('demo')).toBe(''));
+      expect(change.session.recall(change.draftKey)).toMatchObject({ image: 'new-draft' });
+    });
+
+    it('reports a refresh failure separately from a successful command', async () => {
+      const change = prepareChange(kind);
+      vi.mocked(wailsApi.listPlayrooms).mockRejectedValue(new Error('read failed'));
+      const reportFailure = vi.spyOn(TestBed.inject(ToastService), 'failure');
+      const toast = vi.spyOn(TestBed.inject(ToastService), 'toast');
+      change.start();
+      change.resolveCommand();
+      await vi.waitFor(() => expect(change.actions.pendingOperation('demo')).toBe(''));
+      expect(toast).toHaveBeenCalledWith(
+        kind === 'create' ? 'Created "demo"' : 'Updated "demo"',
+        'ok',
+        expect.any(String),
+      );
+      expect(reportFailure).toHaveBeenCalledExactlyOnceWith(
+        'Could not refresh the playrooms',
+        expect.any(Error),
+      );
+      expect(change.session.recall(change.draftKey)).toBeUndefined();
+    });
+
+    it('does not refresh, clear drafts or move cached selection after a scope change', async () => {
+      const change = prepareChange(kind);
+      change.start();
+      change.state.noteScopeChange();
+      change.state.selectPlayhouse('another-ph');
+      TestBed.tick();
+      change.session.remember(change.draftKey, { image: 'another-scope' });
+      const cachedSelection = readCache();
+      change.resolveCommand();
+      await vi.waitFor(() => expect(TestBed.inject(CliConsoleService).isRunning()).toBe(false));
+      expect(wailsApi.listPlayrooms).not.toHaveBeenCalled();
+      expect(change.session.recall(change.draftKey)).toEqual({ image: 'another-scope' });
+      expect(readCache()).toEqual(cachedSelection);
+    });
+
+    it('rejects a form opened for another playhouse', () => {
+      const change = prepareChange(kind);
+      change.submittedForm.playhouse = 'another-ph';
+      expect(change.start()).toBe(false);
+      expect(change.execute).not.toHaveBeenCalled();
+      expect(change.state.rooms()[0].status).toBe('ready');
+    });
+  });
+
+  it.each(['start', 'stop', 'delete'] as const)(
+    'does not patch the room for a duplicate %s',
+    async (operation) => {
+      const change = prepareChange('update');
+      change.start();
+      const pendingRoom = change.state.rooms()[0];
+      if (operation === 'delete') await change.actions.delete(pendingRoom, false, '5m');
+      else await change.actions[operation](pendingRoom);
+      expect(change.state.rooms()[0]).toBe(pendingRoom);
+      change.resolveCommand();
+      await vi.waitFor(() => expect(change.actions.pendingOperation('demo')).toBe(''));
+    },
+  );
 });

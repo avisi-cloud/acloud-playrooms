@@ -1,13 +1,14 @@
 import { DestroyRef, Injectable, effect, inject, signal, untracked } from '@angular/core';
-import { Playroom, UpdateForm } from '../../shared/models';
-import { isTransitional, listingToRoom, readCache } from '../../shared/utils';
+import { CreateForm, Playroom, UpdateForm } from '../../shared/models';
+import { isTransitional, listingToRoom, readCache, updateCache } from '../../shared/utils';
 import { CliConsoleService } from './cli-console';
 import { ToastService } from './toast';
 import { PlayroomSelection, PlayroomStateService } from './playroom-state';
-import { PlayroomUpdateInput, wailsApi } from './wails-api';
+import { PlayroomCreateInput, PlayroomUpdateInput, wailsApi } from './wails-api';
+import { UiSessionService } from './ui-session';
 
 /**
- * Playroom start, stop, update and delete, with the optimistic patching and
+ * Playroom create, start, stop, update and delete, with optimistic patching and
  * toasts around them. All of it against the shared PlayroomStateService list.
  */
 @Injectable({ providedIn: 'root' })
@@ -15,6 +16,7 @@ export class PlayroomLifecycleService {
   private readonly state = inject(PlayroomStateService);
   private readonly notify = inject(ToastService);
   private readonly console = inject(CliConsoleService);
+  private readonly session = inject(UiSessionService);
   readonly loadError = signal('');
   private readSequence = 0;
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
@@ -65,14 +67,6 @@ export class PlayroomLifecycleService {
         delete next[key];
         return next;
       });
-  }
-
-  private async reloadAfterOperation(playhouse: string): Promise<void> {
-    try {
-      await this.reload(playhouse);
-    } catch (error) {
-      this.notify.failure('Could not refresh playrooms. Use Refresh to retry.', error);
-    }
   }
 
   /** Optimistically patch a single room in the shared list. */
@@ -132,11 +126,79 @@ export class PlayroomLifecycleService {
     }
   }
 
+  startCreate(form: CreateForm): boolean {
+    const selection = this.state.captureSelection();
+    if (form.playhouse !== selection.playhouse) return false;
+    const finish = this.beginOperation(form.name, form.playhouse, 'Creating');
+    if (!finish) return false;
+    const submittedForm = structuredClone(form);
+    const submittedRevision = this.session.draftRevision('create');
+    void this.create(submittedForm, selection, submittedRevision, finish);
+    return true;
+  }
+
+  private async create(
+    form: CreateForm,
+    selection: PlayroomSelection,
+    submittedRevision: number | undefined,
+    finish: () => void,
+  ): Promise<void> {
+    const optimistic: Playroom = {
+      name: form.name,
+      owner: this.state.user(),
+      status: 'creating',
+      rawStatus: '',
+      host: '',
+      ageMin: 0,
+      disk: form.storage,
+      diskType: form.ephemeral ? 'ephemeral' : 'persistent',
+      image: form.image,
+      cpuReq: form.cpuReq,
+      cpuLim: form.cpuLim,
+      memReq: form.memReq,
+      memLim: form.memLim,
+      ports: form.ports.filter(Boolean).join(', '),
+      system: form.readOnly ? 'read-only' : 'writable',
+      capabilityProfile: form.capabilities,
+      capabilityAdditions: form.capAdd.filter(Boolean),
+      outdated: false,
+      playhouse: form.playhouse,
+      ephemeral: form.ephemeral,
+      env: [],
+      git: [],
+      copy: [],
+    };
+    this.state.setRooms([
+      optimistic,
+      ...this.state.rooms().filter((room) => room.name !== form.name),
+    ]);
+    this.state.setRoomsCount(this.state.rooms().length);
+    let startedOperationId = '';
+    try {
+      await this.console.run(`Creating "${form.name}"`, (operationId) => {
+        startedOperationId = operationId;
+        this.notify.toast(`Creating "${form.name}" ...`, 'busy', operationId);
+        return wailsApi.createPlayroom(operationId, createInputFor(form));
+      });
+      this.notify.toast(`Created "${form.name}"`, 'ok', startedOperationId);
+      if (this.state.isCurrentSelection(selection)) {
+        updateCache({ lastPlayroom: form.name, lastPlayhouse: form.playhouse });
+        this.session.forgetSubmittedDraft('create', submittedRevision);
+      }
+    } catch (error) {
+      this.notify.failure(`Could not create "${form.name}"`, error, startedOperationId);
+    } finally {
+      // A wait can fail after creation, so the CLI list decides what exists.
+      await this.reloadAfterMutation(selection);
+      finish();
+    }
+  }
+
   async stop(room: Playroom): Promise<void> {
     const selection = this.state.captureSelection();
-    this.patch(room.name, { status: 'stopped', host: '', rawStatus: '' }, room.playhouse);
     const finish = this.beginOperation(room.name, room.playhouse, 'Stopping');
     if (!finish) return;
+    this.patch(room.name, { status: 'stopped', host: '', rawStatus: '' }, room.playhouse);
     let startedOperationId = '';
     try {
       await this.console.run(`Stopping "${room.name}"`, (operationId) => {
@@ -154,9 +216,9 @@ export class PlayroomLifecycleService {
 
   async start(room: Playroom): Promise<void> {
     const selection = this.state.captureSelection();
-    this.patch(room.name, { status: 'starting', host: '', rawStatus: '' }, room.playhouse);
     const finish = this.beginOperation(room.name, room.playhouse, 'Starting');
     if (!finish) return;
+    this.patch(room.name, { status: 'starting', host: '', rawStatus: '' }, room.playhouse);
     let startedOperationId = '';
     try {
       await this.console.run(`Starting "${room.name}"`, (operationId) => {
@@ -177,12 +239,24 @@ export class PlayroomLifecycleService {
     }
   }
 
-  async update(form: UpdateForm): Promise<boolean> {
+  startUpdate(form: UpdateForm): boolean {
     const selection = this.state.captureSelection();
-    this.patch(form.name, { status: 'starting' }, form.playhouse);
-    let succeeded = false;
+    if (form.playhouse !== selection.playhouse) return false;
     const finish = this.beginOperation(form.name, form.playhouse, 'Updating');
     if (!finish) return false;
+    const submittedForm = structuredClone(form);
+    const submittedRevision = this.session.draftRevision('update:' + form.name);
+    void this.update(submittedForm, selection, submittedRevision, finish);
+    return true;
+  }
+
+  private async update(
+    form: UpdateForm,
+    selection: PlayroomSelection,
+    submittedRevision: number | undefined,
+    finish: () => void,
+  ): Promise<void> {
+    this.patch(form.name, { status: 'starting' }, form.playhouse);
     let startedOperationId = '';
     try {
       await this.console.run(`Updating "${form.name}"`, (operationId) => {
@@ -191,15 +265,14 @@ export class PlayroomLifecycleService {
         return wailsApi.updatePlayroom(operationId, updateInputFor(form));
       });
       this.notify.toast(`Updated "${form.name}"`, 'ok', startedOperationId);
-      succeeded = true;
+      if (this.state.isCurrentSelection(selection))
+        this.session.forgetSubmittedDraft('update:' + form.name, submittedRevision);
     } catch (error) {
       this.notify.failure(`Could not update "${form.name}"`, error, startedOperationId);
-      return false;
     } finally {
       await this.reloadAfterMutation(selection);
       finish();
     }
-    return succeeded;
   }
 
   /**
@@ -213,9 +286,9 @@ export class PlayroomLifecycleService {
     force = false,
   ): Promise<boolean> {
     const selection = this.state.captureSelection();
-    this.patch(room.name, { status: 'deleting' }, room.playhouse);
     const finish = this.beginOperation(room.name, room.playhouse, 'Deleting');
     if (!finish) return false;
+    this.patch(room.name, { status: 'deleting' }, room.playhouse);
     let startedOperationId = '';
     try {
       await this.console.run(`Deleting "${room.name}"`, (operationId) => {
@@ -240,6 +313,38 @@ export class PlayroomLifecycleService {
       finish();
     }
   }
+}
+
+// The preview and execution share this mapping so they cannot send different flags.
+export function createInputFor(form: CreateForm): Partial<PlayroomCreateInput> {
+  return {
+    Name: form.name,
+    Playhouse: form.playhouse,
+    Image: form.image,
+    Storage: form.storage,
+    CPURequest: form.cpuReq,
+    CPULimit: form.cpuLim,
+    MemoryRequest: form.memReq,
+    MemoryLimit: form.memLim,
+    SSHKey: form.sshKey,
+    EnvVars: form.env.filter(Boolean),
+    GitRepos: form.git.filter(Boolean),
+    Copies: form.copy.filter(Boolean),
+    Ports: form.ports.filter(Boolean),
+    ProxyGroup: form.proxyGroup,
+    Exposure: form.exposure,
+    // NodePort rooms already expose SSH on a NodePort.
+    NodePortSSH: form.nodePortSSH && form.exposure !== 'nodeport',
+    Capabilities: form.capabilities,
+    CapAdd: form.capAdd.filter(Boolean),
+    Ephemeral: form.ephemeral,
+    ReadOnly: form.readOnly,
+    Privileged: form.privileged && form.acknowledgePrivileged,
+    WorkspaceNamespace: form.workspaceNamespace,
+    NoWait: form.noWait,
+    WaitTimeout: form.waitTimeout,
+    ForceInstall: form.forceInstall,
+  };
 }
 
 /**

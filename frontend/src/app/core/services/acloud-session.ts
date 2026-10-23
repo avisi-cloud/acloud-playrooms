@@ -57,7 +57,7 @@ export class AcloudSessionService {
     await Promise.all([
       this.loadAcloudVersion(),
       this.loadCompatibilityWarning(),
-      this.loadToolStatuses(),
+      this.refreshToolStatuses(),
     ]);
   }
 
@@ -108,7 +108,7 @@ export class AcloudSessionService {
     }
   }
 
-  private async loadToolStatuses(): Promise<void> {
+  async refreshToolStatuses(): Promise<void> {
     try {
       this._toolStatuses.set(await wailsApi.getToolStatuses());
     } catch {

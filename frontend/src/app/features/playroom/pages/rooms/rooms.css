@@ -102,16 +102,6 @@
   width: var(--playroom-card-width);
   height: var(--playroom-card-height);
 }
-.room-grid.compact {
-  --playroom-card-height: 184px;
-}
-.room-grid.compact .card-sub,
-.room-grid.compact .card-info-row {
-  display: none;
-}
-.room-grid.compact .card-head {
-  padding-bottom: 12px;
-}
 
 /* Discoverability for the keyboard shortcuts this screen binds. Quiet enough
    to ignore, present enough to learn from. */

@@ -252,6 +252,14 @@
               <span>Playhouse</span><strong>{{ room()!.playhouse }}</strong>
             </div>
             <div class="list-row">
+              <span>Room configuration</span>
+              @if (describeOutdated(room()!); as badge) {
+                <strong [title]="badge.hint">{{ badge.label }}</strong>
+              } @else {
+                <strong>Up to date</strong>
+              }
+            </div>
+            <div class="list-row">
               <span>Age</span><strong>{{ ageLabel() }}</strong>
             </div>
             <div class="list-row">

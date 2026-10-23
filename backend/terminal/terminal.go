@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/avisi-cloud/acloud-playrooms/backend/cli"
+	"github.com/avisi-cloud/acloud-playrooms/backend/tools"
 )
 
 // Emulator names a supported terminal application. Anything unrecognised falls
@@ -38,9 +39,12 @@ func Open(emulator Emulator, arguments []string) error {
 
 // commandLine uses the same configured executable as non-interactive commands.
 func commandLine(arguments []string) (string, error) {
+	if err := tools.ValidateTailscaleCommandEnvironment(); err != nil {
+		return "", err
+	}
 	name, err := resolveExecutable()
 	if err != nil {
 		return "", err
 	}
-	return cli.Quote(append([]string{name}, arguments...)), nil
+	return tools.TerminalCommand(cli.Quote(append([]string{name}, arguments...))), nil
 }

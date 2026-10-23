@@ -118,12 +118,3 @@ html.app-dark {
 .skip-link:focus {
   top: 12px;
 }
-.loading-label {
-  position: absolute;
-  top: 8px;
-  right: 18px;
-  z-index: 2;
-  margin: 0;
-  color: var(--tx-2);
-  font-size: 11px;
-}

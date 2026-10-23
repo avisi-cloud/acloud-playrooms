@@ -1,4 +1,15 @@
-import { DEFAULT_FIELDS, labelForDefaultKey, labelSpellsOutKey } from './defaults';
+import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+import { MessageService } from 'primeng/api';
+import { Slider } from 'primeng/slider';
+import { wailsApi } from '../../../../core/services/wails-api';
+import {
+  DEFAULT_FIELDS,
+  DefaultsPageComponent,
+  labelForDefaultKey,
+  labelSpellsOutKey,
+} from './defaults';
 
 const RESOURCE_KEYS = ['cpu-request', 'cpu-limit', 'memory-request', 'memory-limit'];
 
@@ -63,5 +74,157 @@ describe('Defaults field registry', () => {
   it('keeps the key itself as the label of a key it does not know', () => {
     expect(labelForDefaultKey('some-new-key')).toBe('some-new-key');
     expect(labelForDefaultKey('toString')).toBe('toString');
+  });
+});
+
+describe('Defaults sliders', () => {
+  beforeEach(async () => {
+    vi.spyOn(wailsApi, 'getTailscaleBinaryStatus').mockResolvedValue({
+      Found: true,
+      Path: '/mock/tailscale',
+      ConfiguredPath: '',
+      Source: 'path',
+      Version: '1.104.2',
+      Message: '',
+    });
+    vi.spyOn(wailsApi, 'getToolStatuses').mockResolvedValue([]);
+    vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([
+      { Key: 'storage', Value: '1Gi', Builtin: '1Gi', Source: 'built-in' },
+    ]);
+    vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+    vi.spyOn(wailsApi, 'getAcloudBinaryStatus').mockResolvedValue({
+      Found: true,
+      Path: '/mock/acloud',
+      Version: '0.39.0',
+      Source: 'path',
+      Message: '',
+      ConfiguredPath: '',
+      EnvironmentOverride: false,
+    });
+    await TestBed.configureTestingModule({
+      imports: [DefaultsPageComponent],
+      providers: [MessageService, provideRouter([])],
+    }).compileComponents();
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  function sliderFor(key = 'storage') {
+    const fixture = TestBed.createComponent(DefaultsPageComponent);
+    const component = fixture.componentInstance;
+    const field = DEFAULT_FIELDS.find((candidate) => candidate.key === key)!;
+    const firstOption = (field.options as string[])[0];
+    component.rows.set([
+      {
+        Key: key,
+        Value: firstOption,
+        Builtin: firstOption,
+        Source: 'built-in',
+        draft: firstOption,
+        dirty: false,
+      },
+    ]);
+    component.sliderValues[key] = 0;
+    const row = component.groups()[0].rows[0];
+    return { fixture, component, row };
+  }
+
+  it.each(DEFAULT_FIELDS.filter((field) => field.kind === 'slider').map((field) => field.key))(
+    'moves %s continuously while choosing the nearest supported option',
+    (key) => {
+      const { component, row } = sliderFor(key);
+      const options = component.sliderOptions(row.field);
+      for (let index = 0; index < options.length - 1; index++) {
+        for (const fraction of [0.1, 0.49, 0.5, 0.51, 0.9]) {
+          const position = index + fraction;
+          component.onSliderChange(row, position);
+          expect(component.sliderValues[key]).toBe(position);
+          expect(component.rows()[0].draft).toBe(options[index + (fraction < 0.5 ? 0 : 1)]);
+          expect(component.sliderCurrentLabel(row)).toBe(component.rows()[0].draft);
+        }
+      }
+    },
+  );
+
+  it('crosses back below the midpoint without leaving an unsaved change', () => {
+    const { component, row } = sliderFor();
+    component.onSliderChange(row, 0.6);
+    expect(component.rows()[0]).toMatchObject({ draft: '2Gi', dirty: true });
+    component.onSliderChange(row, 0.4);
+    expect(component.sliderValues['storage']).toBe(0.4);
+    expect(component.rows()[0]).toMatchObject({ draft: '1Gi', dirty: false });
+  });
+
+  it.each([
+    [0.49, 0, '1Gi'],
+    [0.5, 1, '2Gi'],
+    [0.9, 1, '2Gi'],
+  ] as const)(
+    'settles at the nearest stop when released at %s',
+    (position, stop, selectedOption) => {
+      const { component, row } = sliderFor();
+      component.onSliderEnd(row, position);
+      expect(component.sliderValues['storage']).toBe(stop);
+      expect(component.rows()[0].draft).toBe(selectedOption);
+    },
+  );
+
+  it('keeps the thumb and selected option inside the track', () => {
+    const { component, row } = sliderFor();
+    component.onSliderChange(row, -0.5);
+    expect(component.sliderValues['storage']).toBe(0);
+    expect(component.rows()[0].draft).toBe('1Gi');
+    component.onSliderChange(row, [7]);
+    expect(component.sliderValues['storage']).toBe(6);
+    expect(component.rows()[0].draft).toBe('100Gi');
+  });
+
+  it('wires fine movement separately from releasing the rendered slider', async () => {
+    const fixture = TestBed.createComponent(DefaultsPageComponent);
+    await fixture.whenStable();
+    const component = fixture.componentInstance;
+    const slider = fixture.debugElement.query(By.directive(Slider)).componentInstance as Slider;
+    expect(slider.step).toBe(0.01);
+    slider.onModelChange(0.65);
+    fixture.detectChanges();
+    expect(component.sliderValues['storage']).toBe(0.65);
+    expect(component.rows()[0].draft).toBe('2Gi');
+    slider.onSlideEnd.emit({ value: 0.65, originalEvent: new Event('mouseup') });
+    fixture.detectChanges();
+    expect(component.sliderValues['storage']).toBe(1);
+  });
+
+  it('keeps keyboard navigation at whole settings despite fine pointer movement', async () => {
+    const fixture = TestBed.createComponent(DefaultsPageComponent);
+    await fixture.whenStable();
+    const component = fixture.componentInstance;
+    const handle = fixture.nativeElement.querySelector('[role="slider"]') as HTMLElement;
+    for (const [key, expectedStop] of [
+      ['ArrowRight', 1],
+      ['ArrowUp', 2],
+      ['ArrowDown', 1],
+      ['ArrowLeft', 0],
+      ['PageUp', 1],
+      ['PageDown', 0],
+      ['End', 6],
+      ['ArrowRight', 6],
+      ['Home', 0],
+      ['ArrowLeft', 0],
+    ] as const) {
+      handle.dispatchEvent(
+        new KeyboardEvent('keydown', { key, code: key, bubbles: true, cancelable: true }),
+      );
+      fixture.detectChanges();
+      await fixture.whenStable();
+      expect(component.sliderValues['storage'], key).toBe(expectedStop);
+    }
+    const unrelatedKey = new KeyboardEvent('keydown', {
+      key: 'Tab',
+      code: 'Tab',
+      bubbles: true,
+      cancelable: true,
+    });
+    handle.dispatchEvent(unrelatedKey);
+    expect(unrelatedKey.defaultPrevented).toBe(false);
   });
 });

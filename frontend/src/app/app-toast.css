@@ -15,6 +15,11 @@
 .toast-body--linked {
   cursor: pointer;
 }
+.toast-body--linked:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
 .toast-summary {
   font-size: 12px;
   font-weight: 600;
@@ -44,15 +49,4 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
   overflow-wrap: anywhere;
-}
-.toast-link {
-  margin-top: 2px;
-  font-size: 9.5px;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  opacity: 0.75;
-}
-.toast-body--linked:hover .toast-link {
-  opacity: 1;
-  text-decoration: underline;
 }

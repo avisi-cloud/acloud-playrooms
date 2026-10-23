@@ -121,6 +121,12 @@ The minimum is a separate notice from "checked against". That one says a flag
 may be missing from the screens; this one says some commands will fail. Like
 the other, it is quiet for an unreadable version and never blocks a command.
 
+`VerifiedAgainstAcloudVersion` is also 0.39.0. The command paths, emitted flags
+and exposed defaults were checked against the installed 0.39.0 CLI help; the
+0.39 JSON fixtures, argument tests and mocked UI checks cover the screen
+contract. This is not a live-cluster integration check. A regression test keeps
+the minimum supported release from being newer than the verified release.
+
 ### A reload serves `index.html` for Angular routes — 2026-10-22
 
 ⌘+R on `/rooms` turned the window white: Wails answers only `/` with

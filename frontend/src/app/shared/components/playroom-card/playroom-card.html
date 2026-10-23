@@ -3,7 +3,6 @@
      text link would draw. -->
 <article
   class="playroom-card"
-  [class.compact]="compact"
   [attr.aria-busy]="!!pendingOperation"
   [ngClass]="statusMap[room.status]?.tone"
   role="link"

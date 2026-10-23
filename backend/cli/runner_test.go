@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/avisi-cloud/acloud-playrooms/backend/tools"
 )
 
 // The runner re-executes the acloud binary, so these tests re-execute the test
@@ -34,6 +37,9 @@ func runFakeCommand(script string) {
 	case "json":
 		fmt.Fprint(os.Stdout, `[{"Name":"demo"}]`)
 		os.Exit(0)
+	case "tool-path":
+		fmt.Fprint(os.Stdout, os.Getenv("PATH"))
+		os.Exit(0)
 	case "fail":
 		fmt.Fprintln(os.Stderr, "resolving playhouse")
 		fmt.Fprintln(os.Stderr, `Error: playhouse "nope" not found`)
@@ -50,6 +56,27 @@ func runFakeCommand(script string) {
 	}
 	fmt.Fprintf(os.Stderr, "unknown fake script %q\n", script)
 	os.Exit(99)
+}
+
+func TestRunnerPassesTheSavedTailscalePathToAcloud(t *testing.T) {
+	homeDirectory := t.TempDir()
+	t.Setenv("HOME", homeDirectory)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(homeDirectory, ".config"))
+	binaryPath := filepath.Join(t.TempDir(), "chosen-tailscale")
+	if err := os.WriteFile(binaryPath, []byte("#!/bin/sh\nprintf '1.104.2\\n'\n"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := tools.SaveTailscaleBinary(binaryPath); err != nil {
+		t.Fatal(err)
+	}
+	runner := fakeRunner(t, "tool-path")
+	result, err := runner.Run(context.Background(), []string{"version"}, Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(result.Stdout, tools.TailscaleCommandDirectory()+string(os.PathListSeparator)) {
+		t.Fatalf("missing Tailscale command directory in %q", result.Stdout)
+	}
 }
 
 // fakeRunner returns a Runner that re-executes this test binary running the

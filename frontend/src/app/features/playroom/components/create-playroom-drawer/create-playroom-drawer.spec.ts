@@ -6,6 +6,8 @@ import { MessageService } from 'primeng/api';
 import { PlayroomDefaultsService } from '../../../../core/services/playroom-defaults';
 import { PlayroomLifecycleService } from '../../../../core/services/playroom-lifecycle';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
+import { UiSessionService } from '../../../../core/services/ui-session';
+import { ToastService } from '../../../../core/services/toast';
 import { wailsApi } from '../../../../core/services/wails-api';
 import { blankCreateForm, readCache } from '../../../../shared/utils';
 import { CreatePlayroomDrawerComponent } from './create-playroom-drawer';
@@ -322,5 +324,63 @@ describe('Create playroom drawer', () => {
       WaitTimeout: '30m',
       ForceInstall: false,
     });
+  });
+
+  it('closes before creation finishes, survives destruction and keeps navigation where it is', async () => {
+    TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-demo');
+    const actions = TestBed.inject(PlayroomLifecycleService);
+    TestBed.tick();
+    vi.spyOn(actions, 'reload').mockResolvedValue([]);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate');
+    const toast = vi.spyOn(TestBed.inject(ToastService), 'toast');
+    let finishCommand = () => {};
+    vi.spyOn(wailsApi, 'createPlayroom').mockReturnValue(
+      new Promise<void>((resolve) => {
+        finishCommand = resolve;
+      }),
+    );
+    const fixture = TestBed.createComponent(CreatePlayroomDrawerComponent);
+    const component = fixture.componentInstance;
+    component.form = { ...blankCreateForm('playhouse-demo'), name: 'demo' };
+    component.visible = true;
+    const visibleChange = vi.fn();
+    component.visibleChange.subscribe(visibleChange);
+
+    component.create();
+
+    expect(component.visible).toBe(false);
+    expect(visibleChange).toHaveBeenCalledWith(false);
+    expect(actions.pendingOperation('demo')).toBe('Creating');
+    expect(TestBed.inject(UiSessionService).recall('create')).toMatchObject({
+      form: { name: 'demo' },
+    });
+    fixture.destroy();
+    finishCommand();
+    await vi.waitFor(() => expect(actions.pendingOperation('demo')).toBe(''));
+    expect(toast).toHaveBeenCalledWith('Created "demo"', 'ok', expect.any(String));
+    expect(TestBed.inject(UiSessionService).recall('create')).toBeUndefined();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it('allows dismissal while the same room is still being created', async () => {
+    TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-demo');
+    const actions = TestBed.inject(PlayroomLifecycleService);
+    TestBed.tick();
+    vi.spyOn(actions, 'reload').mockResolvedValue([]);
+    let finishCommand = () => {};
+    vi.spyOn(wailsApi, 'createPlayroom').mockReturnValue(
+      new Promise<void>((resolve) => {
+        finishCommand = resolve;
+      }),
+    );
+    const component = drawer();
+    component.form = { ...blankCreateForm('playhouse-demo'), name: 'demo' };
+    actions.startCreate(component.form);
+    component.visible = true;
+    expect(component.submitting).toBe(true);
+    component.close();
+    expect(component.visible).toBe(false);
+    finishCommand();
+    await vi.waitFor(() => expect(actions.pendingOperation('demo')).toBe(''));
   });
 });
