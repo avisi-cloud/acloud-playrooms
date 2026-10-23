@@ -36,7 +36,13 @@
 
     <!-- Original Avisi Cloud robot from the website's Logo.tsx. Kept inline
          so its eyes and float share the app's motion preferences. -->
-    <div class="sidebar-mascot" [class.is-paused]="mascotMotionPaused()" aria-hidden="true">
+    <div
+      class="sidebar-mascot"
+      [class.is-paused]="mascotMotionPaused()"
+      [class.is-celebrating]="mascotCelebrating()"
+      (animationend)="mascotCelebrating.set(false)"
+      aria-hidden="true"
+    >
       <svg class="sidebar-mascot-robot" viewBox="0 0 100 100" fill="none" focusable="false">
         <defs>
           <linearGradient id="sidebar-helmet-gradient" x1="0" y1="0" x2="0" y2="1">
@@ -58,9 +64,11 @@
           d="M75 45C75 35 65 30 50 30C35 30 25 35 25 45V55C25 65 35 70 50 70C65 70 75 65 75 55V45Z"
           fill="url(#sidebar-visor-gradient)"
         />
-        <g class="sidebar-mascot-eyes" fill="white">
-          <rect x="35" y="40" width="8" height="20" rx="4" />
-          <rect x="57" y="40" width="8" height="20" rx="4" />
+        <g class="sidebar-mascot-gaze">
+          <g class="sidebar-mascot-eyes" fill="white">
+            <rect x="35" y="40" width="8" height="20" rx="4" />
+            <rect x="57" y="40" width="8" height="20" rx="4" />
+          </g>
         </g>
         <path
           d="M45 10H55C58 10 60 12 60 15V15C60 18 58 20 55 20H45C42 20 40 18 40 15V15C40 12 42 10 45 10Z"

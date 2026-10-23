@@ -10,7 +10,8 @@ import {
   untracked,
 } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { MenuItem } from 'primeng/api';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MenuItem, MessageService } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
 import { PopoverModule } from 'primeng/popover';
 import { ToastModule } from 'primeng/toast';
@@ -69,6 +70,7 @@ export class App implements OnInit {
   readonly scope = inject(ScopeService);
   readonly releaseStage = RELEASE_STAGE;
   readonly mascotMotionPaused = signal(document.hidden);
+  readonly mascotCelebrating = signal(false);
   private readonly setup = inject(SetupService);
   private readonly windowChrome = inject(WindowChromeService);
   private readonly router = inject(Router);
@@ -103,6 +105,16 @@ export class App implements OnInit {
   );
 
   constructor() {
+    inject(MessageService)
+      .messageObserver.pipe(takeUntilDestroyed())
+      .subscribe((message) => {
+        const messages = Array.isArray(message) ? message : [message];
+        if (
+          !document.hidden &&
+          messages.some((entry) => entry.severity === 'success' && entry.data?.operationId)
+        )
+          this.mascotCelebrating.set(true);
+      });
     inject(DestroyRef).onDestroy(() => {
       if (this.busyRelease) clearTimeout(this.busyRelease);
     });

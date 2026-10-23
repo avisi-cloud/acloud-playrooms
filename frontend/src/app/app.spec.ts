@@ -72,6 +72,46 @@ describe('App', () => {
     }
   });
 
+  describe('robot success reaction', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('celebrates successful commands, then resets so the next one can celebrate', async () => {
+      vi.spyOn(document, 'hidden', 'get').mockReturnValue(false);
+      const fixture = TestBed.createComponent(App);
+      await fixture.whenStable();
+      const mascot = (fixture.nativeElement as HTMLElement).querySelector('.sidebar-mascot')!;
+      const notify = TestBed.inject(ToastService);
+
+      notify.toast('Starting', 'busy', 'operation');
+      notify.toast('Failed', 'bad', 'operation');
+      notify.toast('Copied', 'ok');
+      fixture.detectChanges();
+      expect(mascot.classList.contains('is-celebrating')).toBe(false);
+
+      notify.toast('Created', 'ok', 'operation');
+      fixture.detectChanges();
+      expect(mascot.classList.contains('is-celebrating')).toBe(true);
+
+      mascot.dispatchEvent(new Event('animationend'));
+      fixture.detectChanges();
+      expect(mascot.classList.contains('is-celebrating')).toBe(false);
+
+      notify.toast('Started', 'ok', 'next-operation');
+      fixture.detectChanges();
+      expect(mascot.classList.contains('is-celebrating')).toBe(true);
+    });
+
+    it('does not queue a celebration while the document is hidden', async () => {
+      vi.spyOn(document, 'hidden', 'get').mockReturnValue(true);
+      const fixture = TestBed.createComponent(App);
+      await fixture.whenStable();
+
+      TestBed.inject(ToastService).toast('Created', 'ok', 'operation');
+
+      expect(fixture.componentInstance.mascotCelebrating()).toBe(false);
+    });
+  });
+
   // A fresh install is sent to setup by the launch route; this is the other case.
   it('reopens setup at the step that broke once the installation has been read', async () => {
     updateCache({ setupCompleted: true });

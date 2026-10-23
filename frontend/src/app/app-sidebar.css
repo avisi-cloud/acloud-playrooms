@@ -70,13 +70,22 @@
   animation: sidebar-robot-blink 5s ease-in-out infinite;
 }
 
+.sidebar-mascot-gaze {
+  animation: sidebar-robot-glance 12s ease-in-out infinite;
+}
+
+/* The parent bounces independently of the SVG's continuous float. */
+.sidebar-mascot.is-celebrating {
+  animation: sidebar-robot-success 650ms ease-in-out;
+}
+
 @keyframes sidebar-robot-float {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(0) rotate(-2deg);
   }
   50% {
-    transform: translateY(-6px);
+    transform: translateY(-6px) rotate(2deg);
   }
 }
 
@@ -91,13 +100,45 @@
   }
 }
 
+@keyframes sidebar-robot-glance {
+  0%,
+  65%,
+  100% {
+    transform: translateX(0);
+  }
+  70%,
+  78% {
+    transform: translateX(3px);
+  }
+  85%,
+  93% {
+    transform: translateX(-3px);
+  }
+}
+
+@keyframes sidebar-robot-success {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(-10px);
+  }
+  65% {
+    transform: translateY(2px);
+  }
+}
+
+.sidebar-mascot.is-paused,
 .sidebar-mascot.is-paused .sidebar-mascot-robot,
+.sidebar-mascot.is-paused .sidebar-mascot-gaze,
 .sidebar-mascot.is-paused .sidebar-mascot-eyes {
   animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .sidebar-mascot-robot,
+  .sidebar-mascot-gaze,
   .sidebar-mascot-eyes {
     animation: none;
   }
