@@ -181,7 +181,23 @@
                               [severity]="statusSeverity(playhouse.Status)"
                               styleClass="ph-tag"
                             />
-                            @if (describeLayout(playhouse.LayoutStatus); as layout) {
+                            @if (jobs.canResume(playhouse.Slug)) {
+                              @if (!jobs.isConverging(playhouse.Slug)) {
+                                <button
+                                  type="button"
+                                  class="layout-badge-button"
+                                  title="The create stopped after the cluster was made. Resume runs acloud playhouse update to finish it."
+                                  [attr.aria-label]="'Resume the setup of ' + playhouse.Slug"
+                                  (click)="resumeSetup(playhouse.Slug, $event)"
+                                >
+                                  <p-tag
+                                    value="setup incomplete · resume"
+                                    severity="warn"
+                                    styleClass="ph-tag"
+                                  />
+                                </button>
+                              }
+                            } @else if (describeLayout(playhouse.LayoutStatus); as layout) {
                               @if (layout.opensUpdate && !jobs.isConverging(playhouse.Slug)) {
                                 <button
                                   type="button"

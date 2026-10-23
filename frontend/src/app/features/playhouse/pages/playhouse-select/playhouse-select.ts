@@ -200,6 +200,11 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
     this.jobs.update(event.slug, event.input);
   }
 
+  resumeSetup(slug: string, event: MouseEvent): void {
+    event.stopPropagation();
+    this.jobs.resume(slug);
+  }
+
   // ── Delete ─────────────────────────────────────────────────────────────────
 
   askDelete(playhouse: PlayhouseEntry, event: MouseEvent): void {
