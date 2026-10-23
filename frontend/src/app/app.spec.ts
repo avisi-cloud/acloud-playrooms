@@ -56,6 +56,9 @@ describe('App', () => {
       );
       TestBed.tick();
       expect(app.shellBusy()).toBe(true);
+      vi.advanceTimersByTime(1500);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.loading-label')).toBeNull();
 
       finish();
       await command;
@@ -70,6 +73,51 @@ describe('App', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  describe('notification banners', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('opens Activity from the banner with Enter or Space and keeps dismissal separate', async () => {
+      const fixture = TestBed.createComponent(App);
+      await fixture.whenStable();
+      const openActivity = vi.spyOn(fixture.componentInstance.console, 'open');
+      TestBed.inject(ToastService).failure(
+        'Could not update demo',
+        'Try again; check the image',
+        'operation',
+      );
+      fixture.detectChanges();
+      const banner = document.querySelector<HTMLElement>('.toast-body--linked')!;
+      expect(banner.textContent).not.toContain('View command');
+      expect(banner.textContent).toContain('Check the image');
+      expect(banner.getAttribute('role')).toBe('button');
+      expect(banner.hasAttribute('aria-label')).toBe(false);
+      expect(banner.getAttribute('aria-description')).toBe('Open Activity for this command');
+      expect(banner.tabIndex).toBe(0);
+      banner.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      banner.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+      expect(openActivity).toHaveBeenCalledTimes(2);
+      expect(openActivity).toHaveBeenLastCalledWith('operation');
+      const dismiss = document.querySelector<HTMLButtonElement>('.p-toast-close-button')!;
+      expect(dismiss).not.toBeNull();
+      dismiss.click();
+      fixture.detectChanges();
+      expect(openActivity).toHaveBeenCalledTimes(2);
+      expect(document.querySelector('.toast-body--linked')).toBeNull();
+    });
+
+    it('does not make an ordinary notification an Activity link', async () => {
+      const fixture = TestBed.createComponent(App);
+      await fixture.whenStable();
+      const openActivity = vi.spyOn(fixture.componentInstance.console, 'open');
+      TestBed.inject(ToastService).toast('Copied');
+      fixture.detectChanges();
+      const banner = document.querySelector<HTMLElement>('.toast-body')!;
+      expect(banner.hasAttribute('tabindex')).toBe(false);
+      banner.click();
+      expect(openActivity).not.toHaveBeenCalled();
+    });
   });
 
   describe('robot success reaction', () => {

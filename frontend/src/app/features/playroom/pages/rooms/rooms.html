@@ -79,14 +79,6 @@
       <option value="age">Newest first</option>
       <option value="status">Status</option>
     </select>
-    <button
-      class="page-back-btn"
-      type="button"
-      [attr.aria-pressed]="compact()"
-      (click)="compact.set(!compact())"
-    >
-      Compact
-    </button>
     <!-- The shortcuts exist; without this nothing tells you so. -->
     <span class="shortcut-hint" title="Keyboard shortcuts on this screen">
       <kbd>c</kbd> create <span class="shortcut-sep">·</span> <kbd>/</kbd> search
@@ -142,13 +134,12 @@
         }
       </div>
     } @else if (loaded()) {
-      <div class="room-grid" [class.compact]="compact()">
+      <div class="room-grid">
         @for (room of filteredRooms(); track room.name) {
           <app-playroom-card
             [room]="room"
             [currentUser]="state.user()"
             [pendingOperation]="actions.pendingOperation(room.name)"
-            [compact]="compact()"
             (openRoom)="openRoom($event)"
             (connectRoom)="openConnect($event, 'connect')"
             (openInEditor)="openConnect($event, 'open')"

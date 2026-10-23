@@ -14,13 +14,13 @@ export function describeOutdated(
   if (!room.outdated) return null;
   if (room.ephemeral) {
     return {
-      label: 'outdated',
+      label: 'Recreate to update',
       hint: 'Missing the latest security hardening. A disposable playroom cannot be updated: delete it and create a new one.',
       opensUpdate: false,
     };
   }
   return {
-    label: 'update available',
+    label: 'Update available',
     hint: 'Missing the latest security hardening. Update applies it; the playroom restarts.',
     opensUpdate: true,
   };

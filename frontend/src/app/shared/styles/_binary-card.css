@@ -5,8 +5,7 @@
   margin-bottom: 1.25rem;
 }
 
-/* A missing binary is the reason the rest of the screen is empty, so the card
-   carries the alarm rather than relying on a toast that has since gone. */
+/* Keep a missing command visible while its path is corrected. */
 .binary-card.is-broken {
   border-color: color-mix(in srgb, var(--bad) 45%, var(--border-2));
   background: color-mix(in srgb, var(--bad) 4%, var(--surf-2));

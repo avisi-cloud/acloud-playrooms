@@ -30,6 +30,7 @@ backend/
   config/       context and organisation switching
   auth/         acloud auth login (hand-off) and logout
   terminal/     hand-off to the user's terminal for the interactive commands
+  tools/        Tailscale discovery, saved path, and child-process PATH
   local/        the documented exceptions: direct reads with no CLI equivalent
 ```
 
@@ -324,6 +325,10 @@ and it lives in one package so the exceptions are easy to count.
 | `tools.go`         | a `$PATH` probe for tailscale and ssh                                                             |
 | `theme.go`         | the remembered theme — the one write                                                              |
 | `compatibility.go` | the acloud release these screens need and were verified against, and how the running one compares |
+
+Tailscale discovery and its saved GUI-only path live in `backend/tools`. The
+runner and terminal hand-off use its PATH setup, and `local.ToolStatuses` uses
+the same resolver so the sidebar reports the executable commands will use.
 
 The config helpers read the CLI's YAML file on each lookup; they do not import
 private config packages or retain a startup snapshot. The version helper runs

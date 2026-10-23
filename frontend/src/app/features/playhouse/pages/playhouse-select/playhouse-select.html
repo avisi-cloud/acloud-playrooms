@@ -1,3 +1,40 @@
+<ng-template #playhouseVersions let-playhouse>
+  <div class="version-summary">
+    <div class="version-layout-line">
+      <span class="layout-version"
+        >Layout
+        {{
+          (playhouse.LayoutVersion ?? null) === null ? 'unknown' : 'v' + playhouse.LayoutVersion
+        }}</span
+      >
+      @if (jobs.isConverging(playhouse.Slug)) {
+        <span class="layout-updating" role="status">Updating…</span>
+      } @else {
+        @let layout = describeLayout(playhouse.LayoutStatus);
+        @if (layout.opensUpdate && !jobs.canResume(playhouse.Slug) && !isDeleting(playhouse.Slug)) {
+          <button
+            type="button"
+            class="layout-badge-button"
+            [title]="layout.hint"
+            [attr.aria-label]="'Bring ' + playhouse.Slug + ' up to date'"
+            (click)="askUpdate(playhouse, $event)"
+          >
+            <p-tag [value]="layout.label" [severity]="layout.severity" styleClass="ph-tag" />
+          </button>
+        } @else {
+          <p-tag
+            [value]="layout.label"
+            [severity]="layout.severity"
+            [title]="layout.hint"
+            styleClass="ph-tag"
+          />
+        }
+      }
+    </div>
+    <span class="kubernetes-version">Kubernetes {{ playhouse.Version || 'unknown' }}</span>
+  </div>
+</ng-template>
+
 <div class="page-shell select-view">
   <header class="page-header">
     <div>
@@ -87,7 +124,7 @@
                     <th>Playhouse</th>
                     <th>Status</th>
                     <th>Region</th>
-                    <th class="col-version">Version</th>
+                    <th class="col-version">Versions</th>
                     <th class="col-identity">Identity</th>
                   </tr>
                 </thead>
@@ -158,13 +195,15 @@
                         <div class="slug-cell">
                           <div class="slug-text">
                             <span class="slug-main">{{ playhouse.Slug }}</span>
-                            <!-- Shown only once the Identity and Version columns
-                                 are dropped, so the data is folded rather than
-                                 lost. -->
-                            <span class="slug-meta"
-                              >{{ playhouse.Version || '-' }} ·
-                              {{ playhouse.Identity || '-' }}</span
-                            >
+                            <div class="slug-meta">
+                              <ng-container
+                                *ngTemplateOutlet="
+                                  playhouseVersions;
+                                  context: { $implicit: playhouse }
+                                "
+                              />
+                              <span class="muted">{{ playhouse.Identity || '-' }}</span>
+                            </div>
                           </div>
                           @if (playhouse.Slug === state.playhouse()) {
                             <span class="selected-pill">selected</span>
@@ -197,35 +236,16 @@
                                   />
                                 </button>
                               }
-                            } @else if (describeLayout(playhouse.LayoutStatus); as layout) {
-                              @if (layout.opensUpdate && !jobs.isConverging(playhouse.Slug)) {
-                                <button
-                                  type="button"
-                                  class="layout-badge-button"
-                                  [title]="layout.hint"
-                                  [attr.aria-label]="'Bring ' + playhouse.Slug + ' up to date'"
-                                  (click)="askUpdate(playhouse, $event)"
-                                >
-                                  <p-tag
-                                    [value]="layout.label"
-                                    [severity]="layout.severity"
-                                    styleClass="ph-tag"
-                                  />
-                                </button>
-                              } @else if (!layout.opensUpdate) {
-                                <p-tag
-                                  [value]="layout.label"
-                                  [severity]="layout.severity"
-                                  styleClass="ph-tag"
-                                  [title]="layout.hint"
-                                />
-                              }
                             }
                           </div>
                         }
                       </td>
                       <td>{{ playhouse.Region || '-' }}</td>
-                      <td class="col-version">{{ playhouse.Version || '-' }}</td>
+                      <td class="col-version">
+                        <ng-container
+                          *ngTemplateOutlet="playhouseVersions; context: { $implicit: playhouse }"
+                        />
+                      </td>
                       <td class="col-identity">
                         <span class="mono muted">{{ playhouse.Identity || '-' }}</span>
                       </td>
@@ -266,14 +286,9 @@
                   <span
                     ><i class="pi pi-map-marker"></i>{{ current.Region || 'region unknown' }}</span
                   >
-                  <span><i class="pi pi-tag"></i>{{ current.Version || 'version unknown' }}</span>
-                  <span
-                    ><i class="pi pi-sitemap"></i>layout
-                    {{ current.LayoutVersion ?? 'not stamped' }}
-                    @if (describeLayout(current.LayoutStatus); as layout) {
-                      · {{ layout.label }}
-                    }
-                  </span>
+                  <ng-container
+                    *ngTemplateOutlet="playhouseVersions; context: { $implicit: current }"
+                  />
                 </div>
                 <p-button
                   label="Open playrooms"

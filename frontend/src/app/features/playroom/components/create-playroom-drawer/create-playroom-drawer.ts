@@ -10,15 +10,15 @@ import {
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { CliConsoleService } from '../../../../core/services/cli-console';
-import { ToastService } from '../../../../core/services/toast';
-import { PlayroomLifecycleService } from '../../../../core/services/playroom-lifecycle';
+import {
+  createInputFor,
+  PlayroomLifecycleService,
+} from '../../../../core/services/playroom-lifecycle';
 import { PlayroomDefaultsService } from '../../../../core/services/playroom-defaults';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { ImageCatalogService } from '../../../../core/services/image-catalog';
@@ -41,7 +41,6 @@ import {
   CreateForm,
   CreatePlayroomMode,
   ImageEntry,
-  Playroom,
   PlayroomSize,
 } from '../../../../shared/models';
 import {
@@ -68,48 +67,7 @@ const INPUT_FIELDS_SHOWN_IN_EASY_MODE: (keyof PlayroomCreateInput)[] = [
   'MemoryLimit',
 ];
 
-/**
- * The single description of a create form as a backend input. The preview and
- * the create call both use it, so they cannot describe different commands.
- */
-function createInputFor(form: CreateForm): Partial<PlayroomCreateInput> {
-  return {
-    Name: form.name,
-    Playhouse: form.playhouse,
-    Image: form.image,
-    Storage: form.storage,
-    CPURequest: form.cpuReq,
-    CPULimit: form.cpuLim,
-    MemoryRequest: form.memReq,
-    MemoryLimit: form.memLim,
-    SSHKey: form.sshKey,
-    EnvVars: form.env.filter(Boolean),
-    GitRepos: form.git.filter(Boolean),
-    Copies: form.copy.filter(Boolean),
-    Ports: form.ports.filter(Boolean),
-    ProxyGroup: form.proxyGroup,
-    Exposure: form.exposure,
-    // acloud refuses it on a nodeport room, whose SSH already is a NodePort.
-    NodePortSSH: form.nodePortSSH && form.exposure !== 'nodeport',
-    Capabilities: form.capabilities,
-    CapAdd: form.capAdd.filter(Boolean),
-    Ephemeral: form.ephemeral,
-    ReadOnly: form.readOnly,
-    // Guarded by the acknowledgement: the toggle alone does not send it, so a
-    // user cannot arm the dangerous flag and then forget they did.
-    Privileged: form.privileged && form.acknowledgePrivileged,
-    WorkspaceNamespace: form.workspaceNamespace,
-    NoWait: form.noWait,
-    WaitTimeout: form.waitTimeout,
-    ForceInstall: form.forceInstall,
-  };
-}
-
-/**
- * The "create playroom" drawer: one form shown as Easy (name, image, size) or
- * Advanced (every option, in steps), its validation, and the side effects of
- * creating.
- */
+/** Validation stays here; accepted commands outlive the drawer in the lifecycle service. */
 @Component({
   selector: 'app-create-playroom-drawer',
   imports: [
@@ -131,14 +89,14 @@ function createInputFor(form: CreateForm): Partial<PlayroomCreateInput> {
 export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   private readonly state = inject(PlayroomStateService);
   private readonly actions = inject(PlayroomLifecycleService);
-  private readonly notify = inject(ToastService);
-  private readonly console = inject(CliConsoleService);
   private readonly defaults = inject(PlayroomDefaultsService);
-  private readonly router = inject(Router);
   private readonly imageCatalog = inject(ImageCatalogService);
   private readonly session = inject(UiSessionService);
-  submitting = false;
   submitFailure = '';
+
+  get submitting(): boolean {
+    return !!this.actions.pendingOperation(this.form.name);
+  }
 
   /**
    * The command preview comes from the backend, so what is shown is the arguments
@@ -174,6 +132,7 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
       const draft = this.session.recall<{ form: CreateForm; step: number }>('create');
       this.form = draft?.form ?? blankCreateForm(this.playhouse);
       this.touched = false;
+      this.submitFailure = '';
       this.step = draft?.step ?? 0;
       this.advancedSecurityOpenedFromImageError = false;
       void this.loadImages();
@@ -211,7 +170,6 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   }
 
   onVisibleChange(value: boolean): void {
-    if (this.submitting) return;
     if (!value) this.rememberDraft();
     this.visible = value;
     this.visibleChange.emit(value);
@@ -421,83 +379,17 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
 
   // ── Create ─────────────────────────────────────────────────────────────────
 
-  async create(): Promise<void> {
+  create(): void {
     if (this.submitting) return;
     this.touched = true;
     if (!this.canCreate()) return;
-    const form = this.form;
-    this.submitting = true;
     this.submitFailure = '';
     this.rememberDraft();
-    const scopeRevision = this.state.scopeRevision();
-
-    const optimistic: Playroom = {
-      name: form.name,
-      owner: this.state.user(),
-      status: 'creating',
-      rawStatus: '',
-      host: '',
-      ageMin: 0,
-      disk: form.storage,
-      diskType: form.ephemeral ? 'ephemeral' : 'persistent',
-      image: form.image,
-      cpuReq: form.cpuReq,
-      cpuLim: form.cpuLim,
-      memReq: form.memReq,
-      memLim: form.memLim,
-      ports: form.ports.filter(Boolean).join(', '),
-      system: form.readOnly ? 'read-only' : 'writable',
-      capabilityProfile: form.capabilities,
-      capabilityAdditions: form.capAdd.filter(Boolean),
-      outdated: false,
-      playhouse: form.playhouse,
-      ephemeral: form.ephemeral,
-      env: [],
-      git: [],
-      copy: [],
-    };
-    this.state.setRooms([
-      optimistic,
-      ...this.state.rooms().filter((room) => room.name !== form.name),
-    ]);
-
-    const input = this.toInput();
-
-    // The drawer is closed and the room already shows as "creating", so this
-    // runs in the background and a toast reports how it went.
-    let startedOperationId = '';
-    try {
-      await this.console.run(`Creating "${form.name}"`, (operationId) => {
-        startedOperationId = operationId;
-        this.notify.toast(`Creating "${form.name}" ...`, 'busy', operationId);
-        return wailsApi.createPlayroom(operationId, input);
-      });
-      updateCache({ lastPlayroom: form.name, lastPlayhouse: form.playhouse });
-      this.notify.toast(`Created "${form.name}"`, 'ok', startedOperationId);
-      if (
-        this.state.scopeRevision() === scopeRevision &&
-        this.state.playhouse() === form.playhouse
-      ) {
-        this.session.forget('create');
-        this.submitting = false;
-        this.visible = false;
-        this.visibleChange.emit(false);
-        void this.router.navigate(['/rooms', form.name]);
-      }
-      await this.actions.reload(form.playhouse);
-    } catch (error) {
-      this.submitFailure =
-        'Creation did not finish. Your input is kept below. Check Activity before retrying: the playroom may already exist.';
-      this.notify.failure(`Could not create "${form.name}"`, error, startedOperationId);
-      // Creation can fail after the playroom exists — a wait-timeout is the
-      // obvious case — so reload rather than assuming it never got made.
-      try {
-        await this.actions.reload(form.playhouse);
-      } catch {
-        /* Keep the draft and original failure. */
-      }
-    } finally {
-      this.submitting = false;
+    if (!this.actions.startCreate(this.form)) {
+      this.submitFailure = 'This room is already being changed, or the selected playhouse changed.';
+      return;
     }
+    this.visible = false;
+    this.visibleChange.emit(false);
   }
 }

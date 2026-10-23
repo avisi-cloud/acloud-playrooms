@@ -53,6 +53,7 @@
          defaults below cannot load either, and a card nested in that failure
          would hide the one control that fixes it. -->
     <app-acloud-binary />
+    <app-tailscale-binary />
 
     @if (loading()) {
       <!-- The shell's brand mark breathes instead; see PageLoadingService. -->
@@ -133,10 +134,11 @@
                         <p-slider
                           [ngModel]="sliderValues[row.Key]"
                           (ngModelChange)="onSliderChange(row, $event)"
-                          (onSlideEnd)="onSliderChange(row, $event.value ?? sliderValues[row.Key])"
+                          (onSlideEnd)="onSliderEnd(row, $event.value ?? sliderValues[row.Key])"
+                          (keydown)="onSliderKeydown(row, $event)"
                           [min]="0"
                           [max]="sliderMax(row.field)"
-                          [step]="1"
+                          [step]="sliderStep"
                           [ariaLabel]="row.label"
                           styleClass="settings-slider"
                         />

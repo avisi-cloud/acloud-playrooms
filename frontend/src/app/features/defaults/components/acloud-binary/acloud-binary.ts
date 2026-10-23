@@ -21,7 +21,7 @@ import { explainFailure } from '../../../../shared/utils';
   selector: 'app-acloud-binary',
   imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, TagModule],
   templateUrl: './acloud-binary.html',
-  styleUrl: './acloud-binary.css',
+  styleUrl: '../../../../shared/styles/_binary-card.css',
 })
 export class AcloudBinaryCardComponent implements OnInit {
   private readonly session = inject(AcloudSessionService);

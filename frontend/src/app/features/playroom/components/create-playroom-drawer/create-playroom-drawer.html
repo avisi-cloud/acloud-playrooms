@@ -1,9 +1,10 @@
 <p-drawer
   appOverlayFocus="Create playroom"
   [appOverlayVisible]="visible"
-  [closeOnEscape]="!submitting"
-  [dismissible]="!submitting"
-  [showCloseIcon]="!submitting"
+  [closeOnEscape]="true"
+  [dismissible]="true"
+  [closable]="true"
+  ariaCloseLabel="Close create playroom"
   [visible]="visible"
   (visibleChange)="onVisibleChange($event)"
   position="right"
@@ -602,7 +603,6 @@
       [text]="true"
       size="small"
       styleClass="footer-cancel"
-      [disabled]="submitting"
       (click)="close()"
     />
     @if (mode === 'advanced' && step > 0) {

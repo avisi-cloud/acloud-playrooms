@@ -44,7 +44,6 @@ export class PlayroomCardComponent {
 
   @Input() currentUser = '';
   @Input() pendingOperation = '';
-  @Input() compact = false;
 
   @Output() openRoom = new EventEmitter<string>();
   @Output() connectRoom = new EventEmitter<string>();

@@ -102,6 +102,13 @@ change applies to the next command rather than the next launch.
 
 It executes that binary with an argument array, not a shell command string.
 
+Tailscale has its own saved path in Defaults. `backend/tools` checks that path,
+then PATH and the standard Homebrew/MacPorts locations. A selected path is
+validated with `tailscale version` and stored beside the GUI preferences. A small
+launcher passes that exact executable to acloud through the child process PATH;
+terminal connections receive the same choice without changing the user's shell
+configuration. A broken saved path is reported instead of choosing another binary.
+
 Calls with an `OperationID` stream events to the activity log and can be
 cancelled. Cancellation interrupts the process, allows a five-second cleanup
 period, then kills it if necessary. Calls without an ID capture output without
@@ -131,6 +138,7 @@ selected value directly, so the GUI supplies it instead of opening an fzf picker
 | `backend/config/`, `backend/auth/`        | Configuration commands and authentication hand-off               |
 | `backend/terminal/`                       | Interactive command launch                                       |
 | `backend/local/`                          | Small local reads and GUI preferences                            |
+| `backend/tools/`                          | Tailscale discovery, preference and command environment          |
 | `build/`                                  | Wails build and packaging tasks                                  |
 
 Backend packages do not import Wails. An injected emitter connects the runner
@@ -144,7 +152,7 @@ No production code or public CI test may import the private `acloud` module.
 All platform mutations and listings go through real CLI commands. The GUI does
 not make its own Acloud or Kubernetes API requests.
 
-The limited exceptions live in `backend/local`:
+The limited exceptions live in `backend/local` and `backend/tools`:
 
 - Reading the CLI's local configuration for the cached playhouse and user.
 - Checking whether cached credentials exist, without treating that as server validation.
@@ -152,6 +160,7 @@ The limited exceptions live in `backend/local`:
 - Probing local tools and comparing the installed CLI version with the version
   the screens were last verified against.
 - Remembering the app theme in a GUI-specific file.
+- Remembering and applying the app's Tailscale executable path.
 
 Configuration is read again on each lookup so a login or context change made by
 a subprocess becomes visible. The GUI does not write the CLI configuration

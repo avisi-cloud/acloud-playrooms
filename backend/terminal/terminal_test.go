@@ -108,7 +108,7 @@ func TestCommandLineQuotesArgumentsTheShellWouldResplit(t *testing.T) {
 	if !strings.Contains(line, `"my room"`) && !strings.Contains(line, `'my room'`) {
 		t.Errorf("command line = %q, want the spaced argument quoted", line)
 	}
-	if !strings.HasPrefix(line, "acloud ") {
+	if !strings.Contains(line, "acloud playroom open ") {
 		t.Errorf("command line = %q, want it to invoke acloud", line)
 	}
 }

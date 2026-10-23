@@ -66,7 +66,6 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   readonly mineOnly = this.session.mineOnly;
   readonly statusFilter = this.session.status;
   readonly sort = this.session.sort;
-  readonly compact = this.session.compact;
   readonly failure = signal('');
   @ViewChild('listBody') private listBody?: ElementRef<HTMLElement>;
   private restoredScroll = false;

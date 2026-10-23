@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { describeLayout } from './playhouse-layout';
 
 describe('describeLayout', () => {
-  it('says nothing about a current layout', () => {
-    expect(describeLayout('current')).toBeNull();
+  it('labels a current layout without offering an update', () => {
+    expect(describeLayout('current')).toMatchObject({ label: 'Up to date', opensUpdate: false });
   });
 
   it('sends an outdated playhouse to the update', () => {
@@ -16,11 +16,12 @@ describe('describeLayout', () => {
   });
 
   it('shows an unread layout as unknown instead of guessing', () => {
-    expect(describeLayout('unknown')?.label).toBe('layout unknown');
+    expect(describeLayout('unknown').label).toBe('Unknown');
   });
 
-  it('says nothing when acloud reported no status', () => {
-    expect(describeLayout('')).toBeNull();
-    expect(describeLayout(undefined)).toBeNull();
+  it('keeps missing and unrecognised statuses unknown', () => {
+    for (const status of ['', undefined, 'future-status']) {
+      expect(describeLayout(status)).toMatchObject({ label: 'Unknown', opensUpdate: false });
+    }
   });
 });

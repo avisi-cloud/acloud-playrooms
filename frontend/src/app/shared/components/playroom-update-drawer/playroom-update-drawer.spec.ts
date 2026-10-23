@@ -1,5 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
+import { PlayroomLifecycleService } from '../../../core/services/playroom-lifecycle';
+import { PlayroomStateService } from '../../../core/services/playroom-state';
+import { UiSessionService } from '../../../core/services/ui-session';
+import { ToastService } from '../../../core/services/toast';
+import { wailsApi } from '../../../core/services/wails-api';
 import { Playroom } from '../../models';
 import { blankUpdateForm } from '../../utils';
 import { PlayroomUpdateDrawerComponent } from './playroom-update-drawer';
@@ -47,6 +52,8 @@ describe('Update playroom drawer', () => {
     }).compileComponents();
   });
 
+  afterEach(() => vi.restoreAllMocks());
+
   // "3" is on its way to "30Gi"; calling it too small while it is typed would
   // flash an error at every keystroke.
   it('waits until the storage field is left before calling a size too small', () => {
@@ -89,5 +96,59 @@ describe('Update playroom drawer', () => {
     const options = drawerFor('20Gi').capabilitiesOptions;
     expect(options[0].id).toBe('');
     expect(options.every((option) => option.hint.length > 0)).toBe(true);
+  });
+
+  it('closes before updating finishes and keeps the operation alive after destruction', async () => {
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('playhouse-demo');
+    state.setRooms([room('20Gi')]);
+    const actions = TestBed.inject(PlayroomLifecycleService);
+    TestBed.tick();
+    vi.spyOn(actions, 'reload').mockResolvedValue([]);
+    const toast = vi.spyOn(TestBed.inject(ToastService), 'toast');
+    let finishCommand = () => {};
+    vi.spyOn(wailsApi, 'updatePlayroom').mockReturnValue(
+      new Promise<void>((resolve) => {
+        finishCommand = resolve;
+      }),
+    );
+    const fixture = TestBed.createComponent(PlayroomUpdateDrawerComponent);
+    const component = fixture.componentInstance;
+    component.form = blankUpdateForm(room('20Gi'));
+    component.visible = true;
+    const visibleChange = vi.fn();
+    component.visibleChange.subscribe(visibleChange);
+
+    component.save();
+
+    expect(component.visible).toBe(false);
+    expect(visibleChange).toHaveBeenCalledWith(false);
+    expect(actions.pendingOperation('demo')).toBe('Updating');
+    fixture.destroy();
+    finishCommand();
+    await vi.waitFor(() => expect(actions.pendingOperation('demo')).toBe(''));
+    expect(toast).toHaveBeenCalledWith('Updated "demo"', 'ok', expect.any(String));
+    expect(TestBed.inject(UiSessionService).recall('update:demo')).toBeUndefined();
+  });
+
+  it('allows dismissal while the room is still being updated', async () => {
+    TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-demo');
+    const actions = TestBed.inject(PlayroomLifecycleService);
+    TestBed.tick();
+    vi.spyOn(actions, 'reload').mockResolvedValue([]);
+    let finishCommand = () => {};
+    vi.spyOn(wailsApi, 'updatePlayroom').mockReturnValue(
+      new Promise<void>((resolve) => {
+        finishCommand = resolve;
+      }),
+    );
+    const component = drawerFor('20Gi');
+    actions.startUpdate(component.form);
+    component.visible = true;
+    expect(component.submitting).toBe(true);
+    component.close();
+    expect(component.visible).toBe(false);
+    finishCommand();
+    await vi.waitFor(() => expect(actions.pendingOperation('demo')).toBe(''));
   });
 });

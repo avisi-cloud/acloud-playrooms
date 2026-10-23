@@ -85,7 +85,6 @@ export class App implements OnInit {
    * any command the user started. Held to the end of the breath — see BREATH_MS.
    */
   readonly shellBusy = this._shellBusy.asReadonly();
-  readonly delayedBusy = signal(false);
   private hasActivatedRoute = false;
 
   updateMascotMotionForDocumentVisibility(): void {
@@ -117,14 +116,6 @@ export class App implements OnInit {
       });
     inject(DestroyRef).onDestroy(() => {
       if (this.busyRelease) clearTimeout(this.busyRelease);
-    });
-    effect((onCleanup) => {
-      if (!this.pageLoading.active() && !this.console.isRunning()) {
-        this.delayedBusy.set(false);
-        return;
-      }
-      const timer = setTimeout(() => this.delayedBusy.set(true), 1200);
-      onCleanup(() => clearTimeout(timer));
     });
     effect(() => {
       const busy = this.pageLoading.active() || this.console.isRunning();
@@ -316,8 +307,8 @@ export class App implements OnInit {
   // ── Activity log ─────────────────────────────────────────────────────────
 
   /** Opens the activity log, at a specific command when the toast names one. */
-  openActivity(operationId?: string): void {
-    this.console.open(operationId ?? '');
+  openToastActivity(operationId?: string): void {
+    if (operationId) this.console.open(operationId);
   }
 
   activityState(): string {

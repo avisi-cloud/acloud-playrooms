@@ -50,11 +50,11 @@ describe('AcloudSessionService', () => {
       vi.spyOn(wailsApi, 'getAcloudBinaryStatus').mockResolvedValue({
         Found: true,
       } as Awaited<ReturnType<typeof wailsApi.getAcloudBinaryStatus>>);
-      vi.spyOn(wailsApi, 'getAcloudVersion').mockResolvedValue('0.37.0');
+      vi.spyOn(wailsApi, 'getAcloudVersion').mockResolvedValue('0.39.0');
       vi.spyOn(wailsApi, 'getToolStatuses').mockResolvedValue([]);
       vi.spyOn(wailsApi, 'getAcloudCompatibility').mockResolvedValue({
-        RunningVersion: '0.37.0',
-        VerifiedVersion: '0.37.0',
+        RunningVersion: '0.39.0',
+        VerifiedVersion: '0.39.0',
         MinimumVersion: '0.39.0',
         RunningVersionIsNewerThanVerified: false,
         RunningVersionIsOlderThanMinimum: false,
@@ -75,7 +75,7 @@ describe('AcloudSessionService', () => {
       expect(session.compatibility()?.RunningVersionIsNewerThanVerified).toBe(true);
     });
 
-    it('stays quiet in between', async () => {
+    it('stays quiet for the verified 0.39 release', async () => {
       await loadWith({});
       expect(session.compatibility()).toBeNull();
     });
@@ -85,7 +85,7 @@ describe('AcloudSessionService', () => {
       await loadWith({});
       vi.spyOn(wailsApi, 'getAcloudCompatibility').mockResolvedValue({
         RunningVersion: '0.37.0',
-        VerifiedVersion: '0.37.0',
+        VerifiedVersion: '0.39.0',
         MinimumVersion: '0.39.0',
         RunningVersionIsNewerThanVerified: false,
         RunningVersionIsOlderThanMinimum: true,

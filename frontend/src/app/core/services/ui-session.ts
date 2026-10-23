@@ -6,12 +6,12 @@ import { PlayroomStateService } from './playroom-state';
 @Injectable({ providedIn: 'root' })
 export class UiSessionService {
   private readonly state = inject(PlayroomStateService);
-  private readonly drafts = new Map<string, unknown>();
+  private readonly drafts = new Map<string, { contents: unknown; revision: number }>();
+  private nextDraftRevision = 0;
   readonly query = signal('');
   readonly mineOnly = signal(false);
   readonly status = signal('');
   readonly sort = signal('name');
-  readonly compact = signal(false);
   scrollTop = 0;
 
   constructor() {
@@ -23,19 +23,27 @@ export class UiSessionService {
       this.mineOnly.set(false);
       this.status.set('');
       this.sort.set('name');
-      this.compact.set(false);
       this.scrollTop = 0;
     });
   }
 
-  remember<T>(key: string, value: T): void {
-    this.drafts.set(key, structuredClone(value));
+  remember<T>(key: string, draft: T): void {
+    this.drafts.set(key, { contents: structuredClone(draft), revision: ++this.nextDraftRevision });
   }
   recall<T>(key: string): T | undefined {
-    const value = this.drafts.get(key);
-    return value === undefined ? undefined : (structuredClone(value) as T);
+    const draft = this.drafts.get(key);
+    return draft === undefined ? undefined : (structuredClone(draft.contents) as T);
   }
   forget(key: string): void {
     this.drafts.delete(key);
+  }
+
+  draftRevision(key: string): number | undefined {
+    return this.drafts.get(key)?.revision;
+  }
+
+  forgetSubmittedDraft(key: string, submittedRevision: number | undefined): void {
+    if (submittedRevision !== undefined && this.draftRevision(key) === submittedRevision)
+      this.forget(key);
   }
 }

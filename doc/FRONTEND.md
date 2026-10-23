@@ -98,7 +98,8 @@ clicking a toast, or by itself when a command fails. It is one continuous
 scrollback for the whole session, held in memory.
 
 Pass the operation id to `toast()` and the toast becomes a link into the log at
-that command.
+that command. The banner itself is the link, with Enter and Space support;
+there is no separate command button inside it. Dismissal only closes the toast.
 
 Polled reads deliberately skip all of this — they run without an operation id,
 so they emit nothing. A room list refreshing every ten seconds would bury
@@ -190,6 +191,12 @@ the gap macOS traffic lights need, and the background colour behind the page.
 Both have to happen in the window rather than in CSS, because the background is
 what shows at launch before the first paint and in the gap during a live resize.
 
+Defaults shows separate Acloud command and Tailscale command cards. Each supports
+a typed path, a native file picker, checking again, and returning to automatic
+lookup. The Tailscale choice is remembered across launches and applies to acloud
+subprocesses and terminal connections. Saving or clearing it refreshes the sidebar
+tool status. Both cards use `shared/styles/_binary-card.css`.
+
 `core/services/playroom-state.ts` holds the selected playhouse, user, theme and
 room list as signals. Two fields there exist because of specific bugs:
 
@@ -208,6 +215,14 @@ the polling while the command was still running.
 `core/services/playroom-defaults.ts` caches the user's `playroom config`
 defaults so the create drawer and connect dialog open on the values the Defaults
 screen shows, rather than on constants compiled into the frontend.
+
+`core/services/playroom-lifecycle.ts` owns room creation and updates as background
+operations. Both drawers close as soon as a validated submission is accepted;
+their X, Escape and dismissal remain available whenever open. Pending operations
+prevent duplicate commands for the same room. Submitted input is copied, and
+successful completion only clears that draft revision in the original selection.
+Failures keep the draft in memory. Completion refreshes the applicable room list
+without navigating, and a failed refresh is reported separately from the command.
 
 `core/services/image-catalog.ts` similarly owns the immutable image-flavor
 catalog. Create, update and Defaults share one successful request per session;
@@ -277,6 +292,13 @@ An unrecognised status maps to `unknown` rather than to a guess. It keeps
 polling, because the alternative — calling it `creating` — told users a room was
 being provisioned when nobody knew that.
 
+Playhouse versions label the layout and Kubernetes version separately, in both
+the table and its folded narrow-window content. Layout status says Up to date,
+Update available, Needs newer acloud or Unknown, with an update action only where
+supported. Room cards show update availability, and room details show configuration
+status. Outdated disposable rooms say Recreate to update; no numeric room version
+is inferred from the CLI's `Outdated` flag.
+
 Rooms reload every 10 seconds while any room is in a transitional state. A tick
 that arrives while the previous read is still running is dropped rather than
 queued, so a slow list cannot stack subprocesses behind itself. A read the
@@ -310,6 +332,9 @@ the fifteen-second playhouse poll pass `background`, and commands only reach the
 log when they carry an operation id, which polled reads do not. A poll that
 pulsed the mark would blink it every ten seconds for as long as a room was
 starting up — the state where the indicator most needs to mean something.
+
+There is no separate global Working message: room state, notification banners
+and the Activity indicator provide progress alongside the breathing mark.
 
 They used to say it themselves — a grid of shimmering skeleton cards on the
 room list, a centred spinner on the other three — which redrew the whole
@@ -378,6 +403,10 @@ the two can be compared. The source tag says where an override came from;
 colour says that there is one, which a badge at the far left of the row did not
 convey. Unsaved edits stay a separate, cyan state: a saved override has to
 remain visible after the dirty tint clears.
+
+Defaults sliders move continuously between supported settings. Crossing a midpoint
+changes the selected value; releasing snaps the thumb to that setting. Arrow keys
+move one supported setting at a time, and Home/End select the track's endpoints.
 
 ## Naming
 
