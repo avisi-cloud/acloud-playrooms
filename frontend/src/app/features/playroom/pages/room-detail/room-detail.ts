@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import {
+  ChangeDetectorRef,
   Component,
   DestroyRef,
   OnDestroy,
@@ -52,6 +53,7 @@ export class RoomDetailPageComponent implements OnDestroy {
   readonly actions = inject(PlayroomLifecycleService);
   private readonly notify = inject(ToastService);
   private readonly pageLoading = inject(PageLoadingService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly console = inject(CliConsoleService);
   readonly state = inject(PlayroomStateService);
   @ViewChild('roomActions') private roomActions?: PlayroomActionsHostComponent;
@@ -268,6 +270,7 @@ export class RoomDetailPageComponent implements OnDestroy {
     } finally {
       this.loading = false;
       this.refreshing = false;
+      this.changeDetector.markForCheck();
       if (revision !== this.state.scopeRevision() || playhouse !== this.state.playhouse())
         void this.refreshRooms();
     }
