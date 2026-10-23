@@ -67,6 +67,7 @@ describe('Playroom details', () => {
     state.selectPlayhouse('ph');
     const fixture = TestBed.createComponent(RoomDetailPageComponent);
     await fixture.whenStable();
+    await vi.waitFor(() => expect(fixture.componentInstance.refreshing).toBe(false));
     fixture.detectChanges();
     return fixture;
   }
