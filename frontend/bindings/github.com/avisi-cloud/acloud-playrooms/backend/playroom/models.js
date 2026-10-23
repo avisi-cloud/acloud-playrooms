@@ -58,12 +58,13 @@ export class ConnectInput {
              */
             this["ForwardAgent"] = false;
         }
-        if (!("Tunnel" in $$source)) {
+        if (!("Via" in $$source)) {
             /**
+             * Via picks the connection path; blank uses the room's own exposure.
              * @member
-             * @type {boolean}
+             * @type {Exposure}
              */
-            this["Tunnel"] = false;
+            this["Via"] = Exposure.$zero;
         }
         if (!("ForceInstall" in $$source)) {
             /**
@@ -211,6 +212,14 @@ export class CreateInput {
              */
             this["Exposure"] = Exposure.$zero;
         }
+        if (!("NodePortSSH" in $$source)) {
+            /**
+             * NodePortSSH adds SSH on a NodePort next to the room's own path; acloud refuses it on a nodeport room.
+             * @member
+             * @type {boolean}
+             */
+            this["NodePortSSH"] = false;
+        }
         if (!("Capabilities" in $$source)) {
             /**
              * @member
@@ -289,7 +298,7 @@ export class CreateInput {
         const $$createField10_0 = $$createType0;
         const $$createField11_0 = $$createType0;
         const $$createField12_0 = $$createType0;
-        const $$createField16_0 = $$createType0;
+        const $$createField17_0 = $$createType0;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("EnvVars" in $$parsedSource) {
             $$parsedSource["EnvVars"] = $$createField9_0($$parsedSource["EnvVars"]);
@@ -304,7 +313,7 @@ export class CreateInput {
             $$parsedSource["Ports"] = $$createField12_0($$parsedSource["Ports"]);
         }
         if ("CapAdd" in $$parsedSource) {
-            $$parsedSource["CapAdd"] = $$createField16_0($$parsedSource["CapAdd"]);
+            $$parsedSource["CapAdd"] = $$createField17_0($$parsedSource["CapAdd"]);
         }
         return new CreateInput(/** @type {Partial<CreateInput>} */($$parsedSource));
     }
@@ -643,12 +652,13 @@ export class OpenInput {
              */
             this["Editor"] = "";
         }
-        if (!("Tunnel" in $$source)) {
+        if (!("Via" in $$source)) {
             /**
+             * Via picks the connection path; blank uses the room's own exposure.
              * @member
-             * @type {boolean}
+             * @type {Exposure}
              */
-            this["Tunnel"] = false;
+            this["Via"] = Exposure.$zero;
         }
 
         Object.assign(this, $$source);
@@ -913,6 +923,21 @@ export class UpdateInput {
              * @type {string[]}
              */
             this["CapAdd"] = [];
+        }
+        if (!("ChangeNodePortSSH" in $$source)) {
+            /**
+             * Turning NodePortSSH off removes the room's extra NodePort SSH Service.
+             * @member
+             * @type {boolean}
+             */
+            this["ChangeNodePortSSH"] = false;
+        }
+        if (!("NodePortSSH" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["NodePortSSH"] = false;
         }
         if (!("ChangeWorkspaceNamespace" in $$source)) {
             /**

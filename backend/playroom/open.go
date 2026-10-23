@@ -11,12 +11,16 @@ type OpenInput struct {
 	Name      string
 	Playhouse string
 	Editor    string
-	Tunnel    bool
+	// Via picks the connection path; blank uses the room's own exposure.
+	Via Exposure
 }
 
 // Open runs `acloud playroom open`, pre-answering its y/N prompt because the
 // GUI already asked. That yes is unconditional, so a second prompt would pass.
 func Open(ctx context.Context, operationID string, input OpenInput) error {
+	if err := input.Via.Validate(); err != nil {
+		return err
+	}
 	_, err := cli.Run(ctx, buildOpenArguments(input), cli.Options{OperationID: operationID, Stdin: "y\n"})
 	return err
 }
@@ -25,6 +29,6 @@ func buildOpenArguments(input OpenInput) []string {
 	return cli.NewCommandArguments("playroom", "open").Positional(input.Name).
 		Str("--playhouse", input.Playhouse).
 		Str("--editor", input.Editor).
-		Flag("--tunnel", input.Tunnel).
+		Str("--via", string(input.Via)).
 		Build()
 }

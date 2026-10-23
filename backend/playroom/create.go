@@ -26,7 +26,9 @@ type CreateInput struct {
 	Ports         []string
 	ProxyGroup    string
 	Exposure      Exposure
-	Capabilities  Capabilities
+	// NodePortSSH adds SSH on a NodePort next to the room's own path; acloud refuses it on a nodeport room.
+	NodePortSSH  bool
+	Capabilities Capabilities
 	// CapAdd adds Linux capabilities on top of the Capabilities profile, e.g. NET_ADMIN.
 	CapAdd             []string
 	Ephemeral          bool
@@ -70,6 +72,7 @@ func buildCreateArguments(input CreateInput) []string {
 		Repeat("--port", input.Ports).
 		Str("--proxy-group", input.ProxyGroup).
 		Str("--exposure", string(input.Exposure)).
+		Flag("--nodeport-ssh", input.NodePortSSH).
 		Str("--capabilities", string(input.Capabilities)).
 		Repeat("--cap-add", input.CapAdd).
 		Str("--wait-timeout", input.WaitTimeout).

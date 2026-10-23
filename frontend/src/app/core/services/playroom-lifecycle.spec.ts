@@ -24,6 +24,8 @@ function form(overrides: Partial<UpdateForm> = {}): UpdateForm {
     workspaceNamespace: true,
     acknowledgeWorkspaceNamespaceRemoval: false,
     moveToTailscale: false,
+    changeNodePortSSH: false,
+    nodePortSSH: true,
     noWait: false,
     waitTimeout: '5m',
     ...overrides,
@@ -41,6 +43,14 @@ describe('updateInputFor', () => {
   // recreating the playroom, so the UI never offers them.
   it('sends tailscale when the tailnet toggle is on', () => {
     expect(updateInputFor(form({ moveToTailscale: true })).Exposure).toBe('tailscale');
+  });
+
+  // The backend only sends --nodeport-ssh when the change toggle is on.
+  it('carries the NodePort SSH change and its value', () => {
+    expect(updateInputFor(form()).ChangeNodePortSSH).toBe(false);
+    const input = updateInputFor(form({ changeNodePortSSH: true, nodePortSSH: false }));
+    expect(input.ChangeNodePortSSH).toBe(true);
+    expect(input.NodePortSSH).toBe(false);
   });
 
   it('passes none through for an unset request and limit', () => {

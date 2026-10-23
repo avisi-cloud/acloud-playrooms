@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Playroom } from '../../shared/models';
+import { ConnectionPath, Playroom } from '../../shared/models';
 import { updateCache } from '../../shared/utils';
 import { CliConsoleService } from './cli-console';
 import { PlayroomConnectInput, wailsApi } from './wails-api';
@@ -21,14 +21,14 @@ export class PlayroomConnectService {
     user: string,
     terminal: string,
     forwardAgent: boolean,
-    tunnel = false,
+    via: ConnectionPath = '',
   ): Promise<string> {
     const input: Partial<PlayroomConnectInput> = {
       Name: room.name,
       Playhouse: room.playhouse,
       User: user,
       ForwardAgent: forwardAgent,
-      Tunnel: tunnel,
+      Via: via,
       Terminal: terminal,
     };
     await wailsApi.connectPlayroom(input);
@@ -37,13 +37,13 @@ export class PlayroomConnectService {
   }
 
   /** Opens the playroom in a desktop editor. No TTY needed, so it streams. */
-  async open(room: Playroom, editor: string, tunnel = false): Promise<void> {
+  async open(room: Playroom, editor: string, via: ConnectionPath = ''): Promise<void> {
     await this.console.run(`Opening "${room.name}" in ${editor}`, (operationId) =>
       wailsApi.openPlayroomInEditor(operationId, {
         Name: room.name,
         Playhouse: room.playhouse,
         Editor: editor,
-        Tunnel: tunnel,
+        Via: via,
       }),
     );
     updateCache({ lastPlayroom: room.name, lastPlayhouse: room.playhouse, lastEditor: editor });

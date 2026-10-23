@@ -295,7 +295,21 @@
               </p-select>
               <small class="field-hint">{{ optionTexts.exposure.hint }}</small>
             </div>
-            <div class="field-group">
+            <label class="toggle-line" for="create-nodeport-ssh"
+              ><span
+                >{{ optionTexts['nodeport-ssh'].label
+                }}<small class="flag-ref">--nodeport-ssh</small></span
+              ><p-toggleswitch
+                inputId="create-nodeport-ssh"
+                [(ngModel)]="form.nodePortSSH"
+                [disabled]="form.exposure === 'nodeport'"
+            /></label>
+            <small class="field-hint">{{
+              form.exposure === 'nodeport'
+                ? 'A NodePort playroom already has its SSH on a NodePort.'
+                : optionTexts['nodeport-ssh'].hint
+            }}</small>
+            <div class="field-group mt-2">
               <label class="field-label" for="create-proxy-group">{{
                 optionTexts['proxy-group'].label
               }}</label
@@ -362,7 +376,8 @@
             /></label>
             <small class="field-hint"
               >Lets the agent deploy to <code>playroom-{{ form.name || 'NAME' }}</code
-              >, with its own kubeconfig. Without it, the playroom has no Kubernetes access.</small
+              >, with its own kubeconfig, up to 20 pods and 4 CPU / 8 GiB. Without it, the playroom
+              has no Kubernetes access.</small
             >
 
             <!-- Dangerous flags are shown with the CLI's own warning rather than
@@ -485,7 +500,12 @@
               </div>
               <div>
                 <span>{{ optionTexts.exposure.label }}</span
-                ><strong>{{ form.exposure || 'playhouse default' }}</strong>
+                ><strong
+                  >{{ form.exposure || 'playhouse default'
+                  }}{{
+                    form.nodePortSSH && form.exposure !== 'nodeport' ? ' · NodePort SSH' : ''
+                  }}</strong
+                >
               </div>
               <div>
                 <span>{{ optionTexts.capabilities.label }}</span

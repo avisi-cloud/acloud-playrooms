@@ -17,7 +17,12 @@ type UpdateInput struct {
 	// Exposure re-bootstraps the playhouse's SSH connectivity. Switching to
 	// tailscale on a playhouse that never had it also needs the credentials
 	// below; they are stored in-cluster, so a later update can omit them.
-	Exposure                   string
+	Exposure string
+	// IP allowlist edits, applied in this order; without a terminal acloud never offers the current IP.
+	ResetAllowlist             bool
+	RemoveIPs                  []string
+	AllowIPs                   []string
+	AllowCurrentIP             bool
 	TailscaleOAuthClientID     string
 	TailscaleOAuthClientSecret string
 	MaxPlayroomNodes           int
@@ -36,6 +41,10 @@ func buildUpdateArguments(input UpdateInput) []string {
 	return cli.NewCommandArguments("playhouse", "update").Positional(input.Name).
 		Str("--update-channel", input.UpdateChannel).
 		Str("--exposure", input.Exposure).
+		Flag("--reset-allowlist", input.ResetAllowlist).
+		Repeat("--remove-ip", input.RemoveIPs).
+		Repeat("--allow-ip", input.AllowIPs).
+		Flag("--allow-current-ip", input.AllowCurrentIP).
 		Str("--tailscale-oauth-client-id", input.TailscaleOAuthClientID).
 		Str("--tailscale-oauth-client-secret", input.TailscaleOAuthClientSecret).
 		Int("--max-playroom-nodes", input.MaxPlayroomNodes).

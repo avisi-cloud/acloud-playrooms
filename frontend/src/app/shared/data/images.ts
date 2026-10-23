@@ -37,6 +37,26 @@ export const EXPOSURES = [
   },
 ] as const;
 
+/** What the playhouse IP allowlist does, said the same way in the create and edit drawers. */
+export const IP_ALLOWLIST_HINT =
+  'Guards the Kubernetes API and NodePort SSH. While it is empty the API is open and NodePorts are internal only.';
+
+/** `--via` for connect and open. Blank lets acloud use the room's own exposure. */
+export const CONNECTION_PATHS = [
+  { id: '', label: 'Room default', hint: 'However this playroom is exposed' },
+  { id: 'tailscale', label: 'Tailscale', hint: 'Over the tailnet' },
+  {
+    id: 'nodeport',
+    label: 'NodePort',
+    hint: "The room's NodePort or NodePort SSH; your IP must be on the playhouse IP allowlist",
+  },
+  {
+    id: 'portforward',
+    label: 'Port-forward',
+    hint: 'Through the cluster API; works without Tailscale or NodePort access',
+  },
+] as const;
+
 /** `--capabilities` profiles, mirroring backend/playroom's Capabilities constants. */
 export const CAPABILITIES = [
   { id: 'minimal', label: 'Minimal', hint: 'Only what login and sudo need' },

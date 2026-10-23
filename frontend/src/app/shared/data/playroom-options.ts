@@ -36,6 +36,14 @@ export const PLAYROOM_OPTION_TEXTS = {
     label: 'Exposure',
     hint: 'How your Mac reaches the playroom. Forwarded ports need Tailscale.',
   },
+  'nodeport-ssh': {
+    label: 'Also allow SSH over a NodePort',
+    hint: 'Reachable from the IP allowlist of the playhouse. Connect with Connect via NodePort.',
+  },
+  via: {
+    label: 'Connect via',
+    hint: 'Which way to reach the playroom. Default uses how it is exposed.',
+  },
   'proxy-group': {
     label: 'Proxy group',
     hint: 'Only needed when the playhouse runs Tailscale in high-availability mode.',

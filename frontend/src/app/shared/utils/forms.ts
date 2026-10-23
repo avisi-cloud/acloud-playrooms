@@ -38,6 +38,7 @@ export function blankCreateForm(playhouse: string, defaults?: DefaultsLookup): C
     ports: [''],
     proxyGroup: value('proxy-group', ''),
     exposure: '',
+    nodePortSSH: false,
     capabilities: capabilitiesOrBlank(value('capabilities', '')),
     capAdd: [''],
     ephemeral: false,
@@ -75,6 +76,9 @@ export function blankUpdateForm(room: Playroom): UpdateForm {
     acknowledgeWorkspaceNamespaceRemoval: false,
     // Off by default: an update with no exposure flag keeps the current one.
     moveToTailscale: false,
+    changeNodePortSSH: false,
+    // Turning the change on most often means adding it.
+    nodePortSSH: true,
     noWait: false,
     waitTimeout: DEFAULTS.waitTimeout,
   };

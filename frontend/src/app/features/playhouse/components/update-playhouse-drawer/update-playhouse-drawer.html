@@ -23,7 +23,8 @@
         [options]="exposureOptions"
         optionLabel="label"
         optionValue="id"
-        [(ngModel)]="form.exposure"
+        [ngModel]="form.exposure"
+        (ngModelChange)="onExposureChange($event)"
         appendTo="body"
         [style]="{ width: '100%' }"
       >
@@ -64,6 +65,42 @@
           >Stored in the cluster on first use, so leave both blank for a playhouse already on
           Tailscale. Fill them in to switch a playhouse over, or to replace expired
           credentials.</small
+        >
+      </div>
+    }
+  </section>
+
+  <section class="ph-update-card">
+    <div class="ph-update-card-head">IP allowlist</div>
+    <small class="field-hint">{{ ipAllowlistHint }}</small>
+    <label class="toggle-line mt-2" for="ph-update-allow-current-ip"
+      ><span>Add my current public IP<small class="flag-ref">--allow-current-ip</small></span
+      ><p-toggleswitch inputId="ph-update-allow-current-ip" [(ngModel)]="form.allowCurrentIP"
+    /></label>
+    <app-string-list-editor
+      label="Add IP addresses or ranges"
+      [(values)]="form.allowIPs"
+      placeholder="198.51.100.0/24"
+      addLabel="add address"
+      itemLabel="IP address or range"
+    />
+    <app-string-list-editor
+      label="Remove IP addresses or ranges"
+      [(values)]="form.removeIPs"
+      placeholder="203.0.113.7"
+      addLabel="add address"
+      itemLabel="IP address or range"
+    />
+    <label class="toggle-line mt-2" for="ph-update-reset-allowlist"
+      ><span>Clear the allowlist first<small class="flag-ref">--reset-allowlist</small></span
+      ><p-toggleswitch inputId="ph-update-reset-allowlist" [(ngModel)]="form.resetAllowlist"
+    /></label>
+    @if (form.resetAllowlist) {
+      <div class="danger-copy">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span
+          >Removes every entry before the additions above. Left empty, the Kubernetes API is open to
+          everyone and NodePort SSH only works from inside.</span
         >
       </div>
     }

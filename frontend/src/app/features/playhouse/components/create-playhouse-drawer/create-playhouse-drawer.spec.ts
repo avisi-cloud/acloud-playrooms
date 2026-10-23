@@ -18,4 +18,19 @@ describe('Create playhouse drawer', () => {
       expect(component.selectedExposureHint(), exposure.id).toBe(exposure.hint);
     }
   });
+
+  // --yes skips acloud's own offer, so a NodePort playhouse would otherwise lock you out.
+  it('switches on your current IP when NodePort is chosen', () => {
+    const component = TestBed.createComponent(CreatePlayhouseDrawerComponent).componentInstance;
+    expect(component.form.allowCurrentIP).toBe(false);
+    component.onExposureChange('nodeport');
+    expect(component.toInput().AllowCurrentIP).toBe(true);
+  });
+
+  it('sends the allowlist entries without blank rows', () => {
+    const component = TestBed.createComponent(CreatePlayhouseDrawerComponent).componentInstance;
+    component.form.allowIPs = [' 198.51.100.0/24 ', ''];
+    expect(component.toInput().AllowIPs).toEqual(['198.51.100.0/24']);
+    expect(component.allowlistSummary()).toBe('198.51.100.0/24');
+  });
 });

@@ -55,6 +55,24 @@ describe('Update playhouse drawer', () => {
     expect(component.previewInput().TailscaleOAuthClientID).toBe('id');
   });
 
+  it('counts every allowlist edit as a change and drops blank rows', () => {
+    const component = drawer();
+    component.form.allowIPs = ['', ' '];
+    expect(component.hasChanges()).toBe(false);
+
+    component.form.removeIPs = [' 203.0.113.7 '];
+    expect(component.hasChanges()).toBe(true);
+    expect(component.previewInput().RemoveIPs).toEqual(['203.0.113.7']);
+    expect(component.previewInput().AllowIPs).toEqual([]);
+  });
+
+  // A GUI run has no terminal, so acloud never offers your IP for a switch to NodePort.
+  it('switches on your current IP when switching to NodePort', () => {
+    const component = drawer();
+    component.onExposureChange('nodeport');
+    expect(component.previewInput().AllowCurrentIP).toBe(true);
+  });
+
   // A channel switch is a change on its own; blank keeps the current one.
   it('counts an update channel as a change and trims it', () => {
     const component = drawer();

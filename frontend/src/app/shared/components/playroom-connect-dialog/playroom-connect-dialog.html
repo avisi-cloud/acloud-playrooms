@@ -82,10 +82,19 @@
           <span>Forward SSH agent<small class="flag-ref">--forward-agent</small></span>
           <p-toggleswitch [(ngModel)]="forwardAgent" />
         </label>
-        <label class="toggle-line">
-          <span>Reach it over Tailscale<small class="flag-ref">--tunnel</small></span>
-          <p-toggleswitch [(ngModel)]="tunnel" />
-        </label>
+        <div class="field-group">
+          <label class="field-label" for="connect-via">Connect via</label>
+          <p-select
+            [options]="connectionPaths"
+            optionLabel="label"
+            optionValue="id"
+            inputId="connect-via"
+            [(ngModel)]="via"
+            [style]="{ width: '100%' }"
+            appendTo="body"
+          />
+          <small class="field-hint">{{ selectedConnectionPathHint() }}</small>
+        </div>
       } @else {
         <div class="field-group">
           <label class="field-label" for="connect-editor">Editor</label>
@@ -99,10 +108,19 @@
             appendTo="body"
           />
         </div>
-        <label class="toggle-line">
-          <span>Reach it over Tailscale<small class="flag-ref">--tunnel</small></span>
-          <p-toggleswitch [(ngModel)]="tunnel" />
-        </label>
+        <div class="field-group">
+          <label class="field-label" for="open-via">Connect via</label>
+          <p-select
+            [options]="connectionPaths"
+            optionLabel="label"
+            optionValue="id"
+            inputId="open-via"
+            [(ngModel)]="via"
+            [style]="{ width: '100%' }"
+            appendTo="body"
+          />
+          <small class="field-hint">{{ selectedConnectionPathHint() }}</small>
+        </div>
       }
     </div>
     <!-- The one action that hands off to a real terminal, and the only surface

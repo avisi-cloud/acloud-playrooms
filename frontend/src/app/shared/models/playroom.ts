@@ -1,9 +1,11 @@
-import { CAPABILITIES, EXPOSURES } from '../data/images';
+import { CAPABILITIES, CONNECTION_PATHS, EXPOSURES } from '../data/images';
 import { STATUS } from '../data/status';
 
 export type StatusKey = keyof typeof STATUS;
 /** An `--exposure` value; blank leaves the flag off. */
 export type Exposure = (typeof EXPOSURES)[number]['id'];
+/** A `--via` connection path; blank leaves it to the room's exposure. */
+export type ConnectionPath = (typeof CONNECTION_PATHS)[number]['id'];
 /** A `--capabilities` profile; blank leaves the flag off. */
 export type Capabilities = (typeof CAPABILITIES)[number]['id'] | '';
 export type ConnectTab = 'connect' | 'open';
@@ -59,6 +61,8 @@ export interface CreateForm {
   ports: string[];
   proxyGroup: string;
   exposure: Exposure;
+  /** `--nodeport-ssh`: SSH on a NodePort too; not for a nodeport room. */
+  nodePortSSH: boolean;
   capabilities: Capabilities;
   /** `--cap-add`: Linux capabilities on top of the profile. */
   capAdd: string[];
@@ -110,6 +114,9 @@ export interface UpdateForm {
   acknowledgeWorkspaceNamespaceRemoval: boolean;
   /** Moves a nodeport or portforward room onto the tailnet; see the drawer. */
   moveToTailscale: boolean;
+  /** `playroom list` does not report it, so only a change is sent. */
+  changeNodePortSSH: boolean;
+  nodePortSSH: boolean;
   noWait: boolean;
   waitTimeout: string;
 }

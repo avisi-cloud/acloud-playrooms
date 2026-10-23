@@ -21,8 +21,8 @@ import {
 } from '../../../core/services/wails-api';
 import { PlayroomDefaultsService } from '../../../core/services/playroom-defaults';
 import { ToastService } from '../../../core/services/toast';
-import { EDITORS, TERMINALS } from '../../data';
-import { ConnectTab, Playroom } from '../../models';
+import { CONNECTION_PATHS, EDITORS, TERMINALS } from '../../data';
+import { ConnectionPath, ConnectTab, Playroom } from '../../models';
 import { readCache } from '../../utils';
 import { CommandPreviewComponent } from '../command-preview/command-preview';
 import { OverlayFocusDirective } from '../../directives';
@@ -57,6 +57,7 @@ export class PlayroomConnectDialogComponent implements OnChanges {
 
   readonly editors = [...EDITORS];
   readonly terminals = [...TERMINALS];
+  readonly connectionPaths = [...CONNECTION_PATHS];
 
   @Input() room: Playroom | null = null;
   @Input() visible = false;
@@ -65,8 +66,8 @@ export class PlayroomConnectDialogComponent implements OnChanges {
 
   user = 'playroom';
   forwardAgent = true;
-  /** `--tunnel`: reach the room over Tailscale rather than its public address. */
-  tunnel = false;
+  /** `--via`; blank lets acloud use the room's own exposure. */
+  via: ConnectionPath = '';
   editor: string;
   terminal: string;
 
@@ -81,7 +82,7 @@ export class PlayroomConnectDialogComponent implements OnChanges {
     if (changes['visible'] && this.visible) {
       this.user = 'playroom';
       this.forwardAgent = true;
-      this.tunnel = false;
+      this.via = '';
       void this.seedFromDefaults();
     }
   }
@@ -93,7 +94,7 @@ export class PlayroomConnectDialogComponent implements OnChanges {
       Playhouse: this.room?.playhouse ?? '',
       User: this.user,
       ForwardAgent: this.forwardAgent,
-      Tunnel: this.tunnel,
+      Via: this.via,
       Terminal: this.terminal,
     };
   }
@@ -103,7 +104,7 @@ export class PlayroomConnectDialogComponent implements OnChanges {
       Name: this.room?.name ?? '',
       Playhouse: this.room?.playhouse ?? '',
       Editor: this.editor,
-      Tunnel: this.tunnel,
+      Via: this.via,
     };
   }
 
@@ -114,6 +115,10 @@ export class PlayroomConnectDialogComponent implements OnChanges {
 
   close(): void {
     this.onVisibleChange(false);
+  }
+
+  selectedConnectionPathHint(): string {
+    return this.connectionPaths.find((path) => path.id === this.via)?.hint ?? '';
   }
 
   onTabKeydown(event: KeyboardEvent): void {
@@ -156,11 +161,11 @@ export class PlayroomConnectDialogComponent implements OnChanges {
           this.user,
           this.terminal,
           this.forwardAgent,
-          this.tunnel,
+          this.via,
         );
         this.notify.toast(`Opened "${room.name}" in ${this.terminal}`, 'ok', operationId);
       } else {
-        await this.connectSvc.open(room, this.editor, this.tunnel);
+        await this.connectSvc.open(room, this.editor, this.via);
       }
     } catch (error) {
       this.notify.failure(`Could not open "${room.name}"`, error);
