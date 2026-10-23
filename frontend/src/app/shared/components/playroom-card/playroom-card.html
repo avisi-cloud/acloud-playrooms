@@ -38,6 +38,21 @@
       @if (room.rawStatus && room.rawStatus.toLowerCase() !== statusLabel().toLowerCase()) {
         <span class="card-raw-status" [title]="room.rawStatus">{{ room.rawStatus }}</span>
       }
+      @if (outdatedBadge(); as badge) {
+        @if (badge.opensUpdate && !pendingOperation) {
+          <button
+            type="button"
+            class="card-outdated"
+            [title]="badge.hint"
+            [attr.aria-label]="'Update playroom ' + room.name + ': ' + badge.hint"
+            (click)="$event.stopPropagation(); editRoom.emit(room.name)"
+          >
+            {{ badge.label }}
+          </button>
+        } @else {
+          <span class="card-outdated" [title]="badge.hint">{{ badge.label }}</span>
+        }
+      }
     </div>
   </div>
 

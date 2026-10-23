@@ -591,6 +591,29 @@ export class Listing {
              */
             this["System"] = "";
         }
+        if (!("CapabilityProfile" in $$source)) {
+            /**
+             * CapabilityProfile is "default" for a room from before capability profiles.
+             * @member
+             * @type {string}
+             */
+            this["CapabilityProfile"] = "";
+        }
+        if (!("CapabilityAdditions" in $$source)) {
+            /**
+             * @member
+             * @type {string[]}
+             */
+            this["CapabilityAdditions"] = [];
+        }
+        if (!("Outdated" in $$source)) {
+            /**
+             * Outdated means an older acloud rendered the room; `playroom update` rolls out the new one.
+             * @member
+             * @type {boolean}
+             */
+            this["Outdated"] = false;
+        }
         if (!("Ports" in $$source)) {
             /**
              * Ports is null when only SSH is exposed.
@@ -609,10 +632,14 @@ export class Listing {
      * @returns {Listing}
      */
     static createFrom($$source = {}) {
-        const $$createField13_0 = $$createType2;
+        const $$createField14_0 = $$createType0;
+        const $$createField16_0 = $$createType2;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("CapabilityAdditions" in $$parsedSource) {
+            $$parsedSource["CapabilityAdditions"] = $$createField14_0($$parsedSource["CapabilityAdditions"]);
+        }
         if ("Ports" in $$parsedSource) {
-            $$parsedSource["Ports"] = $$createField13_0($$parsedSource["Ports"]);
+            $$parsedSource["Ports"] = $$createField16_0($$parsedSource["Ports"]);
         }
         return new Listing(/** @type {Partial<Listing>} */($$parsedSource));
     }

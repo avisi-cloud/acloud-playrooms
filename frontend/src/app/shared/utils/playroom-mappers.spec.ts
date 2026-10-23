@@ -84,6 +84,20 @@ describe('listingToRoom', () => {
     expect(parseRenderedPorts(rendered)).toEqual(['3000', '80:8080']);
   });
 
+  it('carries the outdated flag and capabilities, and defaults them when missing', () => {
+    const room = listingToRoom(
+      { ...base, Outdated: true, CapabilityProfile: 'minimal', CapabilityAdditions: ['NET_RAW'] },
+      'ph',
+    );
+    expect(room.outdated).toBe(true);
+    expect(room.capabilityProfile).toBe('minimal');
+    expect(room.capabilityAdditions).toEqual(['NET_RAW']);
+    expect(listingToRoom(base, 'ph').outdated).toBe(false);
+    expect(listingToRoom({ ...base, CapabilityAdditions: null }, 'ph').capabilityAdditions).toEqual(
+      [],
+    );
+  });
+
   it('renders no ports for an SSH-only room', () => {
     expect(listingToRoom({ ...base, Ports: null }, 'ph').ports).toBe('');
     expect(renderPortForwards(undefined)).toBe('');

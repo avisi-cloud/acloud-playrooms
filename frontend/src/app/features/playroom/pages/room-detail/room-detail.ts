@@ -25,6 +25,8 @@ import { STATUS } from '../../../../shared/data';
 import { ConnectTab, Playroom } from '../../../../shared/models';
 import {
   Severity,
+  describeOutdated,
+  renderCapabilities,
   formatAge,
   copyToClipboard,
   isTransitional,
@@ -55,6 +57,8 @@ export class RoomDetailPageComponent implements OnDestroy {
   @ViewChild('roomActions') private roomActions?: PlayroomActionsHostComponent;
 
   readonly roomName = signal('');
+  readonly describeOutdated = describeOutdated;
+  readonly renderCapabilities = renderCapabilities;
   readonly room = computed<Playroom | null>(
     () =>
       this.state

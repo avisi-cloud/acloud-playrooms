@@ -8,3 +8,4 @@ export * from './command-preview';
 export * from './forms';
 export * from './playroom-size';
 export * from './playhouse-layout';
+export * from './playroom-outdated';

@@ -36,6 +36,10 @@ export interface Playroom {
   memLim: string;
   ports: string;
   system: string;
+  capabilityProfile: string;
+  capabilityAdditions: string[];
+  /** Rendered by an older acloud; `playroom update` rolls out the new template. */
+  outdated: boolean;
   playhouse: string;
   ephemeral: boolean;
   env: string[];
@@ -128,6 +132,9 @@ export interface ListingDto {
   DiskSize?: string;
   DiskType?: string;
   System?: string;
+  CapabilityProfile?: string;
+  CapabilityAdditions?: string[] | null;
+  Outdated?: boolean;
   Ports?: PortForwardDto[] | null;
 }
 

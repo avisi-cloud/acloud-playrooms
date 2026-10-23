@@ -14,6 +14,7 @@ import { MenuModule } from 'primeng/menu';
 import { STATUS } from '../../data';
 import { Playroom } from '../../models';
 import {
+  describeOutdated,
   formatAge,
   ownerLabel as formatOwnerLabel,
   statusLabel as formatStatusLabel,
@@ -54,6 +55,7 @@ export class PlayroomCardComponent {
   @Output() deleteRoom = new EventEmitter<string>();
 
   readonly statusMap = STATUS;
+  readonly outdatedBadge = computed(() => describeOutdated(this.roomSignal()));
 
   private readonly roomSignal = signal<Playroom>({} as Playroom);
 
