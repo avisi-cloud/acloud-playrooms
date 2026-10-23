@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.29.1](https://github.com/avisi-cloud/acloud-playrooms/compare/v0.29.0...v0.29.1) (2026-10-23)
+
+
+### Features
+
+* **gui:** polish playroom workflows and configure Tailscale ([#40](https://github.com/avisi-cloud/acloud-playrooms/issues/40)) ([1591005](https://github.com/avisi-cloud/acloud-playrooms/commit/15910058be1db77fdd257245210500353224dcf5))
+* **gui:** refine visual hierarchy and playroom details ([#41](https://github.com/avisi-cloud/acloud-playrooms/issues/41)) ([b9f0905](https://github.com/avisi-cloud/acloud-playrooms/commit/b9f09058ddae593213020988edc13108d356c422))
+* **gui:** separate tool settings and remember T3 Code path ([#43](https://github.com/avisi-cloud/acloud-playrooms/issues/43)) ([49c8e33](https://github.com/avisi-cloud/acloud-playrooms/commit/49c8e33e89430a78fddddcd047fdd893bc2b1fd2))
+
 ## [0.29.0](https://github.com/avisi-cloud/acloud-playrooms/compare/v0.28.4...v0.29.0) (2026-10-23)
 
 
