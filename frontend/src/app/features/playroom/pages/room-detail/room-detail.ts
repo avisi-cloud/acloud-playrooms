@@ -19,6 +19,8 @@ import { TagModule } from 'primeng/tag';
 import { ToastService } from '../../../../core/services/toast';
 import { PlayroomLifecycleService } from '../../../../core/services/playroom-lifecycle';
 import { PageLoadingService } from '../../../../core/services/page-loading';
+import { CliConsoleService } from '../../../../core/services/cli-console';
+import { wailsApi } from '../../../../core/services/wails-api';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { PlayroomActionsHostComponent } from '../../../../shared/components';
 import { STATUS } from '../../../../shared/data';
@@ -37,10 +39,7 @@ import {
   describeError,
 } from '../../../../shared/utils';
 
-/**
- * Single-playroom detail: the connection, resource and metadata view, plus the
- * connect, update and delete surfaces.
- */
+/** Reported room details stay separate from editable form drafts. */
 @Component({
   selector: 'app-room-detail-page',
   imports: [CommonModule, ButtonModule, MenuModule, TagModule, PlayroomActionsHostComponent],
@@ -53,6 +52,7 @@ export class RoomDetailPageComponent implements OnDestroy {
   readonly actions = inject(PlayroomLifecycleService);
   private readonly notify = inject(ToastService);
   private readonly pageLoading = inject(PageLoadingService);
+  private readonly console = inject(CliConsoleService);
   readonly state = inject(PlayroomStateService);
   @ViewChild('roomActions') private roomActions?: PlayroomActionsHostComponent;
 
@@ -67,6 +67,33 @@ export class RoomDetailPageComponent implements OnDestroy {
           (room) => room.name === this.roomName() && room.playhouse === this.state.playhouse(),
         ) ?? null,
   );
+  readonly latestActivityId = computed(() => {
+    const room = this.room();
+    return room
+      ? this.console.latestPlayroomOperation({
+          name: room.name,
+          playhouse: room.playhouse,
+          scopeRevision: this.state.scopeRevision(),
+        })
+      : '';
+  });
+  private readonly connectionTarget = computed(
+    () => ({
+      name: this.room()?.name ?? '',
+      playhouse: this.room()?.playhouse ?? '',
+      scopeRevision: this.state.scopeRevision(),
+    }),
+    {
+      equal: (previous, current) =>
+        previous.name === current.name &&
+        previous.playhouse === current.playhouse &&
+        previous.scopeRevision === current.scopeRevision,
+    },
+  );
+  readonly connectionCommand = signal('');
+  readonly connectionCommandFailure = signal('');
+  readonly commandCopied = signal(false);
+  private readonly commandRetry = signal(0);
   loading = false;
   refreshing = false;
   failure = '';
@@ -82,6 +109,32 @@ export class RoomDetailPageComponent implements OnDestroy {
       this.roomName();
       untracked(() => void this.refreshRooms());
     });
+    effect((onCleanup) => {
+      const target = this.connectionTarget();
+      this.commandRetry();
+      this.connectionCommand.set('');
+      this.connectionCommandFailure.set('');
+      this.commandCopied.set(false);
+      if (!target.name || !target.playhouse) return;
+      let active = true;
+      onCleanup(() => {
+        active = false;
+      });
+      void wailsApi
+        .previewConnectPlayroom({
+          Name: target.name,
+          Playhouse: target.playhouse,
+          ForwardAgent: false,
+        })
+        .then((commandArguments) => {
+          if (!active) return;
+          if (!commandArguments.length) throw new Error('The CLI returned no connection command.');
+          this.connectionCommand.set(commandArguments.join(' '));
+        })
+        .catch((error) => {
+          if (active) this.connectionCommandFailure.set(describeError(error));
+        });
+    });
     this.pollTimer = setInterval(() => void this.refreshRooms(true), 10000);
   }
 
@@ -94,8 +147,8 @@ export class RoomDetailPageComponent implements OnDestroy {
   }
 
   ageLabel(): string {
-    const r = this.room();
-    return r ? formatAge(r.ageMin) : '';
+    const room = this.room();
+    return room?.createdAt ? formatAge(room.ageMin) : 'Not reported';
   }
 
   statusSeverity(): Severity {
@@ -178,6 +231,22 @@ export class RoomDetailPageComponent implements OnDestroy {
   async copyHost(): Promise<void> {
     const room = this.room();
     if (room?.host) await copyToClipboard(room.host);
+  }
+
+  retryConnectionCommand(): void {
+    this.commandRetry.update((attempt) => attempt + 1);
+  }
+
+  async copyConnectionCommand(): Promise<void> {
+    const command = this.connectionCommand();
+    if (!command) return;
+    await copyToClipboard(command);
+    if (this.connectionCommand() === command) this.commandCopied.set(true);
+  }
+
+  openRoomActivity(): void {
+    const operationId = this.latestActivityId();
+    if (operationId) this.console.open(operationId);
   }
 
   async refreshRooms(background = false): Promise<void> {

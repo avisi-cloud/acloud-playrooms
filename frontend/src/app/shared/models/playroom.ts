@@ -28,6 +28,7 @@ export interface Playroom {
   status: StatusKey;
   rawStatus: string;
   ageMin: number;
+  createdAt?: string | null;
   disk: string;
   diskType: string;
   host: string;
@@ -37,6 +38,7 @@ export interface Playroom {
   memReq: string;
   memLim: string;
   ports: string;
+  portForwards?: PortForwardDto[];
   system: string;
   capabilityProfile: string;
   capabilityAdditions: string[];

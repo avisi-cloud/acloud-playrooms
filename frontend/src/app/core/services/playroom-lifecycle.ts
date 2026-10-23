@@ -177,6 +177,11 @@ export class PlayroomLifecycleService {
     try {
       await this.console.run(`Creating "${form.name}"`, (operationId) => {
         startedOperationId = operationId;
+        this.console.associatePlayroom(operationId, {
+          name: form.name,
+          playhouse: form.playhouse,
+          scopeRevision: selection.scopeRevision,
+        });
         this.notify.toast(`Creating "${form.name}" ...`, 'busy', operationId);
         return wailsApi.createPlayroom(operationId, createInputFor(form));
       });
@@ -203,6 +208,11 @@ export class PlayroomLifecycleService {
     try {
       await this.console.run(`Stopping "${room.name}"`, (operationId) => {
         startedOperationId = operationId;
+        this.console.associatePlayroom(operationId, {
+          name: room.name,
+          playhouse: room.playhouse,
+          scopeRevision: selection.scopeRevision,
+        });
         return wailsApi.stopPlayroom(operationId, { Name: room.name, Playhouse: room.playhouse });
       });
       this.notify.toast(`Stopped "${room.name}" (storage retained)`, 'idle', startedOperationId);
@@ -223,6 +233,11 @@ export class PlayroomLifecycleService {
     try {
       await this.console.run(`Starting "${room.name}"`, (operationId) => {
         startedOperationId = operationId;
+        this.console.associatePlayroom(operationId, {
+          name: room.name,
+          playhouse: room.playhouse,
+          scopeRevision: selection.scopeRevision,
+        });
         this.notify.toast(`Starting "${room.name}" ...`, 'busy', operationId);
         // --no-wait keeps the call short; the list polls until the room is ready.
         return wailsApi.startPlayroom(operationId, {
@@ -261,6 +276,11 @@ export class PlayroomLifecycleService {
     try {
       await this.console.run(`Updating "${form.name}"`, (operationId) => {
         startedOperationId = operationId;
+        this.console.associatePlayroom(operationId, {
+          name: form.name,
+          playhouse: form.playhouse,
+          scopeRevision: selection.scopeRevision,
+        });
         this.notify.toast(`Updating "${form.name}" ...`, 'busy', operationId);
         return wailsApi.updatePlayroom(operationId, updateInputFor(form));
       });
@@ -293,6 +313,11 @@ export class PlayroomLifecycleService {
     try {
       await this.console.run(`Deleting "${room.name}"`, (operationId) => {
         startedOperationId = operationId;
+        this.console.associatePlayroom(operationId, {
+          name: room.name,
+          playhouse: room.playhouse,
+          scopeRevision: selection.scopeRevision,
+        });
         this.notify.toast(`Deleting "${room.name}" ...`, 'busy', operationId);
         return wailsApi.deletePlayroom(operationId, {
           Name: room.name,

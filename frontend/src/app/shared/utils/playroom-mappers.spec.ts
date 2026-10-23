@@ -59,6 +59,32 @@ describe('listingToRoom', () => {
     expect(listingToRoom({ ...base, CreatedAt: future }, 'ph').ageMin).toBe(0);
   });
 
+  it('preserves the reported creation date for the detail view', () => {
+    expect(listingToRoom({ ...base, CreatedAt: '2026-10-23T09:00:00Z' }, 'ph').createdAt).toBe(
+      '2026-10-23T09:00:00.000Z',
+    );
+  });
+
+  it.each([undefined, null, '', 'not-a-date', '0001-01-01T00:00:00Z'])(
+    'does not invent a creation date for %s',
+    (CreatedAt) => {
+      expect(listingToRoom({ ...base, CreatedAt }, 'ph').createdAt).toBeNull();
+    },
+  );
+
+  it('keeps individual port mappings without borrowing mutable listing objects', () => {
+    const ports = [
+      { Port: 80, TargetPort: 8080 },
+      { Port: 3000, TargetPort: 3000 },
+    ];
+    const room = listingToRoom({ ...base, Ports: ports }, 'ph');
+    expect(room.portForwards).toEqual(ports);
+    ports[0].TargetPort = 9000;
+    expect(room.portForwards?.[0].TargetPort).toBe(8080);
+    expect(listingToRoom(base, 'ph').portForwards).toBeUndefined();
+    expect(listingToRoom({ ...base, Ports: null }, 'ph').portForwards).toEqual([]);
+  });
+
   it('keeps the raw status only when it adds something to the mapped one', () => {
     // Ready and Stopped are self-explanatory; anything else is worth showing
     // verbatim, because that is where the detail lives.

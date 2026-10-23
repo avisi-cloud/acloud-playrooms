@@ -41,6 +41,10 @@ export function listingToRoom(listing: ListingDto, playhouse: string): Playroom 
     owner: listing.Owner || '',
     status: mapped,
     ageMin,
+    createdAt:
+      listing.CreatedAt && Number.isFinite(createdAt) && new Date(createdAt).getUTCFullYear() > 1
+        ? new Date(createdAt).toISOString()
+        : null,
     rawStatus: mapped === 'ready' || mapped === 'stopped' ? '' : listing.Status || '',
     disk: listing.DiskSize || '',
     diskType: listing.DiskType || 'persistent',
@@ -51,6 +55,10 @@ export function listingToRoom(listing: ListingDto, playhouse: string): Playroom 
     memReq: listing.MemRequest || '',
     memLim: listing.MemLimit || '',
     ports: renderPortForwards(listing.Ports),
+    portForwards:
+      listing.Ports === undefined
+        ? undefined
+        : (listing.Ports ?? []).map((forward) => ({ ...forward })),
     system: listing.System || '',
     capabilityProfile: listing.CapabilityProfile || '',
     capabilityAdditions: listing.CapabilityAdditions ?? [],
