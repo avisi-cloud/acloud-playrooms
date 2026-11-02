@@ -1,95 +1,167 @@
 <p-toast position="bottom-right" [breakpoints]="{ '720px': { width: '92vw' } }">
-  <ng-template let-message pTemplate="message">
-    <div
-      class="toast-body"
-      [class.toast-body--linked]="!!message.data?.operationId"
-      [attr.role]="message.data?.operationId ? 'button' : null"
-      [attr.tabindex]="message.data?.operationId ? 0 : null"
-      [attr.aria-description]="message.data?.operationId ? 'Open Activity for this command' : null"
-      (click)="openToastActivity(message.data?.operationId)"
-      (keydown.enter)="openToastActivity(message.data?.operationId)"
-      (keydown.space)="$event.preventDefault(); openToastActivity(message.data?.operationId)"
-    >
-      @if (message.summary) {
-        <!-- PrimeNG's own classes are kept so severity colouring still applies
+  <ng-template let-message let-closeFn="closeFn" pTemplate="headless">
+    <div class="p-toast-message-content toast-content" [appToastExpiry]="closeFn">
+      <i
+        class="pi p-toast-message-icon"
+        aria-hidden="true"
+        [class.pi-check-circle]="message.severity === 'success'"
+        [class.pi-exclamation-triangle]="message.severity === 'warn'"
+        [class.pi-times-circle]="message.severity === 'error'"
+        [class.pi-info-circle]="
+          message.severity !== 'success' &&
+          message.severity !== 'warn' &&
+          message.severity !== 'error'
+        "
+      ></i>
+      <div
+        class="toast-body"
+        [class.toast-body--linked]="!!message.data?.operationId"
+        [attr.role]="message.data?.operationId ? 'button' : null"
+        [attr.tabindex]="message.data?.operationId ? 0 : null"
+        [attr.aria-description]="
+          message.data?.operationId ? 'Open Activity for this command' : null
+        "
+        (click)="openToastActivity(message.data?.operationId)"
+        (keydown.enter)="openToastActivity(message.data?.operationId)"
+        (keydown.space)="$event.preventDefault(); openToastActivity(message.data?.operationId)"
+      >
+        @if (message.summary) {
+          <!-- PrimeNG's own classes are kept so severity colouring still applies
              to our replacement template. -->
-        <span class="p-toast-summary toast-summary">{{ message.summary }}</span>
-      }
-      <span class="p-toast-detail toast-detail">{{ message.detail }}</span>
-      <!-- The way out, when the CLI named one: "pass --force to act on it
+          <span class="p-toast-summary toast-summary">{{ message.summary }}</span>
+        }
+        <span class="p-toast-detail toast-detail">{{ message.detail }}</span>
+        <!-- The way out, when the CLI named one: "pass --force to act on it
            anyway" answers a different question than the failure above it, and
            reads as an instruction only when it is set apart from it. -->
-      @if (message.data?.remedy) {
-        <span class="toast-remedy">{{ message.data.remedy }}</span>
-      }
+        @if (message.data?.remedy) {
+          <span class="toast-remedy">{{ message.data.remedy }}</span>
+        }
+      </div>
+      <button
+        type="button"
+        class="p-toast-close-button"
+        aria-label="Dismiss notification"
+        (click)="closeFn($event)"
+      >
+        <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+      <span class="toast-progress" aria-hidden="true"></span>
     </div>
   </ng-template>
 </p-toast>
+<p-drawer
+  appOverlayFocus="Notifications"
+  [appOverlayVisible]="notify.historyVisible()"
+  [visible]="notify.historyVisible()"
+  (visibleChange)="notify.historyVisible.set($event)"
+  position="right"
+  header="Notifications"
+  ariaCloseLabel="Close notifications"
+  [style]="{ width: 'min(480px, 100vw)' }"
+  styleClass="av-drawer"
+  appendTo="body"
+>
+  <p class="notification-history-intro">Notifications from this session, newest first.</p>
+  @for (notification of notify.history(); track notification.id) {
+    <article class="notification-history-entry" [attr.data-severity]="notification.severity">
+      <div class="notification-history-meta">
+        <span>{{ notification.severityLabel }}</span>
+        <time [attr.datetime]="notification.createdAt.toISOString()">{{
+          notification.createdAt | date: 'HH:mm:ss'
+        }}</time>
+      </div>
+      @if (notification.summary) {
+        <h3>{{ notification.summary }}</h3>
+      }
+      <p>{{ notification.detail }}</p>
+      @if (notification.remedy) {
+        <p class="notification-history-remedy">{{ notification.remedy }}</p>
+      }
+      @if (notification.operationId) {
+        <button
+          type="button"
+          class="notification-history-activity"
+          (click)="notify.historyVisible.set(false); openToastActivity(notification.operationId)"
+        >
+          <i class="pi pi-list" aria-hidden="true"></i> Open Activity
+        </button>
+      }
+    </article>
+  } @empty {
+    <p class="notification-history-empty">No notifications yet.</p>
+  }
+</p-drawer>
 <app-cli-console />
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
-<div class="app-shell" [class.light]="state.theme() === 'light'">
+<div
+  class="app-shell"
+  [class.light]="state.theme() === 'light'"
+  [class.background-grain-disabled]="!state.backgroundGrain()"
+>
   <!-- ── Sidebar (always visible) ────────────────────────────────────── -->
   <aside class="sidebar">
     <div class="traffic-zone"></div>
 
-    <!-- Original Avisi Cloud robot from the website's Logo.tsx. Kept inline
+    @if (state.ameRobot()) {
+      <!-- Original Avisi Cloud robot from the website's Logo.tsx. Kept inline
          so its eyes and float share the app's motion preferences. -->
-    <div
-      class="sidebar-mascot"
-      [class.is-paused]="mascotMotionPaused()"
-      [class.is-celebrating]="mascotCelebrating()"
-      (animationend)="mascotCelebrating.set(false)"
-      aria-hidden="true"
-    >
-      <svg class="sidebar-mascot-robot" viewBox="0 0 100 100" fill="none" focusable="false">
-        <defs>
-          <linearGradient id="sidebar-helmet-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#2484E4" />
-            <stop offset="100%" stop-color="#0056A6" />
-          </linearGradient>
-          <linearGradient id="sidebar-visor-gradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#1D2C6B" />
-            <stop offset="100%" stop-color="#0D143D" />
-          </linearGradient>
-        </defs>
-        <path
-          d="M80 40C80 25 70 15 50 15C30 15 20 25 20 40V60C20 75 30 85 50 85C70 85 80 75 80 60V40Z"
-          fill="url(#sidebar-helmet-gradient)"
-          stroke="#1A6BBF"
-          stroke-width="2"
-        />
-        <path
-          d="M75 45C75 35 65 30 50 30C35 30 25 35 25 45V55C25 65 35 70 50 70C65 70 75 65 75 55V45Z"
-          fill="url(#sidebar-visor-gradient)"
-        />
-        <g class="sidebar-mascot-gaze">
-          <g class="sidebar-mascot-eyes" fill="white">
-            <rect x="35" y="40" width="8" height="20" rx="4" />
-            <rect x="57" y="40" width="8" height="20" rx="4" />
+      <div
+        class="sidebar-mascot"
+        [class.is-paused]="mascotMotionPaused()"
+        [class.is-celebrating]="mascotCelebrating()"
+        (animationend)="mascotCelebrating.set(false)"
+        aria-hidden="true"
+      >
+        <svg class="sidebar-mascot-robot" viewBox="0 0 100 100" fill="none" focusable="false">
+          <defs>
+            <linearGradient id="sidebar-helmet-gradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#2484E4" />
+              <stop offset="100%" stop-color="#0056A6" />
+            </linearGradient>
+            <linearGradient id="sidebar-visor-gradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1D2C6B" />
+              <stop offset="100%" stop-color="#0D143D" />
+            </linearGradient>
+          </defs>
+          <path
+            d="M80 40C80 25 70 15 50 15C30 15 20 25 20 40V60C20 75 30 85 50 85C70 85 80 75 80 60V40Z"
+            fill="url(#sidebar-helmet-gradient)"
+            stroke="#1A6BBF"
+            stroke-width="2"
+          />
+          <path
+            d="M75 45C75 35 65 30 50 30C35 30 25 35 25 45V55C25 65 35 70 50 70C65 70 75 65 75 55V45Z"
+            fill="url(#sidebar-visor-gradient)"
+          />
+          <g class="sidebar-mascot-gaze">
+            <g class="sidebar-mascot-eyes" fill="white">
+              <rect x="35" y="40" width="8" height="20" rx="4" />
+              <rect x="57" y="40" width="8" height="20" rx="4" />
+            </g>
           </g>
-        </g>
-        <path
-          d="M45 10H55C58 10 60 12 60 15V15C60 18 58 20 55 20H45C42 20 40 18 40 15V15C40 12 42 10 45 10Z"
-          fill="url(#sidebar-helmet-gradient)"
-          stroke="#1A6BBF"
-          stroke-width="2"
-        />
-        <path
-          d="M15 45C12 45 10 47 10 50V50C10 53 12 55 15 55H20V45H15Z"
-          fill="url(#sidebar-helmet-gradient)"
-          stroke="#1A6BBF"
-          stroke-width="2"
-        />
-        <path
-          d="M85 45C88 45 90 47 90 50V50C90 53 88 55 85 55H80V45H85Z"
-          fill="url(#sidebar-helmet-gradient)"
-          stroke="#1A6BBF"
-          stroke-width="2"
-        />
-      </svg>
-    </div>
-
+          <path
+            d="M45 10H55C58 10 60 12 60 15V15C60 18 58 20 55 20H45C42 20 40 18 40 15V15C40 12 42 10 45 10Z"
+            fill="url(#sidebar-helmet-gradient)"
+            stroke="#1A6BBF"
+            stroke-width="2"
+          />
+          <path
+            d="M15 45C12 45 10 47 10 50V50C10 53 12 55 15 55H20V45H15Z"
+            fill="url(#sidebar-helmet-gradient)"
+            stroke="#1A6BBF"
+            stroke-width="2"
+          />
+          <path
+            d="M85 45C88 45 90 47 90 50V50C90 53 88 55 85 55H80V45H85Z"
+            fill="url(#sidebar-helmet-gradient)"
+            stroke="#1A6BBF"
+            stroke-width="2"
+          />
+        </svg>
+      </div>
+    }
     <div class="sidebar-brand">
       <!-- Always the white mark: the sidebar keeps its brand background and
            light text in both themes, so there is no light-mode variant to
@@ -275,41 +347,36 @@
 
     <div class="sidebar-bottom">
       <div class="sidebar-footer">
-        <button
-          type="button"
-          class="activity-btn"
-          [class.running]="console.isRunning()"
-          [class.failed]="console.lastFailed() && !console.isRunning()"
-          [title]="activityTitle()"
-          (click)="console.toggle()"
-        >
-          @if (console.isRunning()) {
-            <i class="pi pi-spin pi-spinner activity-icon"></i>
-          } @else {
-            <i class="pi pi-list activity-icon"></i>
-          }
-          <span class="activity-label">Activity</span>
-          <span class="activity-state">{{ activityState() }}</span>
-        </button>
+        <div class="sidebar-utilities">
+          <button
+            type="button"
+            class="activity-btn"
+            [class.running]="console.isRunning()"
+            [class.failed]="console.lastFailed() && !console.isRunning()"
+            [title]="activityTitle()"
+            (click)="console.toggle()"
+          >
+            @if (console.isRunning()) {
+              <i class="pi pi-spin pi-spinner activity-icon"></i>
+            } @else {
+              <i class="pi pi-list activity-icon"></i>
+            }
+            <span class="activity-label">Activity</span>
+            <span class="activity-state">{{ activityState() }}</span>
+          </button>
 
-        <!-- Icon, label and state all describe the current theme. The icon used
-             to show the target while the label showed the state, so the two
-             halves of one row said opposite things. -->
-        <button
-          type="button"
-          class="theme-btn"
-          [title]="
-            state.theme() === 'dark' ? 'Dark mode — switch to light' : 'Light mode — switch to dark'
-          "
-          (click)="state.toggleTheme()"
-        >
-          <i
-            class="theme-icon"
-            [class]="state.theme() === 'dark' ? 'pi pi-moon theme-icon' : 'pi pi-sun theme-icon'"
-          ></i>
-          <span class="theme-label">{{ state.theme() === 'dark' ? 'Dark' : 'Light' }} mode</span>
-          <span class="theme-state">Switch</span>
-        </button>
+          <button
+            type="button"
+            class="activity-btn notifications-btn"
+            (click)="notify.historyVisible.set(true)"
+            [attr.aria-expanded]="notify.historyVisible()"
+            aria-haspopup="dialog"
+          >
+            <i class="pi pi-bell activity-icon" aria-hidden="true"></i>
+            <span class="activity-label">Notifications</span>
+            <span class="activity-state">{{ notify.history().length }}</span>
+          </button>
+        </div>
 
         <button
           type="button"

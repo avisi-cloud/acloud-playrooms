@@ -109,6 +109,12 @@ launcher passes that exact executable to acloud through the child process PATH;
 terminal connections receive the same choice without changing the user's shell
 configuration. A broken saved path is reported instead of choosing another binary.
 
+VS Code discovery also extends the acloud child process PATH when `code` is
+missing. It searches the standard Homebrew/MacPorts command directories and the
+VS Code app in `/Applications` and `~/Applications`. An existing `code` command
+keeps priority; the user's shell PATH is unchanged. Discovery is logged, and an
+absent installation keeps the CLI's normal missing-editor error.
+
 Settings also remembers an optional T3 Code app or command path in
 `gui-t3-code-path`. Desktop apps are found in Applications, including Homebrew's
 Beta and older Alpha bundle names. App metadata is checked without launching it;

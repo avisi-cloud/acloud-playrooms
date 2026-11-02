@@ -1,5 +1,5 @@
 /* The sidebar: brand, the three scope pickers, nav, tool statuses, and the
-   footer row of activity / theme / account.
+   footer controls for Activity, Notifications and account.
 
    Split out of app.css, which had grown to hold four unrelated things. Loaded
    through `styleUrls` on the App component, so it stays component-scoped — it
@@ -451,51 +451,12 @@
   flex-shrink: 0;
 }
 
-/* Footer: theme toggle + user */
+/* Footer controls and account */
 .sidebar-footer {
   padding: 8px 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.theme-btn {
-  width: 100%;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 6px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  text-align: left;
-  color: var(--side-tx);
-  font-family: var(--font-sans);
-  transition:
-    background 0.12s ease,
-    border-color 0.12s ease;
-}
-.theme-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(245, 247, 250, 0.16);
-}
-.theme-icon {
-  font-size: 11px;
-  color: var(--side-tx-2);
-  flex-shrink: 0;
-}
-.theme-label {
-  font-size: 11.5px;
-  flex: 1;
-  min-width: 0;
-}
-.theme-state {
-  font-size: 9.5px;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  color: var(--side-tx-3);
 }
 
 .account-btn {
@@ -629,4 +590,34 @@
 .sidebar-link.acloud-missing:hover {
   background: color-mix(in srgb, var(--bad-on-dark) 14%, transparent);
   color: var(--bad-on-dark);
+}
+
+.sidebar-utilities {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.sidebar-utilities .activity-btn {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 4px;
+  margin: 0;
+  padding: 8px 6px;
+}
+.sidebar-utilities .activity-icon {
+  grid-column: 1;
+  grid-row: 1;
+}
+.sidebar-utilities .activity-state {
+  grid-column: 2;
+  grid-row: 1;
+  text-align: right;
+  font-size: 8.5px;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.sidebar-utilities .activity-label {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  white-space: nowrap;
 }
