@@ -3,10 +3,16 @@ version: 2
 project_name: acloud-playrooms
 
 # Wails builds both native architectures, combines them, and signs the .app.
-# GoReleaser OSS then archives and publishes that complete bundle.
+# `make dmg` packages and verifies the DMG from that same bundle. GoReleaser
+# OSS then archives the bundle, checksums both downloads and publishes the
+# release.
 before:
   hooks:
-    - make package VERSION={{ .Version }}
+    # Writes the DMG to bin/, because GoReleaser requires dist/ to be empty
+    # until it has created it itself.
+    - make dmg VERSION={{ .Version }}
+    # The build regenerates the bindings, and a release must match the source.
+    - sh -c 'git diff --exit-code -- frontend/bindings || { echo "Commit the regenerated frontend/bindings first." >&2; exit 1; }'
 
 builds:
   - skip: true
@@ -25,13 +31,47 @@ archives:
 
 checksum:
   name_template: checksums.txt
-
-changelog:
-  disable: true
+  extra_files:
+    - glob: 'bin/{{ .ProjectName }}_{{ .Version }}_darwin_universal.dmg'
 
 release:
   github:
     owner: avisi-cloud
     name: acloud-playrooms
-  # Release Please owns the release notes; reruns only replace build artifacts.
-  mode: keep-existing
+  extra_files:
+    - glob: 'bin/{{ .ProjectName }}_{{ .Version }}_darwin_universal.dmg'
+  # Lets a retried tag replace the files of an earlier, failed attempt.
+  replace_existing_artifacts: true
+  # The alpha note replaces a pre-release flag, which would drop the release
+  # from /releases/latest, the page the README links to.
+  header: |
+    > **Alpha:** things may change or break between versions. Report problems or ideas in [GitHub issues](https://github.com/avisi-cloud/acloud-playrooms/issues).
+  footer: |
+    **Full Changelog**: https://github.com/avisi-cloud/acloud-playrooms/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+changelog:
+  use: github
+  sort: asc
+  groups:
+    - title: 'Breaking changes'
+      regexp: '^.*?\w+(\(.+\))?!:\s?.+$'
+      order: 0
+    - title: 'Features'
+      regexp: '^.*?feat(\(.+\))??!?:.+$'
+      order: 1
+    - title: 'Bug fixes'
+      regexp: '^.*?fix(\(.+\))??!?:.+$'
+      order: 2
+    - title: 'Documentation'
+      regexp: '^.*?docs(\(.+\))??!?:.+$'
+      order: 3
+    - title: 'Others'
+      order: 999
+  filters:
+    # Commit messages matching the regexp listed here will be removed from the changelog
+    exclude:
+      - '^Merge branch'
+      - '^.*?(test|style)(\(.+\))??!?:.+$'
+      - 'initial commit'
+      # Release commits from the former Release Please flow.
+      - '^chore\(main\): release '

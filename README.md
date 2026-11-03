@@ -79,7 +79,15 @@ and `acloud auth status`.
 
 ### 2. Install Acloud Playrooms
 
-Download the universal macOS DMG from the
+With Homebrew:
+
+```sh
+brew install --cask avisi-cloud/tools/acloud-playrooms
+```
+
+Update later with `brew upgrade --cask acloud-playrooms`.
+
+Or download the universal macOS DMG from the
 [latest release](https://github.com/avisi-cloud/acloud-playrooms/releases/latest),
 open it, and drag **Acloud Playrooms** onto **Applications** in the installer
 window. Eject the disk image after copying. The same
@@ -87,8 +95,9 @@ download supports Apple Silicon and Intel Macs running macOS 12 or later.
 The ZIP is also available if you prefer to copy the app manually.
 
 > [!NOTE]
-> Builds are currently ad-hoc signed, not Apple-notarized, so the app may need
-> approval in macOS Privacy & Security on first open.
+> Builds are currently ad-hoc signed, not Apple-notarized, so a downloaded app
+> may need approval in macOS Privacy & Security on first open. The Homebrew
+> cask removes the download quarantine from the installed app.
 > [Details and signing plans](doc/RELEASING.md#macos-signing-and-quarantine).
 
 ### 3. Open the app
@@ -218,10 +227,9 @@ working directory. `ACLOUD_BINARY` outranks the path set in the app's
 
 ## Releases and maintenance
 
-Merge a fix or feature, then review and merge the release PR created by
-**Release Please**. The pipeline builds a universal Mac app with Wails, packages
-it with GoReleaser, verifies it and uploads it to GitHub Releases. Homebrew updates
-are enabled when the optional Homebrew credential is configured.
+Push a version tag such as `v0.29.2` to release. The pipeline builds a universal
+Mac app with Wails, packages and publishes it to GitHub Releases with GoReleaser,
+verifies it and updates the Homebrew cask in `avisi-cloud/homebrew-tools`.
 **Renovate** prepares dependency update PRs for review.
 
 Maintainers: complete the [one-time GitHub setup](doc/RELEASING.md#one-time-github-setup)

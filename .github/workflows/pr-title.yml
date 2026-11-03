@@ -1,10 +1,10 @@
 name: Pull request title
 
-# Release Please computes the next version and the changelog from commit
-# subjects on main. Squash-merging makes the PR title that subject, so a title
-# it cannot parse silently costs a version bump: the change ships inside
-# whatever release comes next, with no changelog entry. Checking the title is
-# cheaper than noticing the gap afterwards.
+# GoReleaser groups the release notes by the Conventional Commit type of each
+# commit subject on main. Squash-merging makes the PR title that subject, so a
+# title it cannot parse lands under "Others" instead of Features or Bug fixes,
+# and a breaking change goes unflagged. Checking the title is cheaper than
+# editing the release notes afterwards.
 
 on:
   pull_request:
@@ -26,7 +26,7 @@ jobs:
           const pattern = /^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^)]+\))?!?: .+/;
           const title = process.env.PR_TITLE ?? '';
           if (pattern.test(title)) process.exit(0);
-          console.error(`This title cannot be read by Release Please:\n\n  ${title}\n`);
+          console.error(`This title cannot be grouped in the release notes:\n\n  ${title}\n`);
           // The colon is what gets left out: "feat(gui) AME-1234 ..." looks
           // conventional and parses as nothing.
           console.error('Use "<type>(<scope>): <summary>", for example:\n');

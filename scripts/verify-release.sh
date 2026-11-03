@@ -1,19 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Run after GoReleaser and generate-homebrew-cask.mjs. `make dmg`, GoReleaser's
+# first before hook, already mounts and verifies the DMG itself.
+cd "$(dirname "$0")/.."
 release_directory="$(pwd)/dist"
 verification_directory="$(mktemp -d)"
 trap 'rm -rf "$verification_directory"' EXIT
 
-cd "$release_directory"
-shasum -a 256 -c checksums.txt
+expected_version="$(node -p 'JSON.parse(require("node:fs").readFileSync("dist/metadata.json", "utf8")).version')"
+archive="acloud-playrooms_${expected_version}_darwin_universal.zip"
+disk_image="acloud-playrooms_${expected_version}_darwin_universal.dmg"
 
-archives=(acloud-playrooms_*_darwin_universal.zip)
-if [ "${#archives[@]}" -ne 1 ] || [ ! -f "${archives[0]}" ]; then
-  echo 'Expected exactly one universal macOS archive.' >&2
-  exit 1
-fi
-ditto -x -k "${archives[0]}" "$verification_directory"
+# Both downloads need exactly one checksum entry, and it must match.
+for file in "$archive" "$disk_image"; do
+  test "$(awk -v file="$file" '$2 == file { count++ } END { print count+0 }' "$release_directory/checksums.txt")" = 1
+done
+(cd "$release_directory" && grep -F "  $archive" checksums.txt | shasum -a 256 -c -)
+(cd bin && grep -F "  $disk_image" "$release_directory/checksums.txt" | shasum -a 256 -c -)
+
+ditto -x -k "$release_directory/$archive" "$verification_directory"
 app_bundle="$verification_directory/Acloud Playrooms.app"
 test -f "$verification_directory/LICENSE"
 test -f "$verification_directory/NOTICE"
@@ -22,17 +28,6 @@ plutil -lint "$app_bundle/Contents/Info.plist"
 lipo "$app_bundle/Contents/MacOS/Acloud Playrooms" -verify_arch arm64 x86_64
 codesign --verify --deep --strict "$app_bundle"
 
-expected_version="$(node -p 'JSON.parse(require("node:fs").readFileSync("metadata.json", "utf8")).version')"
 actual_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app_bundle/Contents/Info.plist")"
 test "$actual_version" = "$expected_version"
-ruby -c homebrew/acloud-playrooms.rb
-
-disk_images=(acloud-playrooms_*_darwin_universal.dmg)
-if [ "${#disk_images[@]}" -ne 1 ] || [ ! -f "${disk_images[0]}" ]; then
-  echo 'Expected exactly one universal macOS disk image.' >&2
-  exit 1
-fi
-test "${disk_images[0]}" = "acloud-playrooms_${expected_version}_darwin_universal.dmg"
-# Require an explicit checksum entry for the DMG as well as verifying its value.
-test "$(awk -v image="${disk_images[0]}" '$2 == image { count++ } END { print count+0 }' checksums.txt)" = 1
-bash ../scripts/verify-dmg.sh "${disk_images[0]}" "$expected_version"
+ruby -c "$release_directory/homebrew/acloud-playrooms.rb"
