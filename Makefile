@@ -5,11 +5,13 @@ GORELEASER ?= goreleaser
 LOCAL_ACLOUD ?= ../acloud/bin/acloud
 LOCAL_ACLOUD_ABS := $(abspath $(LOCAL_ACLOUD))
 
-# Use the top-level version maintained by Release Please, and pass it to Wails
-# so the app bundle and installer filename always agree.
+# Releases pass the tag's version. Local builds use the latest release tag, or
+# the version in build/config.yml without tags. Wails receives it so the app
+# bundle and installer filename always agree.
+TAG_VERSION := $(shell git describe --tags --abbrev=0 --match 'v[0-9]*' 2>/dev/null | sed 's/^v//')
 CONFIG_VERSION := $(shell awk -F':[[:space:]]*' '/^version:/ { gsub(/["[:space:]]/, "", $$2); print $$2; exit }' build/config.yml)
 ifeq ($(strip $(VERSION)),)
-VERSION := $(CONFIG_VERSION)
+VERSION := $(or $(TAG_VERSION),$(CONFIG_VERSION))
 endif
 COMMIT ?= $(shell git rev-parse HEAD)
 BUILD_DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
@@ -81,7 +83,6 @@ dmg: package
 
 release-snapshot:
 	$(GORELEASER) release --snapshot --clean
-	node scripts/package-release-dmg.mjs
 	node scripts/generate-homebrew-cask.mjs
 	bash scripts/verify-release.sh
 

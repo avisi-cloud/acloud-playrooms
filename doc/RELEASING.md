@@ -1,26 +1,31 @@
 # Releases and repository setup
 
-The normal release is **merge changes, review the generated release PR, merge it**.
-GitHub builds the application and attaches the download. It also updates Homebrew
-when the optional Homebrew credential is configured.
-No developer needs to build or upload the production app by hand.
+To release, push a version tag. GitHub Actions builds the app, publishes the
+GitHub Release with its downloads and release notes, and updates the Homebrew
+cask. Nobody builds or uploads the production app by hand.
+
+```sh
+git switch main && git pull
+git tag v0.29.2
+git push origin v0.29.2
+```
 
 ```mermaid
 flowchart TD
-    A[Merge a fix or feature into main] --> B[Release Please opens or updates a release PR]
-    B --> C[Review version and changelog]
-    C --> D[Merge the release PR]
-    D --> E[Release Please creates a tag and GitHub Release]
-    E --> F[Directly call publishing workflow: checks, build and tests]
-    F --> G[Wails builds Intel and Apple Silicon into one app]
-    G --> H[GoReleaser creates the ZIP and checksums]
-    H --> I[Create the branded DMG and add its checksum]
-    I --> V[Verify both packages and generate the cask]
-    V --> J[Upload release files]
-    J --> K{Homebrew credential configured?}
-    K -->|Yes| L[Update avisi-cloud/homebrew-tools]
-    K -->|No| M["Skip Homebrew; GitHub release is ready"]
+    A[Push a tag such as v0.29.2] --> B[Validate the tag and the Homebrew token]
+    B --> C[Checks, build and tests]
+    C --> D[Wails builds Intel and Apple Silicon into one app]
+    D --> E[Create and verify the branded DMG]
+    E --> F[GoReleaser creates the ZIP and checksums]
+    F --> G[GoReleaser publishes the GitHub Release and its notes]
+    G --> H[Generate and verify the cask]
+    H --> I[Update avisi-cloud/homebrew-tools]
 ```
+
+Pick the version from the commits since the last tag. While the app is below
+1.0, features and fixes bump the patch version; breaking changes bump the minor
+version. Only stable tags such as `v0.29.2` publish; the workflow rejects other
+`v*` tags. Tag a commit on `main` that has passed its checks.
 
 ## One-time GitHub setup
 
@@ -29,76 +34,68 @@ flowchart TD
 2. Install or enable the [Renovate GitHub app](https://github.com/apps/renovate)
    for this repository. `renovate.json` controls dependency update PRs; merely
    committing the file does not activate the app.
-3. Enable **Allow GitHub Actions to create and approve pull requests** under
-   **Settings > Actions > General**. An organisation admin may need to allow this.
-4. Require the `Conventional Commit title`, `Frontend checks` and
+3. Require the `Conventional Commit title`, `Frontend checks` and
    `macOS checks and release rehearsal` checks in the branch rules for `main`.
    Branch rules need a public repository or a paid plan; until then these run on
    every pull request but cannot be enforced.
-5. Optionally configure the Homebrew secret below in
-   **Settings > Secrets and variables > Actions**. This can be done later.
+4. Configure the Homebrew secret below in
+   **Settings > Secrets and variables > Actions**, before the first release.
 
 | Secret                        | Repository access            | Fine-grained token permissions |
 | ----------------------------- | ---------------------------- | ------------------------------ |
 | `HOMEBREW_TOOLS_GITHUB_TOKEN` | `avisi-cloud/homebrew-tools` | Contents: read/write           |
 
-Use an organisation-approved automation account for the Homebrew token. The
-secret has the same name as in `acloud-toolkit`. Organisation policies may require
-approval of the tokens or permission for the automation account to push to the tap.
+`acloud-toolkit` uses a secret with the same name, so you can reuse its token.
+Use an organisation-approved automation account for it. Organisation policies
+may require approval of the token or permission for the account to push to the
+tap. As in `acloud-toolkit`, the workflow checks the token first and fails
+before building when it is missing or cannot read the tap.
 
-Release Please and release uploads use GitHub's automatically provided
-`GITHUB_TOKEN`. No `RELEASE_PLEASE_TOKEN` or personal release token is needed.
-When Release Please creates a release, its dependent job calls the reusable
-publishing workflow directly with the new tag. This does not rely on the tag
-starting another workflow, which GitHub suppresses for built-in-token pushes.
-
-On a generated release PR, use **Approve workflows to run** if GitHub requests
-approval, then wait for the required checks before merging. See
-[GitHub's workflow-trigger rules](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
-
-The publishing job uses the built-in `GITHUB_TOKEN` for release uploads and the
-separate Homebrew token only when checking out and updating the tap. Without it,
-the DMG, ZIP, checksums and generated cask are still published to GitHub; the workflow
-summary notes that the tap update was skipped. Add the secret later to enable
-tap updates for subsequent releases. A configured but invalid token still fails
-the Homebrew step so credential problems are not silently ignored.
+The release itself uses the `GITHUB_TOKEN` that GitHub provides, so you need
+no personal release token. A tag that a person pushes starts the workflow. A tag
+that another workflow pushes with `GITHUB_TOKEN` does not, because GitHub
+suppresses those [workflow triggers](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow).
 
 ## What each tool does
 
 | Tool                         | Responsibility                                                                   |
 | ---------------------------- | -------------------------------------------------------------------------------- |
-| Release Please               | Version proposal, changelog, release tag and GitHub Release                      |
 | Wails                        | Bindings, frontend build, native Go build, universal binary and `.app` packaging |
-| GoReleaser v2 OSS            | Release archive, SHA-256 checksums and build metadata                            |
 | `create-dmg`                 | Branded drag-to-Applications disk image with the same universal app              |
-| `package-release-dmg.mjs`    | Package the release DMG and add its SHA-256 to the shared checksum file          |
+| GoReleaser v2 OSS            | ZIP archive, SHA-256 checksums, release notes and the GitHub Release             |
 | `generate-homebrew-cask.mjs` | An app cask using the archive's actual SHA-256                                   |
-| GitHub Actions               | Checks, artifact verification, upload and Homebrew update                        |
+| GitHub Actions               | Tag trigger, checks, artifact verification and Homebrew update                   |
 | Renovate                     | Dependency update PRs; no automatic merging                                      |
 
-Wails already supplies `darwin:package:universal`, so we reuse it through
-`make package`. GoReleaser's build stage is skipped because Wails has already
-compiled the application. GoReleaser OSS's standard cask generator targets
-binaries; its dedicated `app` support requires Pro. A small local generator
-produces the Homebrew `app` stanza without a paid dependency. See the
-[GoReleaser cask documentation](https://goreleaser.com/customization/homebrew_casks/).
+`.goreleaser.yaml` follows `acloud-toolkit`. GoReleaser creates the release for
+a tag and writes its notes from the commits since the previous tag, grouped by
+Conventional Commit type. This app is a Wails `.app` rather than a Go CLI, so two
+things differ:
+
+- `.goreleaser.yaml` skips GoReleaser's build stage. Its `before` hook runs
+  `make dmg`, which builds the universal app through Wails's
+  `darwin:package:universal` and packages the DMG. GoReleaser archives that
+  bundle and adds the DMG to the checksums and the release.
+- `generate-homebrew-cask.mjs` writes the cask instead of GoReleaser's
+  `homebrew_casks`. In GoReleaser OSS that section only installs binaries, and
+  the `app` stanza a `.app` needs is a
+  [GoReleaser Pro feature](https://goreleaser.com/customization/homebrew_casks/).
+  The workflow pushes the generated cask to `Casks/acloud-playrooms.rb` in the
+  same tap as `acloud-toolkit`.
 
 ## Versioning
 
-The initial baseline is `0.28.0`, matching `build/config.yml`.
-Release Please updates both its manifest and `build/config.yml` in each release
-PR. The `x-release-please-version` marker preserves the Wails configuration's
-comments and formatting. Release Please also creates or updates `CHANGELOG.md`;
-this generated file is intentionally excluded from Prettier checks.
+The tag is the version. Release builds use it for both bundle version fields
+before signing, and for the download filenames. Local `make` builds default to
+the latest release tag, or to the version in `build/config.yml` when no tags are
+fetched. The sidebar's acloud version describes the separately installed CLI,
+not the GUI.
 
-Release builds use the tag-derived version for both bundle version fields before
-signing. Local `make package` uses the version in `build/config.yml` by default.
-The sidebar's acloud version describes the separately installed CLI, not the GUI.
-
-Use [Conventional Commit titles](../CONTRIBUTING.md#pull-request-titles). During
-the `0.x` phase, fixes and features increment the patch; breaking changes
-increment the minor. Stable releases use tags such as `v0.28.1`; this pipeline
-does not publish prereleases to the shared Homebrew cask.
+Release notes come from the commit subjects, so use
+[Conventional Commit titles](../CONTRIBUTING.md#pull-request-titles).
+`CHANGELOG.md` lists the releases up to 0.29.1, which Release Please made.
+Later notes are on the GitHub Releases page. This pipeline does not
+publish prereleases to the shared Homebrew cask.
 
 ## Try a release locally
 
@@ -110,17 +107,18 @@ brew install create-dmg
 make release-snapshot
 ```
 
-This produces a branded DMG, a ZIP, checksums, and a generated cask under `dist/`.
-Both downloads contain the same universal `.app`; Homebrew continues to use the
-ZIP. Verification checks both checksums, bundle metadata, both CPU architectures,
+This produces a branded DMG under `bin/`, and a ZIP, checksums and a generated
+cask under `dist/`. Both downloads contain the same universal `.app`; Homebrew
+uses the ZIP. Verification checks both checksums, bundle metadata, both CPU architectures,
 ad-hoc signatures, and cask syntax. It mounts the DMG read-only and checks its
 Applications shortcut, artwork, legal notices, and persisted Finder layout,
 then detaches it. Nothing is published.
 Snapshot casks are for inspection; their download URLs are not published releases.
 
-GitHub runs the same rehearsal for pull requests. It also verifies generated
-bindings are committed, runs Go vet and race tests, and runs the frontend's
-formatter, linter, production build and tests.
+The build also fails when the regenerated `frontend/bindings` differ from what
+is committed. GitHub runs the same rehearsal for pull requests, and also runs Go
+vet and race tests and the frontend's formatter, linter, production build and
+tests.
 
 ## Change the app icon
 
@@ -188,16 +186,14 @@ avoid reopening an older mounted build.
 ## Retry a release
 
 Open **Actions > Publish release > Run workflow** and enter an existing stable
-tag, for example `v0.28.1`. The job checks out that tag, repeats validation, and
-replaces its release assets. It updates the Homebrew cask only when its content
-changes and the Homebrew credential is configured. The GitHub Release must already
-exist; Release Please creates it. This also lets you publish an existing release
-to Homebrew after adding the credential.
+tag, for example `v0.29.2`. The job checks out that tag, repeats validation and
+the build, and replaces the release's files. GoReleaser keeps release notes
+that already exist. It updates the Homebrew cask only when its content changes.
 
-A release becomes visible before the build completes, so a new release may
-briefly have no downloads. If packaging or upload fails, retry that tag after
-resolving the cause. If the source itself needs a fix, merge the fix and make a
-new release instead of moving the old tag.
+GoReleaser publishes the release before the workflow updates the cask. If a
+step after that fails, retry the tag after resolving the cause. If
+the source itself needs a fix, merge the fix and tag a new version instead of
+moving the old tag.
 
 ## macOS signing and quarantine
 
