@@ -31,6 +31,7 @@ const cask = `cask "acloud-playrooms" do
   homepage "https://github.com/avisi-cloud/acloud-playrooms"
 
   depends_on macos: ">= :monterey"
+  depends_on cask: "avisi-cloud/tools/acloud"
 
   app "Acloud Playrooms.app"
 
@@ -45,9 +46,8 @@ const cask = `cask "acloud-playrooms" do
     This app is in alpha: things may change or break between versions.
     Report problems or ideas at https://github.com/avisi-cloud/acloud-playrooms/issues
 
-    Requires the acloud CLI and an Acloud account.
-    Install the CLI with: brew install --cask avisi-cloud/tools/acloud
-    Then sign in with: acloud auth login
+    Requires an Acloud account. Homebrew installed the acloud CLI with this app.
+    Sign in with: acloud auth login
   EOS
 end
 `;
