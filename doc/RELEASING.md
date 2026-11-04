@@ -201,8 +201,8 @@ The current app is **ad-hoc signed**, not signed with an Apple Developer ID and
 not notarized by Apple. The same distinction applies whether the code is public
 or private: publishing source does not establish a trusted macOS signature.
 
-The cask's `postflight` runs `xattr -dr com.apple.quarantine` only on the installed
-`Acloud Playrooms.app`. This adapts the workaround used by `acloud-toolkit` to
+The cask's `postflight_steps` run `xattr -dr com.apple.quarantine` only on the
+installed `Acloud Playrooms.app`. This adapts the workaround used by `acloud-toolkit` to
 an application bundle. It removes the download quarantine marker for Homebrew
 installs; it does not make the app Apple-approved, and other device policies may
 still block it. Nothing disables Gatekeeper globally.

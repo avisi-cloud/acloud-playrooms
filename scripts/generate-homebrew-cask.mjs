@@ -30,16 +30,15 @@ const cask = `cask "acloud-playrooms" do
   desc "Desktop interface for Acloud AI development environments"
   homepage "https://github.com/avisi-cloud/acloud-playrooms"
 
-  depends_on macos: ">= :monterey"
+  depends_on macos: :monterey
   depends_on cask: "avisi-cloud/tools/acloud"
 
   app "Acloud Playrooms.app"
 
   # This app is ad-hoc signed, but not Apple-notarized.
   # Remove quarantine only from this installed app, as in acloud-toolkit.
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", "#{appdir}/Acloud Playrooms.app"]
+  postflight_steps do
+    run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{appdir}}/Acloud Playrooms.app"]
   end
 
   caveats <<~EOS
