@@ -23,6 +23,10 @@
   flex-direction: column;
 }
 
+.app-shell.background-grain-disabled .main-panel {
+  background-image: none;
+}
+
 /* ── The brand mark ───────────────────────────────────────────────────────
    Two layers cut to the same silhouette, bleeding off the bottom-right corner
    and cropped by the panel:

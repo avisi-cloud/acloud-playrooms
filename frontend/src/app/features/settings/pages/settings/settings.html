@@ -24,6 +24,60 @@
   </header>
   <div class="page-body app-settings-body">
     <div class="app-settings-column">
+      <section class="appearance-settings" aria-labelledby="appearance-title">
+        <h2 class="settings-section-title" id="appearance-title">Appearance</h2>
+        <p class="settings-section-description">
+          Changes apply immediately and are saved on this device.
+        </p>
+        <fieldset class="field-group theme-field" aria-describedby="theme-hint">
+          <legend class="field-label">Theme</legend>
+          <div class="theme-options">
+            @for (option of themeOptions; track option.value) {
+              <label
+                class="theme-option"
+                [class.is-selected]="state.themePreference() === option.value"
+              >
+                <input
+                  type="radio"
+                  name="theme"
+                  [value]="option.value"
+                  [checked]="state.themePreference() === option.value"
+                  (change)="state.setThemePreference(option.value)"
+                />
+                <i class="pi" [class]="option.icon" aria-hidden="true"></i>
+                <span>{{ option.label }}</span>
+              </label>
+            }
+          </div>
+          <p class="field-hint" id="theme-hint">
+            System follows your computer’s light or dark mode.
+          </p>
+        </fieldset>
+        <div class="field-group">
+          <label class="field-label" for="background-grain">Background grain</label>
+          <div class="appearance-toggle">
+            <p-toggleswitch
+              inputId="background-grain"
+              [ngModel]="state.backgroundGrain()"
+              (ngModelChange)="state.setBackgroundGrain($event)"
+            />
+            <span>{{ state.backgroundGrain() ? 'On' : 'Off' }}</span>
+          </div>
+          <p class="field-hint">Adds a subtle texture to the app background.</p>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="ame-robot">AME Robot</label>
+          <div class="appearance-toggle">
+            <p-toggleswitch
+              inputId="ame-robot"
+              [ngModel]="state.ameRobot()"
+              (ngModelChange)="state.setAmeRobot($event)"
+            />
+            <span>{{ state.ameRobot() ? 'On' : 'Off' }}</span>
+          </div>
+          <p class="field-hint">Shows the animated robot in the sidebar.</p>
+        </div>
+      </section>
       <h2 class="settings-section-title">Tool paths</h2>
       <p class="settings-section-description">
         Detected automatically. Set a path when you want to use a specific installation.

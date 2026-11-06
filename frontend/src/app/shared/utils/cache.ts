@@ -8,6 +8,8 @@ export const defaultCache: CacheState = {
   lastEditor: 'vscode',
   lastTerminal: 'terminal',
   lastTheme: 'dark',
+  backgroundGrain: true,
+  ameRobot: true,
   createPlayroomMode: 'easy',
   setupCompleted: false,
 };

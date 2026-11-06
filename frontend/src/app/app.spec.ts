@@ -23,6 +23,31 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
+  it('updates the background grain class in both themes', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const shell = (fixture.nativeElement as HTMLElement).querySelector('.app-shell')!;
+
+    try {
+      expect(shell.classList.contains('background-grain-disabled')).toBe(false);
+
+      fixture.componentInstance.state.setBackgroundGrain(false);
+      fixture.detectChanges();
+      expect(shell.classList.contains('background-grain-disabled')).toBe(true);
+
+      fixture.componentInstance.state.setThemePreference('light');
+      fixture.detectChanges();
+      expect(shell.classList.contains('light')).toBe(true);
+      expect(shell.classList.contains('background-grain-disabled')).toBe(true);
+
+      fixture.componentInstance.state.setBackgroundGrain(true);
+      fixture.detectChanges();
+      expect(shell.classList.contains('background-grain-disabled')).toBe(false);
+    } finally {
+      localStorage.clear();
+    }
+  });
+
   it('has separate sidebar links for Defaults and Settings', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
@@ -35,6 +60,42 @@ describe('App', () => {
     expect(
       [...links].find((link) => link.textContent?.includes('Settings'))?.getAttribute('href'),
     ).toBe('/settings');
+  });
+
+  it('keeps Activity and Notifications together without a sidebar theme button', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.theme-btn')).toBeNull();
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('.sidebar-utilities button')];
+    expect(buttons).toHaveLength(2);
+    expect(buttons[0].textContent).toContain('Activity');
+    expect(buttons[1].textContent).toContain('Notifications');
+    const openActivity = vi.spyOn(fixture.componentInstance.console, 'toggle');
+    buttons[0].click();
+    expect(openActivity).toHaveBeenCalledOnce();
+    buttons[1].click();
+    expect(fixture.componentInstance.notify.historyVisible()).toBe(true);
+    vi.restoreAllMocks();
+  });
+
+  it('removes and restores the AME Robot immediately', async () => {
+    const fixture = TestBed.createComponent(App);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    try {
+      expect(root.querySelector('.sidebar-mascot')).not.toBeNull();
+      fixture.componentInstance.state.setAmeRobot(false);
+      fixture.detectChanges();
+      expect(root.querySelector('.sidebar-mascot')).toBeNull();
+      TestBed.inject(ToastService).toast('Created', 'ok', 'operation');
+      expect(fixture.componentInstance.mascotCelebrating()).toBe(false);
+      fixture.componentInstance.state.setAmeRobot(true);
+      fixture.detectChanges();
+      expect(root.querySelector('.sidebar-mascot')).not.toBeNull();
+    } finally {
+      localStorage.clear();
+    }
   });
 
   it('should render title', async () => {
@@ -91,6 +152,78 @@ describe('App', () => {
 
   describe('notification banners', () => {
     afterEach(() => vi.restoreAllMocks());
+
+    it('expires even a hovered failure after five seconds and keeps its history', async () => {
+      const fixture = TestBed.createComponent(App);
+      await fixture.whenStable();
+      vi.useFakeTimers();
+      try {
+        const notify = TestBed.inject(ToastService);
+        notify.failure('Could not open editor', 'Editor missing', 'operation');
+        fixture.detectChanges();
+        const banner = document.querySelector<HTMLElement>('.p-toast-message')!;
+        expect(banner).not.toBeNull();
+        banner.dispatchEvent(new MouseEvent('mouseenter'));
+        vi.advanceTimersByTime(4999);
+        fixture.detectChanges();
+        expect(document.querySelector('.toast-body')).not.toBeNull();
+        vi.advanceTimersByTime(1);
+        fixture.detectChanges();
+        expect(document.querySelector('.toast-body')).toBeNull();
+        expect(notify.history()[0].summary).toBe('Could not open editor');
+      } finally {
+        fixture.destroy();
+        vi.useRealTimers();
+      }
+    });
+
+    it('opens notification history from the sidebar and links failures back to Activity', async () => {
+      const fixture = TestBed.createComponent(App);
+      await fixture.whenStable();
+      const root = fixture.nativeElement as HTMLElement;
+      root.querySelector<HTMLButtonElement>('.notifications-btn')!.click();
+      await fixture.whenStable();
+      expect(document.querySelector('.notification-history-empty')?.textContent).toContain(
+        'No notifications yet',
+      );
+      const notify = TestBed.inject(ToastService);
+      notify.failure('Could not open editor', 'Editor missing; install VS Code', 'operation');
+      TestBed.inject(MessageService).clear();
+      await fixture.whenStable();
+      expect(document.querySelector('.notification-history-entry')?.textContent).toContain(
+        'Install VS Code',
+      );
+      const openActivity = vi.spyOn(fixture.componentInstance.console, 'open');
+      document.querySelector<HTMLButtonElement>('.notification-history-activity')!.click();
+      await fixture.whenStable();
+      expect(openActivity).toHaveBeenCalledWith('operation');
+      expect(notify.historyVisible()).toBe(false);
+    });
+
+    it('gives each notification its own five seconds without removing newer messages', async () => {
+      const fixture = TestBed.createComponent(App);
+      await fixture.whenStable();
+      vi.useFakeTimers();
+      try {
+        const notify = TestBed.inject(ToastService);
+        notify.toast('First warning', 'warn');
+        fixture.detectChanges();
+        vi.advanceTimersByTime(3000);
+        notify.toast('Second warning', 'warn');
+        fixture.detectChanges();
+        vi.advanceTimersByTime(2000);
+        fixture.detectChanges();
+        const banners = [...document.querySelectorAll('.toast-detail')];
+        expect(banners.map((banner) => banner.textContent)).toEqual(['Second warning']);
+        vi.advanceTimersByTime(3000);
+        fixture.detectChanges();
+        expect(document.querySelector('.toast-body')).toBeNull();
+        expect(notify.history()).toHaveLength(2);
+      } finally {
+        fixture.destroy();
+        vi.useRealTimers();
+      }
+    });
 
     it('opens Activity from the banner with Enter or Space and keeps dismissal separate', async () => {
       const fixture = TestBed.createComponent(App);

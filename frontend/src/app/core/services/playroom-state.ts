@@ -1,5 +1,5 @@
-import { Injectable, signal } from '@angular/core';
-import { Playroom, Theme } from '../../shared/models';
+import { DestroyRef, Injectable, inject, signal } from '@angular/core';
+import { Playroom, Theme, ThemePreference } from '../../shared/models';
 import { readCache, updateCache } from '../../shared/utils';
 
 export interface PlayroomSelection {
@@ -14,6 +14,10 @@ export class PlayroomStateService {
   private readonly _user = signal<string>('');
   private readonly _loggedIn = signal<boolean>(false);
   private readonly _theme = signal<Theme>('dark');
+  private readonly _themePreference = signal<ThemePreference>('dark');
+  private readonly systemDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+  private readonly _backgroundGrain = signal<boolean>(true);
+  private readonly _ameRobot = signal<boolean>(true);
   private readonly _roomsCount = signal<number>(0);
   private readonly _rooms = signal<Playroom[]>([]);
   private readonly _roomsLoadedFor = signal<string | null>(null);
@@ -24,6 +28,9 @@ export class PlayroomStateService {
   readonly user = this._user.asReadonly();
   readonly loggedIn = this._loggedIn.asReadonly();
   readonly theme = this._theme.asReadonly();
+  readonly themePreference = this._themePreference.asReadonly();
+  readonly backgroundGrain = this._backgroundGrain.asReadonly();
+  readonly ameRobot = this._ameRobot.asReadonly();
   readonly roomsCount = this._roomsCount.asReadonly();
   readonly rooms = this._rooms.asReadonly();
 
@@ -41,10 +48,16 @@ export class PlayroomStateService {
 
   constructor() {
     const cache = readCache();
+    this._backgroundGrain.set(cache.backgroundGrain);
+    this._ameRobot.set(cache.ameRobot);
     if (cache.lastPlayhouse) this._playhouse.set(cache.lastPlayhouse);
-    const theme = cache.lastTheme ?? 'dark';
-    this._theme.set(theme);
-    this.applyDarkMode(theme);
+    this._themePreference.set(cache.lastTheme);
+    this.applyThemePreference();
+    const onSystemThemeChange = () => this.applyThemePreference();
+    this.systemDarkMode.addEventListener('change', onSystemThemeChange);
+    inject(DestroyRef).onDestroy(() =>
+      this.systemDarkMode.removeEventListener('change', onSystemThemeChange),
+    );
   }
 
   selectPlayhouse(slug: string): void {
@@ -100,14 +113,27 @@ export class PlayroomStateService {
     );
   }
 
-  toggleTheme(): void {
-    const next: Theme = this._theme() === 'dark' ? 'light' : 'dark';
-    this._theme.set(next);
-    this.applyDarkMode(next);
-    updateCache({ lastTheme: next });
+  setThemePreference(themePreference: ThemePreference): void {
+    this._themePreference.set(themePreference);
+    this.applyThemePreference();
+    updateCache({ lastTheme: themePreference });
   }
 
-  private applyDarkMode(theme: Theme): void {
+  setBackgroundGrain(backgroundGrain: boolean): void {
+    this._backgroundGrain.set(backgroundGrain);
+    updateCache({ backgroundGrain });
+  }
+
+  setAmeRobot(ameRobot: boolean): void {
+    this._ameRobot.set(ameRobot);
+    updateCache({ ameRobot });
+  }
+
+  private applyThemePreference(): void {
+    const themePreference = this._themePreference();
+    const systemTheme: Theme = this.systemDarkMode.matches ? 'dark' : 'light';
+    const theme = themePreference === 'system' ? systemTheme : themePreference;
+    this._theme.set(theme);
     document.documentElement.classList.toggle('app-dark', theme === 'dark');
   }
 }

@@ -15,6 +15,9 @@ import { MenuItem, MessageService } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
 import { PopoverModule } from 'primeng/popover';
 import { ToastModule } from 'primeng/toast';
+import { DrawerModule } from 'primeng/drawer';
+import { OverlayFocusDirective } from './shared/directives';
+import { ToastExpiryDirective } from './shared/directives/toast-expiry';
 import { ToolStatus } from './shared/models';
 import { RELEASE_STAGE, SETUP_STEP_QUERY_PARAM } from './shared/data';
 import { CliConsoleComponent } from './shared/components';
@@ -54,6 +57,9 @@ const PLAYHOUSE_MENU_MAX = 5;
     RouterLinkActive,
     CommonModule,
     ToastModule,
+    DrawerModule,
+    OverlayFocusDirective,
+    ToastExpiryDirective,
     MenuModule,
     PopoverModule,
     CliConsoleComponent,
@@ -74,7 +80,7 @@ export class App implements OnInit {
   private readonly setup = inject(SetupService);
   private readonly windowChrome = inject(WindowChromeService);
   private readonly router = inject(Router);
-  private readonly notify = inject(ToastService);
+  readonly notify = inject(ToastService);
 
   private readonly _shellBusy = signal<boolean>(false);
   private busyStartedAt = 0;
@@ -110,12 +116,16 @@ export class App implements OnInit {
         const messages = Array.isArray(message) ? message : [message];
         if (
           !document.hidden &&
+          this.state.ameRobot() &&
           messages.some((entry) => entry.severity === 'success' && entry.data?.operationId)
         )
           this.mascotCelebrating.set(true);
       });
     inject(DestroyRef).onDestroy(() => {
       if (this.busyRelease) clearTimeout(this.busyRelease);
+    });
+    effect(() => {
+      if (!this.state.ameRobot()) this.mascotCelebrating.set(false);
     });
     effect(() => {
       const busy = this.pageLoading.active() || this.console.isRunning();

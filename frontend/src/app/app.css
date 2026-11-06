@@ -40,3 +40,7 @@
   background: url('/brand/grain.png') 0 0 / 128px 128px repeat;
   opacity: 0.4;
 }
+
+.app-shell.background-grain-disabled::before {
+  display: none;
+}
