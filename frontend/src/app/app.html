@@ -93,6 +93,7 @@
   }
 </p-drawer>
 <app-cli-console />
+<app-playhouse-chooser [(visible)]="showPlayhouseChooser" />
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
 <div
@@ -101,7 +102,7 @@
   [class.background-grain-disabled]="!state.backgroundGrain()"
 >
   <!-- ── Sidebar (always visible) ────────────────────────────────────── -->
-  <aside class="sidebar">
+  <aside class="sidebar app-dark">
     <div class="traffic-zone"></div>
 
     @if (state.ameRobot()) {
@@ -227,60 +228,40 @@
       </div>
     </div>
 
-    <!-- Scrolls instead of clipping: the tool list comes from the backend and
-         the window can be as short as 600px. -->
+    <!-- Navigation scrolls independently in short windows; utilities stay below it. -->
     <div class="sidebar-scroll">
-      <div class="sidebar-section">
-        <div class="sidebar-label">Context</div>
-        <button
-          class="scope-btn"
-          [disabled]="scope.switching()"
-          (click)="contextMenu.toggle($event)"
-        >
-          <span class="scope-slug">{{ scope.currentContext() || 'No context' }}</span>
-          @if (scope.switching()) {
-            <i class="pi pi-spin pi-spinner scope-chevron"></i>
-          } @else {
-            <i class="pi pi-chevron-down scope-chevron"></i>
+      <button
+        type="button"
+        pButton
+        severity="secondary"
+        [outlined]="true"
+        class="current-playhouse"
+        aria-haspopup="dialog"
+        [attr.aria-expanded]="showPlayhouseChooser"
+        (click)="showPlayhouseChooser = true"
+      >
+        <span class="playhouse-mark"><i class="pi pi-server" aria-hidden="true"></i></span>
+        <span class="playhouse-identity">
+          <span class="playhouse-caption">Playhouse</span>
+          <span class="playhouse-name">{{ state.playhouse() || 'Choose a playhouse' }}</span>
+          @if (scope.currentOrganisation()) {
+            <span class="playhouse-organisation">{{ scope.currentOrganisation() }}</span>
           }
-        </button>
-        <p-menu #contextMenu [model]="contextMenuItems()" [popup]="true" appendTo="body" />
-      </div>
+          <span class="switch-label">{{
+            state.playhouse() ? 'Switch playhouse' : 'Find your workspace'
+          }}</span>
+        </span>
+        <i class="pi pi-angle-right switch-chevron" aria-hidden="true"></i>
+      </button>
 
-      <div class="sidebar-section">
-        <div class="sidebar-label">Organisation</div>
-        <button class="scope-btn" [disabled]="scope.switching()" (click)="orgMenu.toggle($event)">
-          <span class="scope-slug">{{ scope.currentOrganisation() || 'No organisation' }}</span>
-          @if (scope.switching()) {
-            <i class="pi pi-spin pi-spinner scope-chevron"></i>
-          } @else {
-            <i class="pi pi-chevron-down scope-chevron"></i>
-          }
-        </button>
-        <p-menu #orgMenu [model]="organisationMenuItems()" [popup]="true" appendTo="body" />
-      </div>
+      @if (dummyMode) {
+        <div class="dummy-mode-note">
+          <p-tag value="Dummy data" severity="warn" icon="pi pi-flask" />
+          <span>Local preview · resets on reload</span>
+        </div>
+      }
 
-      <!-- Third in the same hierarchy as context and organisation, so it is the
-           same control: a menu of what you can switch to, not a link to another
-           screen. The screen is still there, one item down the list. -->
-      <div class="sidebar-section">
-        <div class="sidebar-label">Playhouse</div>
-        <button
-          class="scope-btn"
-          [disabled]="scope.switching()"
-          (click)="openPlayhouseMenu($event, playhouseMenu)"
-        >
-          <span class="scope-slug">{{ state.playhouse() || 'Select playhouse' }}</span>
-          @if (scope.loadingPlayhouses()) {
-            <i class="pi pi-spin pi-spinner scope-chevron"></i>
-          } @else {
-            <i class="pi pi-chevron-down scope-chevron"></i>
-          }
-        </button>
-        <p-menu #playhouseMenu [model]="playhouseMenuItems()" [popup]="true" appendTo="body" />
-      </div>
-
-      <nav class="sidebar-nav">
+      <nav class="sidebar-nav" aria-label="Workspace">
         <a
           class="sidebar-link"
           routerLink="/rooms"
@@ -293,6 +274,10 @@
             <span class="sidebar-badge">{{ state.roomsCount() }}</span>
           }
         </a>
+      </nav>
+
+      <nav class="sidebar-nav preferences-nav" aria-label="Preferences">
+        <div class="sidebar-label nav-label">Preferences</div>
         <a
           class="sidebar-link"
           routerLink="/defaults"
@@ -326,26 +311,44 @@
 
         <div class="sidebar-divider"></div>
       }
-
-      <div class="sidebar-section tools-section">
-        <div class="sidebar-label">Tools</div>
-        <div class="tool-list">
-          @for (tool of session.toolStatuses(); track tool.Command) {
-            <div class="tool-row" [title]="toolStatusTitle(tool)">
-              <span
-                class="tool-dot"
-                [class.installed]="tool.State === 'installed'"
-                [class.missing]="tool.State === 'missing'"
-                [class.unknown]="tool.State === 'unknown'"
-              ></span>
-              <span class="tool-name">{{ tool.Name }}</span>
-            </div>
-          }
-        </div>
-      </div>
     </div>
 
     <div class="sidebar-bottom">
+      <div class="sidebar-section tools-section">
+        <button
+          pButton
+          type="button"
+          severity="secondary"
+          [text]="true"
+          size="small"
+          class="local-tools-toggle"
+          [attr.aria-expanded]="showLocalTools"
+          aria-controls="local-tool-statuses"
+          (click)="showLocalTools = !showLocalTools"
+        >
+          <span pButtonLabel>Local tools</span>
+          <i
+            pButtonIcon
+            [class]="showLocalTools ? 'pi pi-angle-up' : 'pi pi-angle-down'"
+            aria-hidden="true"
+          ></i>
+        </button>
+        @if (showLocalTools) {
+          <div id="local-tool-statuses" class="tool-list">
+            @for (tool of session.toolStatuses(); track tool.Command) {
+              <div class="tool-row" [title]="toolStatusTitle(tool)">
+                <span
+                  class="tool-dot"
+                  [class.installed]="tool.State === 'installed'"
+                  [class.missing]="tool.State === 'missing'"
+                  [class.unknown]="tool.State === 'unknown'"
+                ></span>
+                <span class="tool-name">{{ tool.Name }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
       <div class="sidebar-footer">
         <div class="sidebar-utilities">
           <button

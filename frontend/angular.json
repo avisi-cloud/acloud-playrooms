@@ -29,10 +29,7 @@
                 "input": "public"
               }
             ],
-            "styles": [
-              "primeicons/primeicons.css",
-              "src/styles.css"
-            ]
+            "styles": ["primeicons/primeicons.css", "src/styles.css"]
           },
           "configurations": {
             "production": {
@@ -54,6 +51,22 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "dummy": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/app/core/services/wails-api.ts",
+                  "with": "src/app/core/services/wails-api.dummy.ts"
+                },
+                {
+                  "replace": "src/app/core/development/runtime-mode.ts",
+                  "with": "src/app/core/development/runtime-mode.dummy.ts"
+                }
+              ],
+              "browser": "src/main.dummy.ts"
             }
           },
           "defaultConfiguration": "production"
@@ -66,6 +79,9 @@
             },
             "development": {
               "buildTarget": "frontend:build:development"
+            },
+            "dummy": {
+              "buildTarget": "frontend:build:dummy"
             }
           },
           "defaultConfiguration": "development"

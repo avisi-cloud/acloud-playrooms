@@ -1,0 +1,242 @@
+/* Layout and content only. PrimeNG owns control surfaces and interaction states. */
+:host {
+  display: contents;
+}
+
+.chooser-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  width: 100%;
+}
+
+.chooser-heading h2 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.chooser-heading p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.chooser-layout {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  height: min(440px, calc(100dvh - 220px));
+  min-height: 280px;
+  color: var(--tx);
+}
+
+.organisation-rail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 24px 16px 18px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border-2);
+  background: var(--win);
+}
+
+.context-section {
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-2);
+}
+
+.context-section p-message {
+  display: block;
+  margin-top: 10px;
+}
+
+.organisations-section {
+  padding-top: 20px;
+}
+
+.support-copy {
+  margin: 4px 0 12px;
+  color: var(--tx-2);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.organisation-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.organisation-option span {
+  overflow-wrap: anywhere;
+}
+
+.scope-explanation {
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.playhouse-browser {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 24px;
+  background: var(--surf-2);
+  overflow-y: auto;
+}
+
+.browser-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.browser-heading h3 {
+  margin: 0;
+  color: var(--tx);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.search-field {
+  display: block;
+  flex-shrink: 0;
+  margin: 6px 0 20px;
+}
+
+.playhouse-browser > p-listbox {
+  flex-shrink: 0;
+}
+
+.playhouse-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 0;
+}
+
+.playhouse-description {
+  flex: 1;
+  min-width: 0;
+}
+
+.playhouse-row-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.playhouse-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.playhouse-meta i {
+  font-size: 11px;
+}
+
+.browser-state {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 170px;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.browser-state > i {
+  color: var(--tx-3);
+  font-size: 24px;
+}
+
+.browser-state h4 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.browser-state p {
+  max-width: 38ch;
+  margin: 0;
+  color: var(--tx-2);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.scope-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.chooser-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+}
+
+.footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 640px) {
+  .chooser-layout {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .organisation-rail {
+    max-height: 260px;
+    padding: 16px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border-2);
+  }
+
+  .context-section {
+    padding-bottom: 12px;
+  }
+
+  .organisations-section {
+    padding-top: 12px;
+  }
+
+  .scope-explanation {
+    padding-top: 12px;
+  }
+
+  .playhouse-browser {
+    min-height: 260px;
+    padding: 20px 16px;
+  }
+
+  .chooser-footer {
+    flex-wrap: wrap;
+  }
+
+  .footer-actions {
+    margin-left: auto;
+  }
+}
