@@ -1,5 +1,9 @@
 # Changelog
 
+From 0.29.2 on, maintainers tag releases by hand and the release notes are on
+[GitHub Releases](https://github.com/avisi-cloud/acloud-playrooms/releases).
+This file lists the earlier releases that Release Please made.
+
 ## [0.29.1](https://github.com/avisi-cloud/acloud-playrooms/compare/v0.29.0...v0.29.1) (2026-10-23)
 
 

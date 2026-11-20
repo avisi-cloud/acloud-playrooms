@@ -23,6 +23,7 @@ it, update the entry.
 
 **Settled**
 
+- [Releases are tagged by hand and published by GoReleaser](#releases-are-tagged-by-hand-and-published-by-goreleaser--2026-11-03)
 - [Playhouse edits run `playhouse update`; acloud 0.39 is the minimum](#playhouse-edits-run-playhouse-update-acloud-039-is-the-minimum--2026-10-23)
 - [A reload serves `index.html` for Angular routes](#a-reload-serves-indexhtml-for-angular-routes--2026-10-22)
 - [The GUI re-reads the CLI config on every lookup](#the-gui-re-reads-the-cli-config-on-every-lookup--2026-09-12)
@@ -106,6 +107,23 @@ this is reachable from the CLI alone by scripting two commands in parallel.
 
 ## Settled
 
+### Releases are tagged by hand and published by GoReleaser — 2026-11-03
+
+A release is a pushed `v*` tag, as in `acloud-toolkit`. GoReleaser creates the
+GitHub Release, writes its notes from the commits since the previous tag and
+uploads the ZIP, DMG and checksums. The workflow then updates the cask in
+`avisi-cloud/homebrew-tools`. This replaces Release Please, which proposed the
+version in a release PR and owned the release notes and `CHANGELOG.md`. Both
+tools wanted to create the release, and the team already knows the toolkit's
+tag-and-publish flow.
+
+The workflow now requires the Homebrew token and checks it before the build,
+as the toolkit does, so a release cannot skip the cask without failing.
+`generate-homebrew-cask.mjs` still writes the cask, because GoReleaser OSS
+cannot write the `app` stanza a Wails `.app` needs. That stanza is a Pro
+feature. Moving to GoReleaser Pro would let
+`homebrew_casks` replace `generate-homebrew-cask.mjs`.
+
 ### Playhouse edits run `playhouse update`; acloud 0.39 is the minimum — 2026-10-23
 
 Until acloud 0.38, `playhouse create` with an existing name converged that
@@ -156,6 +174,9 @@ them. The repository uses Apache-2.0, matching acloud-toolkit.
 The app is currently ad-hoc signed. The Homebrew cask removes quarantine from
 this app only; Developer ID signing and notarization remain a future step.
 See [RELEASING.md](RELEASING.md) for setup and the exact release flow.
+
+Tag-based GoReleaser releases replaced Release Please on 2026-11-03. See
+[that entry](#releases-are-tagged-by-hand-and-published-by-goreleaser--2026-11-03).
 
 ### The GUI re-reads the CLI config on every lookup — 2026-09-12
 

@@ -42,10 +42,9 @@ the actual download archive without uploading anything.
 ## Pull request titles
 
 Use a Conventional Commit title and squash-merge: the title becomes the commit
-subject on `main`, and Release Please reads it to prepare the next version and
-changelog. A title it cannot parse costs a version bump silently, so CI checks
-it — the colon after the type is the part that gets left out, and
-`feat(gui) AME-1234 ...` parses as nothing.
+subject on `main`, and GoReleaser groups the release notes by its type. A title
+it cannot parse ends up under "Others", so CI checks it. People most often leave
+out the colon after the type, and `feat(gui) AME-1234 ...` parses as nothing.
 
 | Title                                              | Meaning                |
 | -------------------------------------------------- | ---------------------- |
@@ -55,9 +54,9 @@ it — the colon after the type is the part that gets left out, and
 | `docs: clarify installation`                       | Documentation only     |
 | `chore(deps): update Angular`                      | Dependency maintenance |
 
-While the app is below 1.0, features and fixes bump the patch version; breaking
-changes bump the minor version. Documentation-only and maintenance commits do
-not trigger a release by themselves.
+Merging does not release anything. A maintainer releases by pushing a version
+tag, as [RELEASING.md](doc/RELEASING.md) describes. While the app is below 1.0, features
+and fixes bump the patch version; breaking changes bump the minor version.
 
 ## Keep the GUI thin
 

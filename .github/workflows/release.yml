@@ -1,22 +1,12 @@
 name: Publish release
 
 on:
-  workflow_call:
-    inputs:
-      tag:
-        description: Existing release tag to publish
-        required: true
-        type: string
-    secrets:
-      HOMEBREW_TOOLS_GITHUB_TOKEN:
-        description: Optional credential for updating the Homebrew tap
-        required: false
   push:
     tags: ['v*']
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing release tag to publish or retry (for example v0.28.1)
+        description: Existing release tag to publish or retry (for example v0.29.2)
         required: true
         type: string
 
@@ -38,9 +28,21 @@ jobs:
       - name: Validate tag
         run: |
           if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo 'Expected a stable release tag such as v0.28.1.' >&2
+            echo 'Expected a stable release tag such as v0.29.2.' >&2
             exit 1
           fi
+      # Fail before building rather than after the GitHub release is published.
+      - name: Validate Homebrew token
+        env:
+          HOMEBREW_TOOLS_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TOOLS_GITHUB_TOKEN }}
+        run: |
+          if [ -z "$HOMEBREW_TOOLS_GITHUB_TOKEN" ]; then
+            echo 'The HOMEBREW_TOOLS_GITHUB_TOKEN secret is not configured; see doc/RELEASING.md.' >&2
+            exit 1
+          fi
+          curl -fsS -o /dev/null \
+            -H "Authorization: token $HOMEBREW_TOOLS_GITHUB_TOKEN" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY_OWNER}/homebrew-tools"
       - uses: actions/checkout@v7
         with:
           ref: refs/tags/${{ env.RELEASE_TAG }}
@@ -61,56 +63,24 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
+      # Builds, verifies and publishes the app, DMG, checksums and release notes.
       - uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: '~> v2'
-          args: release --clean --skip=publish
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: node scripts/package-release-dmg.mjs
+          GORELEASER_CURRENT_TAG: ${{ env.RELEASE_TAG }}
       - run: node scripts/generate-homebrew-cask.mjs
       - run: bash scripts/verify-release.sh
-      - name: Check generated bindings are committed
-        run: git diff --exit-code -- frontend/bindings
-      - name: Publish verified artifacts
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release view "$RELEASE_TAG"
-          gh release upload "$RELEASE_TAG" dist/*.zip dist/*.dmg dist/checksums.txt dist/homebrew/acloud-playrooms.rb --clobber
-      # Not a pre-release: that would drop it from /releases/latest, which the README links to.
-      - name: Add the alpha note to the release notes
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ALPHA_NOTE: '> **Alpha:** things may change or break between versions. Report problems or ideas in [GitHub issues](https://github.com/avisi-cloud/acloud-playrooms/issues).'
-        run: |
-          release_notes="$(gh release view "$RELEASE_TAG" --json body --jq .body)"
-          if grep -qF -- "$ALPHA_NOTE" <<< "$release_notes"; then
-            echo 'The release notes already have the alpha note.'
-          else
-            printf '%s\n\n%s\n' "$ALPHA_NOTE" "$release_notes" | gh release edit "$RELEASE_TAG" --notes-file -
-          fi
-      - name: Check whether Homebrew publishing is configured
-        id: homebrew
-        env:
-          HOMEBREW_TOOLS_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TOOLS_GITHUB_TOKEN }}
-        run: |
-          if [ -n "$HOMEBREW_TOOLS_GITHUB_TOKEN" ]; then
-            echo 'enabled=true' >> "$GITHUB_OUTPUT"
-          else
-            echo 'enabled=false' >> "$GITHUB_OUTPUT"
-            echo 'Homebrew update skipped: HOMEBREW_TOOLS_GITHUB_TOKEN is not configured. GitHub release files have been published.' >> "$GITHUB_STEP_SUMMARY"
-          fi
       - name: Check out Homebrew tap
-        if: steps.homebrew.outputs.enabled == 'true'
         uses: actions/checkout@v7
         with:
-          repository: avisi-cloud/homebrew-tools
+          repository: ${{ github.repository_owner }}/homebrew-tools
           token: ${{ secrets.HOMEBREW_TOOLS_GITHUB_TOKEN }}
           path: homebrew-tools
       - name: Update Homebrew cask
-        if: steps.homebrew.outputs.enabled == 'true'
         run: |
           mkdir -p homebrew-tools/Casks
           cp dist/homebrew/acloud-playrooms.rb homebrew-tools/Casks/acloud-playrooms.rb
