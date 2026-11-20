@@ -330,6 +330,11 @@ Tailscale discovery and its saved GUI-only path live in `backend/tools`. The
 runner and terminal hand-off use its PATH setup, and `local.ToolStatuses` uses
 the same resolver so the sidebar reports the executable commands will use.
 
+`tools/vscode.go` finds the `code` launcher in the child process PATH, standard
+package-manager locations and VS Code application bundles. When needed, the
+runner appends its directory to the child process PATH and logs the discovery.
+It preserves existing command choices and the configured Tailscale launcher.
+
 `tools/t3code.go` owns the optional T3 Code preference, desktop-app metadata
 checks and CLI discovery. The app's bundle identifier and executable are checked
 without starting it. Its saved path is not currently consumed by connections or

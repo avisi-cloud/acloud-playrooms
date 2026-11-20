@@ -115,6 +115,7 @@ func (runner *Runner) Run(ctx context.Context, arguments []string, options Optio
 	if err := tools.ConfigureCommandEnvironment(cmd); err != nil {
 		return Result{}, err
 	}
+	tools.ConfigureVSCodeCommandEnvironment(cmd)
 	// Interrupt before killing so the command can run its cleanup.
 	cmd.Cancel = func() error { return cmd.Process.Signal(os.Interrupt) }
 	cmd.WaitDelay = runner.killDelay

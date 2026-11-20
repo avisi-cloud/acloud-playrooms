@@ -1,4 +1,5 @@
 export type Theme = 'dark' | 'light';
+export type ThemePreference = Theme | 'system';
 /** Easy is one screen with name, image and size; Advanced is the full step-by-step wizard. */
 export type CreatePlayroomMode = 'easy' | 'advanced';
 
@@ -7,7 +8,9 @@ export interface CacheState {
   lastPlayroom: string;
   lastEditor: string;
   lastTerminal: string;
-  lastTheme: Theme;
+  lastTheme: ThemePreference;
+  backgroundGrain: boolean;
+  ameRobot: boolean;
   createPlayroomMode: CreatePlayroomMode;
   /** Set once setup is finished; leaving it with "Set up later" does not set it. */
   setupCompleted: boolean;

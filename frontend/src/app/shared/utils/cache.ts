@@ -1,15 +1,20 @@
+import { runtimeMode } from '../../core/development/runtime-mode';
 import { CacheState } from '../models/system';
 
-export const CACHE_KEY = 'acloud-playroom-gui-cache';
+export const CACHE_KEY = runtimeMode.dummy
+  ? 'acloud-playroom-gui-dummy-cache'
+  : 'acloud-playroom-gui-cache';
 
 export const defaultCache: CacheState = {
-  lastPlayhouse: '',
+  lastPlayhouse: runtimeMode.dummy ? 'playhouse-platform-dev' : '',
   lastPlayroom: '',
   lastEditor: 'vscode',
   lastTerminal: 'terminal',
   lastTheme: 'dark',
+  backgroundGrain: true,
+  ameRobot: true,
   createPlayroomMode: 'easy',
-  setupCompleted: false,
+  setupCompleted: runtimeMode.dummy,
 };
 
 export function readCache(): CacheState {

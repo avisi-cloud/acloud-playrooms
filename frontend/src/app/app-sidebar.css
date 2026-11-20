@@ -1,5 +1,5 @@
 /* The sidebar: brand, the three scope pickers, nav, tool statuses, and the
-   footer row of activity / theme / account.
+   footer controls for Activity, Notifications and account.
 
    Split out of app.css, which had grown to hold four unrelated things. Loaded
    through `styleUrls` on the App component, so it stays component-scoped — it
@@ -17,8 +17,8 @@
   --side-tx-3: rgba(245, 247, 250, 0.52); /* uppercase labels, version */
 
   position: relative;
-  width: 220px;
-  flex: 0 0 220px;
+  width: 248px;
+  flex: 0 0 248px;
   display: flex;
   flex-direction: column;
   padding: 0 0 8px;
@@ -281,49 +281,87 @@
   margin-bottom: 6px;
 }
 
-/* Context, organisation and playhouse pickers — one control, three scopes. */
-.scope-btn {
-  display: flex;
+/* One stable identity and one entry point into the chooser. */
+.current-playhouse {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) 14px;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid rgba(245, 247, 250, 0.15);
-  border-radius: 6px;
-  padding: 7px 10px;
-  cursor: pointer;
-  color: var(--side-tx);
-  font-size: 12.5px;
-  font-family: var(--font-sans);
-  transition:
-    border-color 0.14s,
-    background 0.14s;
-}
-.scope-btn:hover:not(:disabled) {
-  background: rgba(0, 0, 0, 0.38);
-  border-color: rgba(245, 247, 250, 0.28);
-}
-.scope-btn:disabled {
-  cursor: default;
-  opacity: 0.75;
-}
-.scope-slug {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
+  gap: 10px;
+  margin: 0 10px;
+  padding: 14px 10px;
+  flex-shrink: 0;
   text-align: left;
 }
-.scope-chevron {
+
+.playhouse-mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 34px;
+  color: var(--busy-on-dark);
+  background: rgba(17, 153, 187, 0.18);
+  border-radius: 6px;
+}
+
+.playhouse-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.playhouse-caption,
+.playhouse-organisation {
   color: var(--side-tx-2);
   font-size: 11px;
-  flex-shrink: 0;
-  margin-left: 6px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.playhouse-name {
+  color: var(--side-tx);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.switch-label {
+  margin-top: 5px;
+  color: var(--busy-on-dark);
+  font-size: 11px;
+}
+
+.switch-chevron {
+  color: var(--side-tx-2);
+  font-size: 13px;
+}
+
+.sidebar button:focus-visible,
+.sidebar a:focus-visible,
+.sidebar summary:focus-visible {
+  outline: 2px solid var(--busy-on-dark);
+  outline-offset: 3px;
 }
 
 /* Tool status */
 .tools-section {
+  max-height: 180px;
   padding-top: 10px;
+  overflow-y: auto;
+}
+
+.local-tools-toggle {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.local-tools-toggle [pButtonLabel] {
+  flex: initial;
+}
+
+.tools-section .tool-list {
+  padding: 8px 0;
 }
 
 .tool-list {
@@ -397,8 +435,18 @@
   flex-direction: column;
   gap: 2px;
   padding: 8px 10px 0;
-  margin-top: 4px;
+  margin-top: 12px;
   flex-shrink: 0;
+}
+
+.preferences-nav {
+  margin-top: auto;
+  padding-top: 28px;
+}
+
+.nav-label {
+  margin: 0 10px 4px;
+  color: var(--side-tx-2);
 }
 
 .sidebar-link {
@@ -451,51 +499,12 @@
   flex-shrink: 0;
 }
 
-/* Footer: theme toggle + user */
+/* Footer controls and account */
 .sidebar-footer {
   padding: 8px 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-}
-
-.theme-btn {
-  width: 100%;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 6px;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  text-align: left;
-  color: var(--side-tx);
-  font-family: var(--font-sans);
-  transition:
-    background 0.12s ease,
-    border-color 0.12s ease;
-}
-.theme-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(245, 247, 250, 0.16);
-}
-.theme-icon {
-  font-size: 11px;
-  color: var(--side-tx-2);
-  flex-shrink: 0;
-}
-.theme-label {
-  font-size: 11.5px;
-  flex: 1;
-  min-width: 0;
-}
-.theme-state {
-  font-size: 9.5px;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  color: var(--side-tx-3);
 }
 
 .account-btn {
@@ -629,4 +638,62 @@
 .sidebar-link.acloud-missing:hover {
   background: color-mix(in srgb, var(--bad-on-dark) 14%, transparent);
   color: var(--bad-on-dark);
+}
+
+.sidebar-utilities {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.sidebar-utilities .activity-btn {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 4px;
+  margin: 0;
+  padding: 8px 6px;
+}
+.sidebar-utilities .activity-icon {
+  grid-column: 1;
+  grid-row: 1;
+}
+.sidebar-utilities .activity-state {
+  grid-column: 2;
+  grid-row: 1;
+  text-align: right;
+  font-size: 8.5px;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+.sidebar-utilities .activity-label {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  white-space: nowrap;
+}
+
+/* Keep the path to playrooms close to the top in a short desktop window.
+   The middle section scrolls independently; account controls stay in reach. */
+@media (max-height: 760px) {
+  .sidebar-mascot {
+    flex-basis: 44px;
+  }
+
+  .sidebar-mascot-robot {
+    width: 48px;
+    height: 48px;
+  }
+
+  .sidebar-brand {
+    padding-top: 8px;
+    padding-bottom: 12px;
+  }
+}
+
+.dummy-mode-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 12px 20px 0;
+  color: var(--side-tx-2);
+  font-size: 11px;
 }

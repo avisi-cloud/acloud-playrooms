@@ -1,11 +1,15 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { MessageService, ToastMessageOptions } from 'primeng/api';
 import { ToastMessage } from '../../shared/models';
 import { describeError, explainFailure } from '../../shared/utils';
 
 export type Tone = ToastMessage['tone'];
+type NotificationSeverity = 'success' | 'info' | 'warn' | 'error' | 'secondary' | 'contrast';
+type NotificationOptions = Omit<ToastMessageOptions, 'severity'> & {
+  severity?: NotificationSeverity;
+};
 
-const SEVERITY: Record<Tone, string> = {
+const SEVERITY: Record<Tone, NotificationSeverity> = {
   ok: 'success',
   busy: 'info',
   warn: 'warn',
@@ -13,17 +17,27 @@ const SEVERITY: Record<Tone, string> = {
   idle: 'secondary',
 };
 
-/**
- * How long a toast stays up, by tone. A failure waits to be dismissed; the
- * activity log behind it is the full story.
- */
-const LIFE: Record<Tone, number | undefined> = {
-  ok: 3600,
-  busy: 3600,
-  warn: 8000,
-  bad: undefined, // sticky
-  idle: 3600,
+const SEVERITY_LABELS: Record<NotificationSeverity, string> = {
+  success: 'Success',
+  info: 'Information',
+  warn: 'Warning',
+  error: 'Error',
+  secondary: 'Information',
+  contrast: 'Information',
 };
+
+export const NOTIFICATION_DURATION_MS = 5000;
+
+export interface NotificationRecord {
+  id: number;
+  createdAt: Date;
+  severity: NotificationSeverity;
+  severityLabel: string;
+  summary: string;
+  detail: string;
+  operationId: string;
+  remedy: string;
+}
 
 /**
  * What a toast carries beyond its two lines: the command it came from, so it
@@ -41,42 +55,48 @@ export interface ToastLink {
 @Injectable({ providedIn: 'root' })
 export class ToastService {
   private readonly messages = inject(MessageService);
+  private readonly _history = signal<NotificationRecord[]>([]);
+  private nextNotificationId = 0;
+  readonly history = this._history.asReadonly();
+  readonly historyVisible = signal(false);
 
-  /**
-   * Short, tone-based toast. Pass the operation id behind it and the toast
-   * becomes a way into the activity log.
-   */
+  /** An operation id links the notification to its command in Activity. */
   toast(message: string, tone: Tone = 'ok', operationId = ''): void {
-    this.messages.add({
-      severity: SEVERITY[tone] ?? 'info',
+    this.show({
+      severity: SEVERITY[tone],
       // A toast is a summary. Callers hand it whatever the CLI returned, which
       // has included an entire HTML error document.
       detail: describeError(message),
-      life: LIFE[tone],
-      sticky: LIFE[tone] === undefined,
       closable: true,
       data: operationId ? ({ operationId } satisfies ToastLink) : undefined,
     });
   }
 
-  /**
-   * A failed command as three lines, the way the CLI writes them: what the user
-   * was doing, why it failed, and what to do about it. Sticky.
-   */
+  /** Keeps the failed action, problem and remedy separate for readability. */
   failure(whatFailed: string, error: unknown, operationId = ''): void {
     const { problem, remedy } = explainFailure(error);
-    this.messages.add({
+    this.show({
       severity: 'error',
       summary: whatFailed,
       detail: problem,
-      sticky: true,
       closable: true,
       data: { operationId, remedy } satisfies ToastLink,
     });
   }
 
-  /** Full passthrough for toasts that need a summary, custom life, etc. */
-  show(options: ToastMessageOptions): void {
-    this.messages.add(options);
+  /** All notifications share one expiry and remain available in this session. */
+  show(options: NotificationOptions): void {
+    const notification: NotificationRecord = {
+      id: ++this.nextNotificationId,
+      createdAt: new Date(),
+      severity: options.severity ?? 'info',
+      severityLabel: SEVERITY_LABELS[options.severity ?? 'info'],
+      summary: options.summary ?? '',
+      detail: options.detail ?? '',
+      operationId: options.data?.operationId ?? '',
+      remedy: options.data?.remedy ?? '',
+    };
+    this._history.update((history) => [notification, ...history]);
+    this.messages.add({ ...options, life: NOTIFICATION_DURATION_MS, sticky: false });
   }
 }

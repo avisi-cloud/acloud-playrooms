@@ -50,3 +50,80 @@
   overflow: hidden;
   overflow-wrap: anywhere;
 }
+.toast-content {
+  position: relative;
+  overflow: hidden;
+}
+.toast-progress {
+  position: absolute;
+  inset: auto 0 0;
+  height: 2px;
+  background: currentColor;
+  transform-origin: left;
+  animation: toast-countdown 5s linear forwards;
+}
+@keyframes toast-countdown {
+  to {
+    transform: scaleX(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-progress {
+    display: none;
+  }
+}
+.notification-history-intro,
+.notification-history-empty {
+  color: var(--tx-2);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+.notification-history-entry {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--border-2);
+  overflow-wrap: anywhere;
+}
+.notification-history-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--tx-2);
+  font-size: 11.5px;
+}
+.notification-history-entry[data-severity='warn'] .notification-history-meta {
+  color: var(--warn);
+}
+.notification-history-entry[data-severity='error'] .notification-history-meta {
+  color: var(--bad);
+}
+.notification-history-entry h3 {
+  margin: 8px 0 4px;
+  font-size: 13px;
+  color: var(--tx);
+}
+.notification-history-entry p {
+  margin: 6px 0 0;
+  color: var(--tx);
+  font-size: 12.5px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+.notification-history-entry .notification-history-remedy {
+  color: var(--tx-2);
+}
+.notification-history-activity {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 0;
+  margin-top: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--link);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.notification-history-activity:hover {
+  text-decoration: underline;
+}

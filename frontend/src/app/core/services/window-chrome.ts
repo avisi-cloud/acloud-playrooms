@@ -43,7 +43,7 @@ export class WindowChromeService {
     );
   }
 
-  /** Once now, and again on every theme toggle. */
+  /** Once now, and again whenever the applied theme changes. */
   private keepNativeWindowBackgroundOnCurrentTheme(): void {
     this.sendThemeToWindow(this.state.theme());
     effect(() => this.sendThemeToWindow(this.state.theme()), { injector: this.injector });

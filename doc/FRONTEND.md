@@ -129,7 +129,11 @@ Playroom "ai-buddy" is owned by jasper@avisi.nl, not you (sem@avisi.nl)
 Pass --force to act on it anyway
 ```
 
-Failures are sticky, and the activity log behind the toast is the full story.
+All notifications disappear after five seconds, including failures and hovered
+notifications. A small countdown bar shows the remaining time. The sidebar's
+Notifications button opens this session's history, newest first, with full
+messages, remedies, timestamps and links to Activity for command notifications.
+History stays in memory and resets when the app restarts.
 `describeError()` is the same reading collapsed to one line, for the inline
 error states that have room for one.
 
@@ -251,8 +255,13 @@ existed (no `setupCompleted` key) with a playhouse counts as completed, so
 upgrades skip it.
 
 `shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal,
-theme, create-playroom mode and `setupCompleted` to localStorage under
-`acloud-playroom-gui-cache`.
+theme, background grain, AME Robot, create-playroom mode and `setupCompleted` to localStorage
+under `acloud-playroom-gui-cache`. Background grain defaults to on; Settings →
+Appearance applies changes immediately to the outer background and content panel.
+The theme setting offers horizontal radio tiles for Light, Dark and System. System follows live changes to
+the computer’s appearance, including the native window background. Theme controls
+live in Settings. AME Robot defaults to on and can be hidden from Appearance.
+Activity and Notifications share one row in the sidebar footer.
 
 ## Scope: context and organisation
 

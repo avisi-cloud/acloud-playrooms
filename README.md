@@ -184,18 +184,38 @@ npm --prefix frontend ci
 make dev
 ```
 
-| Command                 | Result                                                                           |
-| ----------------------- | -------------------------------------------------------------------------------- |
-| `make dev`              | Start the app with live development                                              |
-| `make dev-local`        | Use the CLI built at `../acloud/bin/acloud`                                      |
-| `make build`            | Build the app for your Mac in `bin/`                                             |
-| `make check`            | Check Go formatting, frontend formatting/lint/build/tests, Go vet and race tests |
-| `make package`          | Build a universal Mac application                                                |
-| `make dmg`              | Build and verify the branded installer (requires `create-dmg` and Python 3.10+)  |
-| `make release-snapshot` | Build and verify release files locally, without publishing                       |
+| Command                 | Result                                                                                   |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| `make dev`              | Start the app with live development                                                      |
+| `make dev-dummy`        | Preview the UI in your browser with local sample data; no Acloud CLI or account required |
+| `make dev-local`        | Use the CLI built at `../acloud/bin/acloud`                                              |
+| `make build`            | Build the app for your Mac in `bin/`                                                     |
+| `make check`            | Check Go formatting, frontend formatting/lint/build/tests, Go vet and race tests         |
+| `make package`          | Build a universal Mac application                                                        |
+| `make dmg`              | Build and verify the branded installer (requires `create-dmg` and Python 3.10+)          |
+| `make release-snapshot` | Build and verify release files locally, without publishing                               |
 
 Run `make build` before `make check` on a fresh checkout so generated bindings
 are current. Go GUI tests embed the frontend build, which `make check` produces.
+
+### Preview with dummy data
+
+Run `make dev-dummy`, then open [localhost:4200](http://localhost:4200).
+You can also run `npm --prefix frontend run dev-dummy` directly.
+This serves the real Angular UI in your browser with a separate development data adapter;
+it does not start the desktop app or require the Acloud CLI.
+
+The sample environment includes multiple contexts and organisations, an empty
+organisation, playhouses with long names, and playrooms in ready, stopped,
+creating and failed states. Open the playhouse chooser to explore them.
+Creation, deletion, start/stop and basic setting changes are simulated in memory.
+Reloading restores the sample data; appearance preferences use a separate dummy cache.
+Terminal connections, editor launches, file pickers and local binary configuration
+are unavailable. Command previews are labelled `dummy-preview` and are illustrative.
+The sidebar displays **Dummy data** while this mode is active.
+
+Normal `make dev` and production builds use the live adapter. The dummy adapter is
+selected only by Angular's explicit `dummy` configuration, never by a URL parameter.
 
 <details>
 <summary><strong>Use a local or custom acloud binary</strong></summary>
