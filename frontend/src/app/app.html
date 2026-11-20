@@ -93,7 +93,10 @@
   }
 </p-drawer>
 <app-cli-console />
-<app-playhouse-chooser [(visible)]="showPlayhouseChooser" />
+<!-- Loaded on first open, to keep it out of the startup bundle. -->
+@defer (when showPlayhouseChooser) {
+  <app-playhouse-chooser [(visible)]="showPlayhouseChooser" />
+}
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
 <div

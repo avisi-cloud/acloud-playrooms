@@ -23,15 +23,15 @@ export const dummyOrganisations: Record<string, OrganisationEntry[]> = {
   staging: [{ Slug: 'sandbox', Name: 'Integration sandbox' }],
 };
 
-function playhouse(Slug: string, Region = 'eu-west-1', LayoutStatus = 'current'): PlayhouseEntry {
+function playhouse(slug: string, region = 'eu-west-1', layoutStatus = 'current'): PlayhouseEntry {
   return {
-    Slug,
-    Identity: `demo-${Slug}`,
+    Slug: slug,
+    Identity: `demo-${slug}`,
     Status: 'active',
-    Region,
+    Region: region,
     Version: 'v1.34.1',
-    LayoutVersion: LayoutStatus === 'outdated' ? 11 : 12,
-    LayoutStatus,
+    LayoutVersion: layoutStatus === 'outdated' ? 11 : 12,
+    LayoutStatus: layoutStatus,
   };
 }
 
@@ -50,13 +50,13 @@ export const dummyPlayhouses: Record<string, PlayhouseEntry[]> = {
   'staging/sandbox': [playhouse('playhouse-integration-staging')],
 };
 
-function room(Name: string, extra: Partial<ListingDto> = {}): ListingDto {
+function room(name: string, extra: Partial<ListingDto> = {}): ListingDto {
   return {
-    Name,
+    Name: name,
     Owner: dummyUser,
     Status: 'Ready',
     Image: 'opencode',
-    SSHHost: `${Name}.dummy.example.test`,
+    SSHHost: `${name}.dummy.example.test`,
     CreatedAt: new Date(Date.now() - 3 * 60 * 60_000).toISOString(),
     CPURequest: '500m',
     CPULimit: '4',
@@ -144,9 +144,10 @@ export const dummyDefaults: PlayroomDefaultEntry[] = Object.entries({
   'memory-limit': '2Gi',
   'wait-timeout': '10m',
   exposure: 'tailscale',
+  via: '',
   capabilities: 'standard',
   ephemeral: 'false',
   'read-only': 'false',
   privileged: 'false',
   'workspace-namespace': 'false',
-}).map(([Key, Builtin]) => ({ Key, Builtin, Value: Builtin, Source: 'built-in' }));
+}).map(([key, builtin]) => ({ Key: key, Builtin: builtin, Value: builtin, Source: 'built-in' }));

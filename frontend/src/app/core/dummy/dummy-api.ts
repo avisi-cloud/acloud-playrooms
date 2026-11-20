@@ -152,7 +152,8 @@ export const dummyApi: typeof liveApi = {
   clearT3CodePath: unavailable,
   browseForT3CodePath: unavailable,
   getOperatingSystem: () => read('darwin'),
-  setWindowTheme: async () => {},
+  // The browser preview has no native window to theme.
+  setWindowTheme: () => Promise.resolve(),
   openUrlInDefaultBrowser: unavailable,
   loginWithTerminal: async () => {
     signedIn = true;
