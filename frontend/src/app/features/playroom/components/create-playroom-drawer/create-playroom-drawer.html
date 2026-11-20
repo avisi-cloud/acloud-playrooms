@@ -305,11 +305,7 @@
                 [(ngModel)]="form.nodePortSSH"
                 [disabled]="form.exposure === 'nodeport'"
             /></label>
-            <small class="field-hint">{{
-              form.exposure === 'nodeport'
-                ? 'A NodePort playroom already has its SSH on a NodePort.'
-                : optionTexts['nodeport-ssh'].hint
-            }}</small>
+            <small class="field-hint">{{ nodePortSSHHint() }}</small>
             <div class="field-group mt-2">
               <label class="field-label" for="create-proxy-group">{{
                 optionTexts['proxy-group'].label

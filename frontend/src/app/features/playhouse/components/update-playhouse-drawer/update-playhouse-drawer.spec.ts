@@ -40,6 +40,15 @@ describe('Update playhouse drawer', () => {
 
   // Credentials belong to Tailscale alone; sending them while switching to
   // nodeport would put them on a command that has no use for them.
+  // Blank keeps the current default path; auto is how update clears it.
+  it('keeps the default connection path unless one is chosen, and can clear it', () => {
+    const component = drawer();
+    expect(component.previewInput().DefaultVia).toBe('');
+    component.form.defaultVia = 'auto';
+    expect(component.hasChanges()).toBe(true);
+    expect(component.previewInput().DefaultVia).toBe('auto');
+  });
+
   it('only sends Tailscale credentials when switching to Tailscale', () => {
     const component = drawer();
     component.form.tailscaleOAuthClientID = 'id';

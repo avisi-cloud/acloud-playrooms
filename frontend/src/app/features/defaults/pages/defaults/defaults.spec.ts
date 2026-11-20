@@ -40,9 +40,10 @@ describe('Defaults field registry', () => {
     }
   });
 
-  it('gives every key acloud 0.37 reports a proper control instead of a text box', () => {
+  it('gives every key acloud 0.40 reports a proper control instead of a text box', () => {
     const expectedKinds: Record<string, string> = {
       exposure: 'select',
+      via: 'select',
       capabilities: 'select',
       'workspace-namespace': 'toggle',
       privileged: 'toggle',

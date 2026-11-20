@@ -223,6 +223,23 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
     updateCache({ createPlayroomMode: mode });
   }
 
+  /**
+   * Off sends nothing, and acloud then adds NodePort SSH itself when the default
+   * connection path (yours, else the playhouse's) is NodePort. Only yours is
+   * readable here, so the playhouse's is described rather than named.
+   */
+  nodePortSSHHint(): string {
+    if (this.form.exposure === 'nodeport') {
+      return 'A NodePort playroom already has its SSH on a NodePort.';
+    }
+    const hint = this.optionTexts['nodeport-ssh'].hint;
+    if (this.form.nodePortSSH) return hint;
+    if (this.defaults.configuredText('via', '') === 'nodeport') {
+      return `${hint} Your default connection path is NodePort, so acloud adds it anyway.`;
+    }
+    return `${hint} Left off, acloud still adds it when the playhouse connects via NodePort by default.`;
+  }
+
   /** What the form was seeded with: the values the Defaults screen shows. */
   formFilledWithYourDefaults(): CreateForm {
     return blankCreateForm(this.form.playhouse, this.defaults);

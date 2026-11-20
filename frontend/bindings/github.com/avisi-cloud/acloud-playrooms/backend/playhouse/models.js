@@ -178,6 +178,15 @@ export class CreateInput {
              */
             this["Exposure"] = "";
         }
+        if (!("DefaultVia" in $$source)) {
+            /**
+             * DefaultVia is the path playroom connect/open take when given none; blank
+             * leaves acloud's default (auto: each room's own exposure).
+             * @member
+             * @type {string}
+             */
+            this["DefaultVia"] = "";
+        }
         if (!("AllowIPs" in $$source)) {
             /**
              * --yes skips acloud's offer to add the current IP, so AllowCurrentIP asks for it instead.
@@ -231,10 +240,10 @@ export class CreateInput {
      * @returns {CreateInput}
      */
     static createFrom($$source = {}) {
-        const $$createField15_0 = $$createType0;
+        const $$createField16_0 = $$createType0;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("AllowIPs" in $$parsedSource) {
-            $$parsedSource["AllowIPs"] = $$createField15_0($$parsedSource["AllowIPs"]);
+            $$parsedSource["AllowIPs"] = $$createField16_0($$parsedSource["AllowIPs"]);
         }
         return new CreateInput(/** @type {Partial<CreateInput>} */($$parsedSource));
     }
@@ -467,6 +476,15 @@ export class UpdateInput {
              */
             this["Exposure"] = "";
         }
+        if (!("DefaultVia" in $$source)) {
+            /**
+             * DefaultVia switches the path playroom connect/open take when given none;
+             * "auto" clears it back to each room's own exposure, blank keeps it.
+             * @member
+             * @type {string}
+             */
+            this["DefaultVia"] = "";
+        }
         if (!("ResetAllowlist" in $$source)) {
             /**
              * IP allowlist edits, applied in this order; without a terminal acloud never offers the current IP.
@@ -541,14 +559,14 @@ export class UpdateInput {
      * @returns {UpdateInput}
      */
     static createFrom($$source = {}) {
-        const $$createField4_0 = $$createType0;
         const $$createField5_0 = $$createType0;
+        const $$createField6_0 = $$createType0;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("RemoveIPs" in $$parsedSource) {
-            $$parsedSource["RemoveIPs"] = $$createField4_0($$parsedSource["RemoveIPs"]);
+            $$parsedSource["RemoveIPs"] = $$createField5_0($$parsedSource["RemoveIPs"]);
         }
         if ("AllowIPs" in $$parsedSource) {
-            $$parsedSource["AllowIPs"] = $$createField5_0($$parsedSource["AllowIPs"]);
+            $$parsedSource["AllowIPs"] = $$createField6_0($$parsedSource["AllowIPs"]);
         }
         return new UpdateInput(/** @type {Partial<UpdateInput>} */($$parsedSource));
     }

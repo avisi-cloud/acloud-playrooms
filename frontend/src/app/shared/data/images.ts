@@ -41,9 +41,16 @@ export const EXPOSURES = [
 export const IP_ALLOWLIST_HINT =
   'Guards the Kubernetes API and NodePort SSH. While it is empty the API is open and NodePorts are internal only.';
 
-/** `--via` for connect and open. Blank lets acloud use the room's own exposure. */
+/**
+ * `--via` for connect and open. Blank leaves the flag off, so acloud picks the
+ * path: your `via` default, then the playhouse's, then the room's own exposure.
+ */
 export const CONNECTION_PATHS = [
-  { id: '', label: 'Room default', hint: 'However this playroom is exposed' },
+  {
+    id: '',
+    label: 'Default',
+    hint: 'Your default, else the playhouse default, else however this playroom is exposed',
+  },
   { id: 'tailscale', label: 'Tailscale', hint: 'Over the tailnet' },
   {
     id: 'nodeport',
@@ -56,6 +63,28 @@ export const CONNECTION_PATHS = [
     hint: 'Through the cluster API; works without Tailscale or NodePort access',
   },
 ] as const;
+
+/**
+ * `--default-via` for `playhouse create` and `update`: the path playroom connect
+ * and open take when given none. Each drawer puts its own blank entry first.
+ */
+export const PLAYHOUSE_CONNECTION_PATHS = [
+  {
+    id: 'nodeport',
+    label: 'NodePort',
+    hint: 'New playrooms also get NodePort SSH; your IP must be on the IP allowlist',
+  },
+  { id: 'tailscale', label: 'Tailscale', hint: 'Over the tailnet; only on a Tailscale playhouse' },
+  {
+    id: 'portforward',
+    label: 'Port-forward',
+    hint: 'Through the cluster API; works without Tailscale or NodePort access',
+  },
+] as const;
+
+/** What a playhouse's default connection path does, said alike in the create and edit drawers. */
+export const DEFAULT_CONNECTION_PATH_HINT =
+  'Used by connect and open when you choose no path. Your own default on the Defaults screen wins, and a playroom a path does not fit falls back to how it is exposed.';
 
 /** `--capabilities` profiles, mirroring backend/playroom's Capabilities constants. */
 export const CAPABILITIES = [

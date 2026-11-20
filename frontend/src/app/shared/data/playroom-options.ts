@@ -42,7 +42,7 @@ export const PLAYROOM_OPTION_TEXTS = {
   },
   via: {
     label: 'Connect via',
-    hint: 'Which way to reach the playroom. Default uses how it is exposed.',
+    hint: 'Which way connect and open reach the playroom when you choose none. A path a room cannot use falls back to how it is exposed.',
   },
   'proxy-group': {
     label: 'Proxy group',

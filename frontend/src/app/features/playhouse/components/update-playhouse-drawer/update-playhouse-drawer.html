@@ -41,6 +41,29 @@
       >
     </div>
 
+    <div class="field-group">
+      <label class="field-label" for="ph-update-default-via"
+        >Default connection path<small class="flag-ref">--default-via</small></label
+      >
+      <p-select
+        inputId="ph-update-default-via"
+        [options]="defaultViaOptions"
+        optionLabel="label"
+        optionValue="id"
+        [(ngModel)]="form.defaultVia"
+        appendTo="body"
+        [style]="{ width: '100%' }"
+      >
+        <ng-template let-option pTemplate="item">
+          <div class="ca-option">
+            <span class="ca-name">{{ option.label }}</span>
+            <span class="ca-meta">{{ option.hint }}</span>
+          </div>
+        </ng-template>
+      </p-select>
+      <small class="field-hint">{{ defaultConnectionPathHint }}</small>
+    </div>
+
     @if (showsTailscaleCredentials()) {
       <div class="field-group">
         <label class="field-label">Tailscale OAuth client id</label>

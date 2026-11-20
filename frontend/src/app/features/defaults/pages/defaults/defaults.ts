@@ -18,6 +18,7 @@ import { ToastService } from '../../../../core/services/toast';
 import { wailsApi } from '../../../../core/services/wails-api';
 import {
   CAPABILITIES,
+  CONNECTION_PATHS,
   EDITORS,
   EXPOSURES,
   PLAYROOM_OPTION_TEXTS,
@@ -88,6 +89,16 @@ export const DEFAULT_FIELDS: DefaultField[] = [
   { key: 'user', group: 'Connection', kind: 'text' },
   { key: 'ssh-key', group: 'Connection', kind: 'text' },
   { key: 'forward-agent', group: 'Connection', kind: 'toggle' },
+  {
+    key: 'via',
+    group: 'Connection',
+    kind: 'select',
+    // Blank is unset: the playhouse default applies, then each room's exposure.
+    options: [...CONNECTION_PATHS].map((path) => ({
+      label: path.id === '' ? 'Playhouse default' : path.label,
+      value: path.id,
+    })),
+  },
   {
     key: 'exposure',
     group: 'Networking',

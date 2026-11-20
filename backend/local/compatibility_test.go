@@ -56,8 +56,9 @@ func TestDescribeAcloudCompatibility(t *testing.T) {
 	}{
 		{"an acloud from before playhouse update is too old", "0.37.0", true, false, "needs acloud " + MinimumAcloudVersion},
 		{"an acloud from before NodePort SSH is too old", "0.38.0", true, false, "needs acloud " + MinimumAcloudVersion},
-		{"acloud 0.39 is supported without a warning", "0.39.0", false, false, ""},
-		{"the next acloud release still warns softly", "0.40.0", false, true, "checked against acloud " + VerifiedAgainstAcloudVersion},
+		{"an acloud from before the default connection path is too old", "0.39.2", true, false, "needs acloud " + MinimumAcloudVersion},
+		{"acloud 0.40 is supported without a warning", "0.40.0", false, false, ""},
+		{"the next acloud release still warns softly", "0.41.0", false, true, "checked against acloud " + VerifiedAgainstAcloudVersion},
 		{"a newer acloud than verified warns softly", "99.0.0", false, true, "checked against acloud " + VerifiedAgainstAcloudVersion},
 		{"an unreadable version stays quiet", "dirty", false, false, ""},
 		{"no version stays quiet", "", false, false, ""},
