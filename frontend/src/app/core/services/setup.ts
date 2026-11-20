@@ -6,13 +6,7 @@ import { PlayroomStateService } from './playroom-state';
 
 /** The setup steps, in the order the screen shows them. */
 export type SetupStepKey =
-  | 'welcome'
-  | 'acloud'
-  | 'login'
-  | 'playhouse'
-  | 'tools'
-  | 'defaults'
-  | 'done';
+  'welcome' | 'acloud' | 'login' | 'playhouse' | 'tools' | 'defaults' | 'done';
 
 export type SetupStepStatus = 'done' | 'needs-action' | 'optional';
 

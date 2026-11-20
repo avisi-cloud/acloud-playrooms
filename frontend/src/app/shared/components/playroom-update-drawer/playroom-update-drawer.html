@@ -57,8 +57,7 @@
   <section class="update-card">
     <div class="update-card-head">Resources</div>
     <div class="field-group" [class.has-error]="storageError()">
-      <label class="field-label" for="update-storage">{{ optionTexts.storage.label }}</label
-      ><input
+      <label class="field-label" for="update-storage">{{ optionTexts.storage.label }}</label><input
         id="update-storage"
         pInputText
         class="w-full"
@@ -117,8 +116,12 @@
       <div class="field-group">
         <label class="field-label" for="update-wait-timeout">{{
           optionTexts['wait-timeout'].label
-        }}</label
-        ><input id="update-wait-timeout" pInputText class="w-full" [(ngModel)]="form.waitTimeout" />
+        }}</label><input
+          id="update-wait-timeout"
+          pInputText
+          class="w-full"
+          [(ngModel)]="form.waitTimeout"
+        />
         <small class="field-hint">{{ optionTexts['wait-timeout'].hint }}</small>
       </div>
       <div class="toggle-stack">
