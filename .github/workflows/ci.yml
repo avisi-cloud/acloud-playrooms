@@ -1,9 +1,16 @@
 name: Checks
 
+# Runners are limited, so a pull request only runs what its changes need:
+#   - frontend only, or a draft: the frontend checks on Ubuntu
+#   - Go code: also the quick macOS checks (bindings, vet, race tests)
+#   - packaging (go.mod, Makefile, build/, scripts/, GoReleaser, workflows):
+#     also the full release rehearsal
+# Pushes to main always run everything.
 on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -14,6 +21,44 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Decide which checks to run
+    runs-on: ubuntu-latest
+    outputs:
+      desktop: ${{ steps.scope.outputs.desktop }}
+      rehearsal: ${{ steps.scope.outputs.rehearsal }}
+      workflows: ${{ steps.scope.outputs.workflows }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            printf 'desktop=true\nrehearsal=true\nworkflows=true\n' >> "$GITHUB_OUTPUT"
+            echo "Not a pull request: run everything."
+            exit 0
+          fi
+          if [ "$IS_DRAFT" = "true" ]; then
+            printf 'desktop=false\nrehearsal=false\nworkflows=false\n' >> "$GITHUB_OUTPUT"
+            echo "Draft: frontend checks only. Mark it ready for review to run the rest."
+            exit 0
+          fi
+          changed="$(git diff --name-only "$BASE_SHA" HEAD)"
+          printf 'Changed files:\n%s\n' "$changed"
+          matches() { printf '%s\n' "$changed" | grep -Eq "$1" && echo true || echo false; }
+          packaging='^(go\.mod|go\.sum|Makefile|Taskfile\.yml|\.goreleaser\.yaml|\.nvmrc|build/|scripts/|assets/|\.github/workflows/)'
+          go_code='(\.go$|^frontend/bindings/|^main/)'
+          rehearsal="$(matches "$packaging")"
+          desktop="$(matches "$go_code")"
+          [ "$rehearsal" = "true" ] && desktop=true
+          workflows="$(matches '^\.github/workflows/')"
+          printf 'desktop=%s\nrehearsal=%s\nworkflows=%s\n' "$desktop" "$rehearsal" "$workflows" | tee -a "$GITHUB_OUTPUT"
+
   frontend:
     name: Frontend checks
     runs-on: ubuntu-latest
@@ -31,7 +76,11 @@ jobs:
 
   desktop:
     name: macOS checks and release rehearsal
+    needs: changes
+    if: needs.changes.outputs.desktop == 'true'
     runs-on: macos-15
+    env:
+      REHEARSAL: ${{ needs.changes.outputs.rehearsal }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -39,26 +88,69 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
+      - run: make fmt-check
+      - name: Validate GitHub workflows
+        if: needs.changes.outputs.workflows == 'true'
+        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+
+      # Quick path: Go needs only a placeholder for the embedded frontend; the
+      # frontend job already builds and tests the real one.
+      - name: Generate the bindings without building the frontend
+        if: env.REHEARSAL != 'true'
+        run: |
+          mkdir -p frontend/dist && touch frontend/dist/.placeholder
+          make tools
+          "$(go env GOPATH)/bin/wails3" generate bindings -f '-tags gui' -clean=true
+
+      # Full path: the release rehearsal builds everything, bindings included.
       - uses: actions/setup-node@v6
+        if: env.REHEARSAL == 'true'
         with:
           node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: frontend/package-lock.json
-      - run: make fmt-check
-      - name: Validate GitHub workflows
-        run: go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
       - uses: goreleaser/goreleaser-action@v7
+        if: env.REHEARSAL == 'true'
         with:
           distribution: goreleaser
           version: '~> v2'
           install-only: true
       - name: Validate release configuration
+        if: env.REHEARSAL == 'true'
         run: goreleaser check
       - name: Install DMG packaging tool
+        if: env.REHEARSAL == 'true'
         run: brew install create-dmg
       - uses: actions/setup-python@v6
+        if: env.REHEARSAL == 'true'
         with:
           python-version: '3.15'
       - name: Build a complete release without publishing
+        if: env.REHEARSAL == 'true'
         run: make release-snapshot
+
+      # git diff alone misses newly generated files, such as a binding a Wails
+      # update adds, so untracked files count too.
+      - name: Check that the generated bindings are committed
+        run: |
+          drift="$(git status --porcelain -- frontend/bindings)"
+          if [ -n "$drift" ]; then
+            printf 'Commit the regenerated frontend/bindings first:\n%s\n' "$drift" >&2
+            exit 1
+          fi
       - run: make vet test
+
+  all-checks:
+    name: All checks passed
+    if: always()
+    needs: [changes, frontend, desktop]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when a needed job failed or was cancelled
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          case " $RESULTS " in
+            *" failure "*|*" cancelled "*) exit 1 ;;
+          esac
