@@ -39,6 +39,21 @@ For packaging changes, also run `make release-snapshot` on macOS with
 [GoReleaser v2](https://goreleaser.com/install/) installed. This builds and checks
 the actual download archive without uploading anything.
 
+## What CI runs
+
+Runners are limited, so a pull request only runs the checks its changes need.
+Open a pull request as a draft while you work, and mark it ready for review
+when it is done.
+
+| The pull request                                                            | Runs                                                       |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Is a draft, or changes only the frontend                                    | Frontend checks (Ubuntu)                                   |
+| Changes Go code or the bindings                                             | Also gofmt, the bindings check, vet and race tests (macOS) |
+| Changes `go.mod`, `Makefile`, `build/`, `scripts/`, GoReleaser or workflows | Also the full release rehearsal (macOS)                    |
+
+Every push to `main` runs everything. **All checks passed** sums up the result
+in one check.
+
 ## Pull request titles
 
 Use a Conventional Commit title and squash-merge: the title becomes the commit
