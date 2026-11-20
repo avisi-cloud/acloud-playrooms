@@ -148,8 +148,14 @@
               </div>
             </div>
             <div class="field-group">
-              <label class="field-label" for="create-storage">{{ optionTexts.storage.label }}</label
-              ><input id="create-storage" pInputText class="w-full" [(ngModel)]="form.storage" />
+              <label class="field-label" for="create-storage">{{
+                optionTexts.storage.label
+              }}</label><input
+                id="create-storage"
+                pInputText
+                class="w-full"
+                [(ngModel)]="form.storage"
+              />
               <small class="field-hint">{{ optionTexts.storage.hint }}</small>
             </div>
             <ng-container *ngTemplateOutlet="sizeField" />
@@ -218,8 +224,7 @@
             <div class="field-group">
               <label class="field-label" for="create-ssh-key">{{
                 optionTexts['ssh-key'].label
-              }}</label
-              ><input
+              }}</label><input
                 id="create-ssh-key"
                 pInputText
                 class="w-full"
@@ -309,8 +314,7 @@
             <div class="field-group mt-2">
               <label class="field-label" for="create-proxy-group">{{
                 optionTexts['proxy-group'].label
-              }}</label
-              ><input
+              }}</label><input
                 id="create-proxy-group"
                 pInputText
                 class="w-full"
@@ -324,8 +328,7 @@
               <div class="field-group">
                 <label class="field-label" for="create-wait-timeout">{{
                   optionTexts['wait-timeout'].label
-                }}</label
-                ><input
+                }}</label><input
                   id="create-wait-timeout"
                   pInputText
                   class="w-full"
@@ -462,15 +465,13 @@
                 <span>Name</span><strong>{{ form.name || 'not set' }}</strong>
               </div>
               <div>
-                <span>{{ optionTexts.image.label }}</span
-                ><strong>{{ form.image }}</strong>
+                <span>{{ optionTexts.image.label }}</span><strong>{{ form.image }}</strong>
               </div>
               <div>
                 <span>Size</span><strong>{{ sizeLabels[selectedSize()] }}</strong>
               </div>
               <div>
-                <span>{{ optionTexts.storage.label }}</span
-                ><strong>{{ form.storage }}</strong>
+                <span>{{ optionTexts.storage.label }}</span><strong>{{ form.storage }}</strong>
               </div>
               <div>
                 <span>CPU guaranteed / maximum</span
@@ -481,8 +482,7 @@
                 ><strong>{{ form.memReq }} / {{ form.memLim }}</strong>
               </div>
               <div>
-                <span>{{ optionTexts.port.label }}</span
-                ><strong>{{ portCount() }}</strong>
+                <span>{{ optionTexts.port.label }}</span><strong>{{ portCount() }}</strong>
               </div>
               <div>
                 <span>Wait</span
@@ -496,8 +496,7 @@
                 >
               </div>
               <div>
-                <span>{{ optionTexts.exposure.label }}</span
-                ><strong
+                <span>{{ optionTexts.exposure.label }}</span><strong
                   >{{ form.exposure || 'playhouse default'
                   }}{{
                     form.nodePortSSH && form.exposure !== 'nodeport' ? ' · NodePort SSH' : ''
@@ -505,8 +504,7 @@
                 >
               </div>
               <div>
-                <span>{{ optionTexts.capabilities.label }}</span
-                ><strong
+                <span>{{ optionTexts.capabilities.label }}</span><strong
                   >{{ form.capabilities || 'your default'
                   }}{{ capAddCount() ? ' + ' + capAddCount() + ' added' : '' }}</strong
                 >
@@ -517,8 +515,9 @@
               </div>
               @if (form.privileged && form.acknowledgePrivileged) {
                 <div>
-                  <span>{{ optionTexts.privileged.label }}</span
-                  ><strong class="danger-text">yes</strong>
+                  <span>{{ optionTexts.privileged.label }}</span><strong class="danger-text"
+                    >yes</strong
+                  >
                 </div>
               }
             </div>
