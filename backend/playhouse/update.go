@@ -18,6 +18,9 @@ type UpdateInput struct {
 	// tailscale on a playhouse that never had it also needs the credentials
 	// below; they are stored in-cluster, so a later update can omit them.
 	Exposure string
+	// DefaultVia switches the path playroom connect/open take when given none;
+	// "auto" clears it back to each room's own exposure, blank keeps it.
+	DefaultVia string
 	// IP allowlist edits, applied in this order; without a terminal acloud never offers the current IP.
 	ResetAllowlist             bool
 	RemoveIPs                  []string
@@ -41,6 +44,7 @@ func buildUpdateArguments(input UpdateInput) []string {
 	return cli.NewCommandArguments("playhouse", "update").Positional(input.Name).
 		Str("--update-channel", input.UpdateChannel).
 		Str("--exposure", input.Exposure).
+		Str("--default-via", input.DefaultVia).
 		Flag("--reset-allowlist", input.ResetAllowlist).
 		Repeat("--remove-ip", input.RemoveIPs).
 		Repeat("--allow-ip", input.AllowIPs).

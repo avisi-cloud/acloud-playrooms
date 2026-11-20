@@ -43,12 +43,26 @@ describe('Playroom connect dialog', () => {
     expect(component.openInput().Via).toBe('portforward');
   });
 
-  it('starts every opening on the room default again', () => {
+  it('starts every opening on the default again', () => {
     const component = dialog();
     component.via = 'nodeport';
     component.visible = true;
     component.ngOnChanges({ visible: new SimpleChange(false, true, false) });
     expect(component.via).toBe('');
+  });
+
+  // acloud falls back from a `via` default a room cannot use; an explicit --via fails instead.
+  it('names your connection default without sending it', async () => {
+    vi.spyOn(TestBed.inject(PlayroomDefaultsService), 'configuredText').mockImplementation(
+      (key: string, fallback = '') => (key === 'via' ? 'nodeport' : fallback),
+    );
+    const component = dialog();
+    component.visible = true;
+    component.ngOnChanges({ visible: new SimpleChange(false, true, false) });
+    await vi.waitFor(() => expect(component.selectedConnectionPathHint()).toContain('NodePort'));
+    expect(component.selectedConnectionPathHint()).toContain('Your default');
+    expect(component.connectInput().Via).toBe('');
+    expect(component.openInput().Via).toBe('');
   });
 
   it('describes every connection path', () => {

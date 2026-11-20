@@ -6,7 +6,12 @@ import { DrawerModule } from 'primeng/drawer';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
-import { IP_ALLOWLIST_HINT, PLAYHOUSE_EXPOSURES } from '../../../../shared/data';
+import {
+  DEFAULT_CONNECTION_PATH_HINT,
+  IP_ALLOWLIST_HINT,
+  PLAYHOUSE_CONNECTION_PATHS,
+  PLAYHOUSE_EXPOSURES,
+} from '../../../../shared/data';
 import {
   CommandPreviewComponent,
   StringListEditorComponent,
@@ -35,6 +40,8 @@ interface CreatePlayhouseForm {
   maxPlayroomNodes: number;
   maxPrivilegedNodes: number;
   exposure: string;
+  /** `--default-via`; blank is acloud's own default, each room's exposure. */
+  defaultVia: string;
   /** `--allow-ip` entries for the IP allowlist. */
   allowIPs: string[];
   allowCurrentIP: boolean;
@@ -66,6 +73,7 @@ function blankForm(): CreatePlayhouseForm {
     // Blank is not a valid --exposure, so the form carries the CLI's own
     // default rather than pretending "unset" means something here.
     exposure: 'tailscale',
+    defaultVia: '',
     allowIPs: [''],
     allowCurrentIP: false,
     tailscaleOAuthClientID: '',
@@ -130,6 +138,11 @@ export class CreatePlayhouseDrawerComponent implements OnChanges {
   touched = false;
 
   readonly exposureOptions = [...PLAYHOUSE_EXPOSURES];
+  readonly defaultViaOptions = [
+    { id: '', label: "Each playroom's own", hint: 'However each playroom is exposed' },
+    ...PLAYHOUSE_CONNECTION_PATHS,
+  ];
+  readonly defaultConnectionPathHint = DEFAULT_CONNECTION_PATH_HINT;
   readonly ipAllowlistHint = IP_ALLOWLIST_HINT;
 
   cloudAccounts: CloudAccountEntry[] = [];
@@ -312,6 +325,10 @@ export class CreatePlayhouseDrawerComponent implements OnChanges {
     return this.exposureOptions.find((exposure) => exposure.id === this.form.exposure)?.hint ?? '';
   }
 
+  selectedDefaultViaLabel(): string {
+    return this.defaultViaOptions.find((path) => path.id === this.form.defaultVia)?.label ?? '';
+  }
+
   capacityPrivilegedError(): string {
     if (!this.form.advancedCapacity) return '';
     if (Number(this.form.maxPrivilegedNodes) < 0) return 'Max privileged nodes cannot be negative.';
@@ -374,6 +391,7 @@ export class CreatePlayhouseDrawerComponent implements OnChanges {
       MaxPlayroomNodes: f.maxPlayroomNodes,
       MaxPrivilegedNodes: f.advancedCapacity ? f.maxPrivilegedNodes : 0,
       Exposure: f.exposure,
+      DefaultVia: f.defaultVia,
       AllowIPs: this.filledAllowIPs(),
       AllowCurrentIP: f.allowCurrentIP,
       TailscaleOAuthClientID: f.tailscaleOAuthClientID,

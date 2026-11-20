@@ -20,10 +20,12 @@ it, update the entry.
 - [Embedded terminal for interactive commands](#embedded-terminal-for-interactive-commands)
 - [Root flags](#root-flags)
 - [Concurrency](#concurrency)
+- [Signing in to a playhouse again](#signing-in-to-a-playhouse-again)
 
 **Settled**
 
 - [Releases are tagged by hand and published by GoReleaser](#releases-are-tagged-by-hand-and-published-by-goreleaser--2026-11-03)
+- [acloud 0.40 is the minimum: the default connection path](#acloud-040-is-the-minimum-the-default-connection-path--2026-11-02)
 - [Playhouse edits run `playhouse update`; acloud 0.39 is the minimum](#playhouse-edits-run-playhouse-update-acloud-039-is-the-minimum--2026-10-23)
 - [A reload serves `index.html` for Angular routes](#a-reload-serves-indexhtml-for-angular-routes--2026-10-22)
 - [The GUI re-reads the CLI config on every lookup](#the-gui-re-reads-the-cli-config-on-every-lookup--2026-09-12)
@@ -103,6 +105,22 @@ Two independent changes, both root-module:
 Neither belongs in `gui/`, and the GUI is not the only thing exposed to it —
 this is reachable from the CLI alone by scripting two commands in parallel.
 
+### Signing in to a playhouse again
+
+**Status: open. Recorded 2026-11-02, because the field reasons in
+`input-coverage.spec.ts` pointed here before this entry existed.**
+
+`-f/--force-install` makes a playroom command drop the cached playhouse
+kubeconfig and sign in through the browser again. The create drawer offers it as
+"Sign in to the playhouse again". List, start, stop, update, delete and connect
+do not, and `playroom open` has no such flag.
+
+The working position is that refreshing a session is not a per-operation
+concern: an expired session belongs to the playhouse, not to one command, so a
+switch on every form is the wrong place for it. The likely shape is one action,
+on the playhouse or offered when a command fails because the session expired.
+Until that exists, those fields stay unwired.
+
 ---
 
 ## Settled
@@ -124,7 +142,36 @@ cannot write the `app` stanza a Wails `.app` needs. That stanza is a Pro
 feature. Moving to GoReleaser Pro would let
 `homebrew_casks` replace `generate-homebrew-cask.mjs`.
 
+### acloud 0.40 is the minimum: the default connection path — 2026-11-02
+
+acloud 0.40 lets a playhouse and a user choose the path `playroom connect` and
+`playroom open` take when given no `--via`: `playhouse create/update
+--default-via`, and the `via` key of `playroom config`. The GUI offers both, as
+a select in both playhouse drawers and a Connection row on the Defaults screen.
+The Connect dialog's blank choice is now called Default rather than Room default.
+
+The minimum moved to 0.40.0 together with the verified version, for two
+reasons. An older acloud rejects `--default-via`, which the drawers now offer.
+And a `playhouse update` run by 0.39 rewrites the playhouse's settings without
+the new key, silently dropping a default path someone set with 0.40. The layout
+version did not change, so nothing warns about that.
+
+The GUI never sends the user's `via` default as `--via`. acloud treats a default
+as a preference and falls back to the room's own exposure where it does not fit,
+such as a NodePort default on a room without NodePort SSH; an explicit `--via`
+fails instead. The dialog names the default under its blank choice. For the
+same reason the create drawer never sends `--nodeport-ssh=false`: acloud adds
+NodePort SSH to a new room when the default path is NodePort, and an explicit
+false would stop it.
+
+Checked: the command paths and flags the screens emit, against the help of a
+CLI built from the v0.40.0 tag. The `playroom list` and `playhouse list` JSON
+did not change from 0.39, so the fixtures stand. This is not a live-cluster
+check.
+
 ### Playhouse edits run `playhouse update`; acloud 0.39 is the minimum — 2026-10-23
+
+_The minimum is now 0.40; see the entry above. The reasoning here still holds._
 
 Until acloud 0.38, `playhouse create` with an existing name converged that
 playhouse, so the edit drawer re-ran create. 0.38 added `playhouse update` and

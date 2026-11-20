@@ -27,6 +27,15 @@ describe('Create playhouse drawer', () => {
     expect(component.toInput().AllowCurrentIP).toBe(true);
   });
 
+  // Blank omits --default-via, so acloud's own default (each room's exposure) applies.
+  it('leaves the default connection path to acloud until one is chosen', () => {
+    const component = TestBed.createComponent(CreatePlayhouseDrawerComponent).componentInstance;
+    expect(component.toInput().DefaultVia).toBe('');
+    component.form.defaultVia = 'nodeport';
+    expect(component.toInput().DefaultVia).toBe('nodeport');
+    expect(component.selectedDefaultViaLabel()).toBe('NodePort');
+  });
+
   it('sends the allowlist entries without blank rows', () => {
     const component = TestBed.createComponent(CreatePlayhouseDrawerComponent).componentInstance;
     component.form.allowIPs = [' 198.51.100.0/24 ', ''];

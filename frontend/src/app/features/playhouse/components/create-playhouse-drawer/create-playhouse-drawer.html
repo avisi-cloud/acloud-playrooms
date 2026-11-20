@@ -94,6 +94,28 @@
             />
             <small class="field-hint">{{ selectedExposureHint() }}.</small>
           </div>
+          <div class="field-group">
+            <label class="field-label" for="create-default-via"
+              >Default connection path<small class="flag-ref">--default-via</small></label
+            >
+            <p-select
+              inputId="create-default-via"
+              [options]="defaultViaOptions"
+              optionLabel="label"
+              optionValue="id"
+              [(ngModel)]="form.defaultVia"
+              [style]="{ width: '100%' }"
+              appendTo="body"
+            >
+              <ng-template let-option pTemplate="item">
+                <div class="ca-option">
+                  <span class="ca-name">{{ option.label }}</span>
+                  <span class="ca-meta">{{ option.hint }}</span>
+                </div>
+              </ng-template>
+            </p-select>
+            <small class="field-hint">{{ defaultConnectionPathHint }}</small>
+          </div>
 
           <div class="section-label">IP allowlist</div>
           <small class="field-hint">{{ ipAllowlistHint }}</small>
@@ -420,6 +442,9 @@
             </div>
             <div>
               <span>Exposure</span><strong>{{ form.exposure }}</strong>
+            </div>
+            <div>
+              <span>Default connection path</span><strong>{{ selectedDefaultViaLabel() }}</strong>
             </div>
             <div>
               <span>IP allowlist</span><strong>{{ allowlistSummary() }}</strong>

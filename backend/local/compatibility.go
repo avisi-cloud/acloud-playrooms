@@ -7,12 +7,13 @@ import (
 )
 
 // VerifiedAgainstAcloudVersion records the CLI contract last checked against the screens.
-const VerifiedAgainstAcloudVersion = "0.39.0"
+const VerifiedAgainstAcloudVersion = "0.40.0"
 
 // MinimumAcloudVersion is the oldest acloud that has every command these
-// screens run: 0.39.0 added the IP allowlist, NodePort SSH and --via, and
-// 0.38.0 `playhouse update`, while create stopped updating an existing playhouse.
-const MinimumAcloudVersion = "0.39.0"
+// screens run: 0.40.0 added --default-via (an older `playhouse update` also
+// drops it), 0.39.0 the IP allowlist, NodePort SSH and --via, and 0.38.0
+// `playhouse update`, while create stopped updating an existing playhouse.
+const MinimumAcloudVersion = "0.40.0"
 
 // AcloudCompatibility says whether the acloud the GUI is running inside is
 // older than it needs, or newer than the one the GUI was verified against.

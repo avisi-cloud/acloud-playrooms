@@ -25,7 +25,7 @@ func TestBuildCreateArguments(t *testing.T) {
 				Environment: "env", MaintenanceScheduleIdentity: "sched",
 				NodeType: "n1", SystemNodeType: "n2", PlayroomNodeType: "n3",
 				PrivilegedNodeType: "n4", NodeCount: 1, MaxPlayroomNodes: 3,
-				MaxPrivilegedNodes: 2, Exposure: "tailscale",
+				MaxPrivilegedNodes: 2, Exposure: "tailscale", DefaultVia: "nodeport",
 				AllowIPs: []string{"198.51.100.0/24", " "}, AllowCurrentIP: true,
 				TailscaleOAuthClientID: "id", TailscaleOAuthClientSecret: "secret",
 				WaitTimeout: "20m", NoDefault: true, UpdateChannel: "stable",
@@ -38,7 +38,7 @@ func TestBuildCreateArguments(t *testing.T) {
 				"--node-type", "n1", "--system-node-type", "n2",
 				"--playroom-node-type", "n3", "--privileged-node-type", "n4",
 				"--node-count", "1", "--max-playroom-nodes", "3", "--max-privileged-nodes", "2",
-				"--exposure", "tailscale",
+				"--exposure", "tailscale", "--default-via", "nodeport",
 				"--allow-ip", "198.51.100.0/24", "--allow-current-ip",
 				"--tailscale-oauth-client-id", "id", "--tailscale-oauth-client-secret", "secret",
 				"--wait-timeout", "20m", "--no-default", "--yes",
@@ -105,7 +105,7 @@ func TestBuildUpdateArguments(t *testing.T) {
 
 	t.Run("every field set", func(t *testing.T) {
 		assertArguments(t, buildUpdateArguments(UpdateInput{
-			Name: "e2e-default", UpdateChannel: "rapid", Exposure: "tailscale",
+			Name: "e2e-default", UpdateChannel: "rapid", Exposure: "tailscale", DefaultVia: "auto",
 			ResetAllowlist: true, RemoveIPs: []string{"203.0.113.7"},
 			AllowIPs: []string{"198.51.100.0/24", "192.0.2.1"}, AllowCurrentIP: true,
 			TailscaleOAuthClientID: "id", TailscaleOAuthClientSecret: "secret",
@@ -114,6 +114,7 @@ func TestBuildUpdateArguments(t *testing.T) {
 			"playhouse", "update", "e2e-default",
 			"--update-channel", "rapid",
 			"--exposure", "tailscale",
+			"--default-via", "auto",
 			"--reset-allowlist", "--remove-ip", "203.0.113.7",
 			"--allow-ip", "198.51.100.0/24", "--allow-ip", "192.0.2.1", "--allow-current-ip",
 			"--tailscale-oauth-client-id", "id",
@@ -122,6 +123,14 @@ func TestBuildUpdateArguments(t *testing.T) {
 			"--wait-timeout", "20m",
 		})
 	})
+}
+
+// A blank default path keeps the playhouse's current one; "auto" is how it is cleared.
+func TestBuildUpdateArgumentsKeepsTheDefaultPathUnlessOneIsChosen(t *testing.T) {
+	arguments := buildUpdateArguments(UpdateInput{Name: "e2e-default"})
+	if slices.Contains(arguments, "--default-via") {
+		t.Fatalf("arguments = %s, must not contain --default-via", strings.Join(arguments, " "))
+	}
 }
 
 func TestBuildListArguments(t *testing.T) {

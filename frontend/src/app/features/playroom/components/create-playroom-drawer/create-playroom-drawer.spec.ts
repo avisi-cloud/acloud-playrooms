@@ -236,6 +236,23 @@ describe('Create playroom drawer', () => {
       component.form.nodePortSSH = true;
       expect(component.toInput().NodePortSSH).toBe(false);
     });
+
+    // Sending --nodeport-ssh=false would stop acloud adding it for a NodePort default path.
+    it('says acloud adds it anyway when your default connection path is NodePort', async () => {
+      await configureDefaults({ via: 'nodeport' });
+      const component = drawer();
+      component.form.exposure = 'tailscale';
+      component.form.nodePortSSH = false;
+      expect(component.nodePortSSHHint()).toContain('Your default connection path is NodePort');
+      expect(component.toInput().NodePortSSH).toBe(false);
+    });
+
+    it('mentions the playhouse default while it is off and yours is not NodePort', () => {
+      const component = drawer();
+      component.form.exposure = 'tailscale';
+      component.form.nodePortSSH = false;
+      expect(component.nodePortSSHHint()).toContain('playhouse connects via NodePort');
+    });
   });
 
   describe('an image that needs privileged mode', () => {

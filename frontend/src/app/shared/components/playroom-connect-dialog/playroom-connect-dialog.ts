@@ -66,8 +66,13 @@ export class PlayroomConnectDialogComponent implements OnChanges {
 
   user = 'playroom';
   forwardAgent = true;
-  /** `--via`; blank lets acloud use the room's own exposure. */
+  /** `--via`; blank lets acloud choose, starting from the user's `via` default. */
   via: ConnectionPath = '';
+  /**
+   * The user's `via` default, named under a blank choice. It is not sent: acloud
+   * falls back from a default a room cannot use, but fails on an explicit --via.
+   */
+  configuredVia = '';
   editor: string;
   terminal: string;
 
@@ -118,6 +123,12 @@ export class PlayroomConnectDialogComponent implements OnChanges {
   }
 
   selectedConnectionPathHint(): string {
+    if (this.via === '' && this.configuredVia) {
+      const label =
+        this.connectionPaths.find((path) => path.id === this.configuredVia)?.label ??
+        this.configuredVia;
+      return `Your default: ${label}. A playroom it does not fit falls back to how it is exposed.`;
+    }
     return this.connectionPaths.find((path) => path.id === this.via)?.hint ?? '';
   }
 
@@ -137,7 +148,8 @@ export class PlayroomConnectDialogComponent implements OnChanges {
 
   /**
    * Seeds user and forward-agent from `playroom config`, since both are
-   * configurable. The literals below are the fallback for an unknown key.
+   * configurable, and reads `via` to name it. The literals below are the
+   * fallback for an unknown key.
    */
   private async seedFromDefaults(): Promise<void> {
     try {
@@ -148,6 +160,7 @@ export class PlayroomConnectDialogComponent implements OnChanges {
     if (!this.visible) return;
     this.user = this.defaults.configuredText('user', 'playroom');
     this.forwardAgent = this.defaults.configuredToggle('forward-agent', true);
+    this.configuredVia = this.defaults.configuredText('via', '');
   }
 
   async execute(): Promise<void> {

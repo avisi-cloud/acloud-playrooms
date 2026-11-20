@@ -82,6 +82,7 @@ const WIRED: Record<string, string[]> = {
     'MaxPlayroomNodes',
     'MaxPrivilegedNodes',
     'Exposure',
+    'DefaultVia',
     'AllowIPs',
     'AllowCurrentIP',
     'TailscaleOAuthClientID',
@@ -94,6 +95,7 @@ const WIRED: Record<string, string[]> = {
     'Name',
     'UpdateChannel',
     'Exposure',
+    'DefaultVia',
     'ResetAllowlist',
     'RemoveIPs',
     'AllowIPs',
@@ -115,27 +117,32 @@ const UNWIRED: Record<string, Record<string, string>> = {
   'playroom.UpdateInput': {
     Force: 'Update targets a room the user is looking at; the owner guard is wanted here.',
     ForceInstall:
-      'Session refresh is not a per-operation concern; see the open question in DECISIONS.md.',
+      'Session refresh is not a per-operation concern; see "Signing in to a playhouse again" in DECISIONS.md.',
   },
   'playroom.DeleteInput': {
-    ForceInstall: 'Session refresh is not a per-operation concern; see DECISIONS.md.',
+    ForceInstall:
+      'Session refresh is not a per-operation concern; see "Signing in to a playhouse again" in DECISIONS.md.',
   },
   'playroom.StartInput': {
     Force: 'Starting a room you do not own is not a flow the GUI offers.',
-    ForceInstall: 'Session refresh is not a per-operation concern; see DECISIONS.md.',
+    ForceInstall:
+      'Session refresh is not a per-operation concern; see "Signing in to a playhouse again" in DECISIONS.md.',
     WaitTimeout: 'Start is always --no-wait from the GUI; the list polls until the room is ready.',
   },
   'playroom.StopInput': {
     Force: 'Stopping a room you do not own is not a flow the GUI offers.',
-    ForceInstall: 'Session refresh is not a per-operation concern; see DECISIONS.md.',
+    ForceInstall:
+      'Session refresh is not a per-operation concern; see "Signing in to a playhouse again" in DECISIONS.md.',
   },
   'playroom.OpenInput': {},
   'playroom.ConnectInput': {
-    ForceInstall: 'Session refresh is not a per-operation concern; see DECISIONS.md.',
+    ForceInstall:
+      'Session refresh is not a per-operation concern; see "Signing in to a playhouse again" in DECISIONS.md.',
   },
   'playroom.ListInput': {
     Mine: 'Filtered client-side for an instant toggle; re-listing per keystroke would be worse.',
-    ForceInstall: 'Session refresh is not a per-operation concern; see DECISIONS.md.',
+    ForceInstall:
+      'Session refresh is not a per-operation concern; see "Signing in to a playhouse again" in DECISIONS.md.',
   },
   'playhouse.CreateInput': {},
   'playhouse.DeleteInput': {},

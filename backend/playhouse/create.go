@@ -25,6 +25,9 @@ type CreateInput struct {
 	MaxPlayroomNodes            int
 	MaxPrivilegedNodes          int
 	Exposure                    string
+	// DefaultVia is the path playroom connect/open take when given none; blank
+	// leaves acloud's default (auto: each room's own exposure).
+	DefaultVia string
 	// --yes skips acloud's offer to add the current IP, so AllowCurrentIP asks for it instead.
 	AllowIPs                   []string
 	AllowCurrentIP             bool
@@ -66,6 +69,7 @@ func buildCreateArguments(input CreateInput) []string {
 		Int("--max-playroom-nodes", input.MaxPlayroomNodes).
 		Int("--max-privileged-nodes", input.MaxPrivilegedNodes).
 		Str("--exposure", input.Exposure).
+		Str("--default-via", input.DefaultVia).
 		Repeat("--allow-ip", input.AllowIPs).
 		Flag("--allow-current-ip", input.AllowCurrentIP).
 		Str("--tailscale-oauth-client-id", input.TailscaleOAuthClientID).

@@ -66,12 +66,14 @@ the playroom pools' settings and re-runs the bootstrap. Run with no settings
 
 The drawer offers what update can change on an existing playhouse: the update
 channel, `--exposure` (with the Tailscale credentials, which are stored
-in-cluster after first use), the IP allowlist and the two node ceilings. Update's node-type flags
+in-cluster after first use), the default connection path (`--default-via`;
+`auto` clears it), the IP allowlist and the two node ceilings. Update's node-type flags
 and `--node-count` only size a pool that has to be added, so the drawer leaves
 them to acloud's defaults and says that existing pools keep their size.
 
-`playhouse create` refuses an existing name since acloud 0.38, which is why
-0.39 is the minimum version (see [Decisions](DECISIONS.md)). Update has no
+`playhouse create` refuses an existing name since acloud 0.38, so editing needs
+`playhouse update`. 0.40 is the minimum version, because an older update drops
+the default connection path (see [Decisions](DECISIONS.md)). Update has no
 `--yes` and no `--no-default`: it never prompts without a terminal and never
 changes the default playhouse.
 
@@ -128,6 +130,12 @@ stdout and stderr are captured so failures include the CLI's explanation.
 `playroom connect` and `auth login` are handed to a real terminal through
 `backend/terminal`. Terminal.app, iTerm and Ghostty are supported on macOS.
 Other operating systems do not have a working terminal hand-off yet.
+
+Connect and open send `--via` only when the user picks a path. Left on Default,
+acloud chooses: the user's `via` default, then the playhouse's default path,
+then the room's own exposure, falling back where a default does not fit the
+room. The dialog names the user's default but never sends it, because an
+explicit `--via` fails where a default would have fallen back.
 
 Commands such as `config use-context` and `config use-organisation` accept a
 selected value directly, so the GUI supplies it instead of opening an fzf picker.

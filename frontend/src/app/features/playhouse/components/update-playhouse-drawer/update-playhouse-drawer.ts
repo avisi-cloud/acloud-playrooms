@@ -7,7 +7,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { CommandPreviewComponent, StringListEditorComponent } from '../../../../shared/components';
-import { IP_ALLOWLIST_HINT, PLAYHOUSE_EXPOSURES } from '../../../../shared/data';
+import {
+  DEFAULT_CONNECTION_PATH_HINT,
+  IP_ALLOWLIST_HINT,
+  PLAYHOUSE_CONNECTION_PATHS,
+  PLAYHOUSE_EXPOSURES,
+} from '../../../../shared/data';
 import {
   PlayhouseEntry,
   PlayhouseUpdateInput,
@@ -17,6 +22,7 @@ import {
 interface UpdatePlayhouseForm {
   updateChannel: string;
   exposure: string;
+  defaultVia: string;
   resetAllowlist: boolean;
   removeIPs: string[];
   allowIPs: string[];
@@ -37,6 +43,7 @@ function blankForm(): UpdatePlayhouseForm {
   return {
     updateChannel: '',
     exposure: '',
+    defaultVia: '',
     resetAllowlist: false,
     removeIPs: [''],
     allowIPs: [''],
@@ -84,6 +91,18 @@ export class UpdatePlayhouseDrawerComponent implements OnChanges {
     ...PLAYHOUSE_EXPOSURES,
   ];
 
+  /** Blank keeps the current path; "auto" is how update clears it back to each room's own. */
+  readonly defaultViaOptions = [
+    { id: '', label: 'Leave unchanged', hint: 'Keep the current default path' },
+    {
+      id: 'auto',
+      label: "Each playroom's own",
+      hint: 'Clear the default; each playroom is reached as it is exposed',
+    },
+    ...PLAYHOUSE_CONNECTION_PATHS,
+  ];
+  readonly defaultConnectionPathHint = DEFAULT_CONNECTION_PATH_HINT;
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible'] && this.visible) this.form = blankForm();
   }
@@ -113,6 +132,7 @@ export class UpdatePlayhouseDrawerComponent implements OnChanges {
     return (
       this.form.updateChannel.trim() !== '' ||
       this.form.exposure !== '' ||
+      this.form.defaultVia !== '' ||
       this.form.resetAllowlist ||
       this.form.allowCurrentIP ||
       filled(this.form.removeIPs).length > 0 ||
@@ -127,6 +147,7 @@ export class UpdatePlayhouseDrawerComponent implements OnChanges {
       Name: this.shortName(),
       UpdateChannel: this.form.updateChannel.trim(),
       Exposure: this.form.exposure,
+      DefaultVia: this.form.defaultVia,
       ResetAllowlist: this.form.resetAllowlist,
       RemoveIPs: filled(this.form.removeIPs),
       AllowIPs: filled(this.form.allowIPs),
