@@ -1,5 +1,7 @@
+import { templateFromCreateForm } from '../../../../shared/utils/playroom-template';
 import { vi } from 'vitest';
 
+import { ChangeDetectorRef } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -41,6 +43,34 @@ const DIND_IMAGE = {
 };
 
 describe('Create playroom drawer', () => {
+  it('applies templates through the current form and requires privileged acknowledgement again', () => {
+    const component = drawer();
+    component.form = { ...blankCreateForm('current'), name: 'new-room' };
+    component.templateSaved = true;
+    const template = templateFromCreateForm('Docker', {
+      ...blankCreateForm('other'),
+      image: 'base',
+      privileged: true,
+      acknowledgePrivileged: false,
+      ports: ['8080:80'],
+    });
+    component.applyTemplate(template);
+    expect(component.toInput()).toMatchObject({
+      Name: 'new-room',
+      Playhouse: 'current',
+      Image: 'base',
+      Privileged: false,
+      Ports: ['8080:80'],
+    });
+    expect(component.form.privileged).toBe(true);
+    expect(component.templateSaved).toBe(false);
+    expect(component.canCreate()).toBe(false);
+    expect(component.blockingError()).toContain('Confirm');
+    component.form.acknowledgePrivileged = true;
+    expect(component.canCreate()).toBe(true);
+    expect(component.toInput().Privileged).toBe(true);
+  });
+
   beforeEach(async () => {
     // An in-memory localStorage, so the remembered mode cannot leak between tests.
     let stored: string | null = null;
@@ -219,6 +249,34 @@ describe('Create playroom drawer', () => {
       fixture.destroy();
     });
 
+    it('starts with the form and offers Save as template only where the form ends', async () => {
+      vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+      vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([]);
+      vi.spyOn(wailsApi, 'getPlayroomTemplates').mockResolvedValue([]);
+      const fixture = TestBed.createComponent(CreatePlayroomDrawerComponent);
+      fixture.componentRef.setInput('playhouse', 'playhouse-demo');
+      fixture.componentRef.setInput('visible', true);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const saveField = () => document.body.querySelector('#save-template-name');
+
+      expect(document.body.querySelector('.template-controls')).toBeNull();
+      expect(saveField()).not.toBeNull();
+
+      const component = fixture.componentInstance;
+      component.switchToAdvancedMode();
+      fixture.detectChanges();
+      expect(component.stepKey()).toBe('basics');
+      expect(saveField()).toBeNull();
+
+      component.step = component.steps.length - 1;
+      fixture.debugElement.injector.get(ChangeDetectorRef).markForCheck();
+      fixture.detectChanges();
+      expect(component.stepKey()).toBe('review');
+      expect(saveField()).not.toBeNull();
+      fixture.destroy();
+    });
+
     it('remembers the chosen mode for the next time the drawer is made', () => {
       drawer().switchToAdvancedMode();
       expect(readCache().createPlayroomMode).toBe('advanced');
@@ -284,6 +342,29 @@ describe('Create playroom drawer', () => {
 
       expect(component.toInput()).toEqual(inputInEasyMode);
     });
+  });
+
+  it('keeps an applied template when defaults arrive, even if it matched the initial form', async () => {
+    let finishDefaults = (_entries: Awaited<ReturnType<typeof wailsApi.getPlayroomDefaults>>) => {};
+    vi.spyOn(wailsApi, 'getPlayroomDefaults').mockReturnValue(
+      new Promise((resolve) => {
+        finishDefaults = resolve;
+      }),
+    );
+    vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+    vi.spyOn(wailsApi, 'getPlayroomTemplates').mockResolvedValue([]);
+    const fixture = TestBed.createComponent(CreatePlayroomDrawerComponent);
+    fixture.componentRef.setInput('playhouse', 'ph');
+    fixture.componentRef.setInput('visible', true);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const image = component.form.image;
+    component.applyTemplate(templateFromCreateForm('Built-in options', component.form));
+    finishDefaults([{ Key: 'image', Value: 'different-image', Builtin: '', Source: 'config' }]);
+    await TestBed.inject(PlayroomDefaultsService).loadConfiguredDefaultsOnce();
+    await fixture.whenStable();
+    expect(component.form.image).toBe(image);
+    fixture.destroy();
   });
 
   it('seeds unreported values from late defaults without replacing copied values', async () => {

@@ -1,3 +1,5 @@
+import { templateFromCreateForm } from '../../../../shared/utils/playroom-template';
+import { blankCreateForm } from '../../../../shared/utils/forms';
 import { DesktopNotificationsService } from '../../../../core/services/desktop-notifications';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -57,6 +59,79 @@ describe('Settings page', () => {
   afterEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
+  });
+
+  it('keeps Appearance first and templates between Environment variables and Tool paths', async () => {
+    const fixture = TestBed.createComponent(SettingsPageComponent);
+    await fixture.whenStable();
+    const headings = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('h2')).map(
+      (heading) => heading.textContent?.trim(),
+    );
+    expect(headings[0]).toBe('Appearance');
+    const environment = headings.indexOf('Environment variables');
+    expect(headings.slice(environment, environment + 3)).toEqual([
+      'Environment variables',
+      'Playroom templates',
+      'Tool paths',
+    ]);
+  });
+
+  it('edits a template name only after Rename, cancels with Escape and saves with Enter', async () => {
+    vi.spyOn(wailsApi, 'getPlayroomTemplates').mockResolvedValue([
+      templateFromCreateForm('Web', blankCreateForm('')),
+    ]);
+    const save = vi.spyOn(wailsApi, 'savePlayroomTemplates').mockResolvedValue();
+    const fixture = TestBed.createComponent(SettingsPageComponent);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const row = () => root.querySelector<HTMLElement>('.template-row')!;
+    const rename = () =>
+      Array.from(row().querySelectorAll('button')).find(
+        (button) => button.textContent?.trim() === 'Rename',
+      )!;
+    expect(row().querySelector('input')).toBeNull();
+    rename().click();
+    await fixture.whenStable();
+    let input = row().querySelector<HTMLInputElement>('input')!;
+    input.value = 'Cancelled';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await fixture.whenStable();
+    expect(row().querySelector('input')).toBeNull();
+    expect(row().querySelector('.template-name')?.textContent).toBe('Web');
+    expect(save).not.toHaveBeenCalled();
+    rename().click();
+    await fixture.whenStable();
+    input = row().querySelector<HTMLInputElement>('input')!;
+    input.value = 'Shared';
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await fixture.whenStable();
+    expect(save).toHaveBeenCalledWith([expect.objectContaining({ name: 'Shared' })]);
+    expect(row().querySelector('input')).toBeNull();
+    expect(row().querySelector('.template-name')?.textContent).toBe('Shared');
+  });
+
+  it('keeps the rename input and entered name when saving fails', async () => {
+    vi.spyOn(wailsApi, 'getPlayroomTemplates').mockResolvedValue([
+      templateFromCreateForm('Web', blankCreateForm('')),
+    ]);
+    vi.spyOn(wailsApi, 'savePlayroomTemplates').mockRejectedValue(new Error('Disk full'));
+    const fixture = TestBed.createComponent(SettingsPageComponent);
+    await fixture.whenStable();
+    const component = fixture.componentInstance;
+    const template = component.templates.templates()[0];
+    component.beginTemplateRename(template);
+    component.templateName.set('Shared');
+    await component.saveTemplateName(template);
+    await fixture.whenStable();
+    expect(component.renamingTemplate()).toBe('Web');
+    expect(component.templateName()).toBe('Shared');
+    expect(component.templates.error()).toContain('Disk full');
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector<HTMLInputElement>('#rename-template')
+        ?.value,
+    ).toBe('Shared');
   });
 
   it('shows evening stop defaults and saves the switch and idle threshold', async () => {

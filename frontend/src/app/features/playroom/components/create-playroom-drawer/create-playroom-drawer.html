@@ -19,6 +19,36 @@
     </div>
   </ng-template>
 
+  @if (templates.templates().length) {
+    <section class="template-controls" aria-label="Playroom templates">
+      <span class="field-label">Start from template</span>
+      @if (mode === 'easy') {
+        <div class="template-choices">
+          @for (template of templates.templates(); track template.name) {
+            <p-button
+              [label]="template.name"
+              severity="secondary"
+              [outlined]="true"
+              size="small"
+              (click)="applyTemplate(template)"
+            />
+          }
+        </div>
+      } @else {
+        <p-select
+          ariaLabel="Start from template"
+          inputId="create-template"
+          [options]="templates.templates()"
+          optionLabel="name"
+          placeholder="Choose a template"
+          (onChange)="applyTemplate($event.value)"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+        />
+      }
+    </section>
+  }
+
   <!-- Easy and Advanced edit one form, so the fields both show are written once. -->
   <ng-template #nameAndImageFields>
     <div class="field-group" [class.has-error]="nameError()">
@@ -120,6 +150,47 @@
       </p-select>
       <small class="field-hint">{{ describeSize(selectedSize()) }}</small>
     </div>
+  </ng-template>
+
+  <!-- Saving sits where the form ends (Review, or the one Easy card), so the form starts at the top. -->
+  <ng-template #saveTemplateField>
+    <section class="field-group save-template" aria-label="Save playroom template">
+      <label class="field-label" for="save-template-name">Save as template</label>
+      <div class="template-actions">
+        <input
+          id="save-template-name"
+          pInputText
+          placeholder="Template name"
+          [(ngModel)]="templateName"
+          (ngModelChange)="templateSaved = false"
+        />
+        <p-button
+          label="Save template"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          [disabled]="!templateName.trim() || templates.busy() || !templates.loaded()"
+          (click)="saveTemplate()"
+        />
+      </div>
+      <small class="field-hint"
+        >Saves environment keys only, without the room name, playhouse or SSH key.</small
+      >
+      @if (templateSaved) {
+        <small class="field-hint" role="status">Template saved.</small>
+      }
+      @if (templates.error()) {
+        <p class="field-hint error" role="alert">{{ templates.error() }}</p>
+        <p-button
+          label="Reload templates"
+          severity="secondary"
+          [text]="true"
+          size="small"
+          [disabled]="templates.busy()"
+          (click)="templates.loadTemplates()"
+        />
+      }
+    </section>
   </ng-template>
 
   @if (notCopiedHint) {
@@ -526,6 +597,7 @@
                 <i class="pi pi-exclamation-triangle"></i>{{ blockingError() }}
               </div>
             }
+            <ng-container *ngTemplateOutlet="saveTemplateField" />
           }
         }
       </section>
@@ -571,6 +643,7 @@
           (click)="goToPrivilegedModeOnOptionsStep()"
         />
       }
+      <ng-container *ngTemplateOutlet="saveTemplateField" />
     </section>
   }
 
