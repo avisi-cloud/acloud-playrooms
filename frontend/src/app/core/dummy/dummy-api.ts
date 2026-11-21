@@ -316,6 +316,16 @@ const simulatedApi: typeof liveApi = {
   setDockBadge: async (count) => {
     console.info('Dummy Dock badge', count);
   },
+  onDeepLink: (handler: (url: string) => void) => {
+    const receive = (event: Event) => {
+      if (event instanceof CustomEvent && typeof event.detail === 'string') {
+        event.preventDefault();
+        handler(event.detail);
+      }
+    };
+    window.addEventListener('dummy:deep-link', receive);
+    return () => window.removeEventListener('dummy:deep-link', receive);
+  },
   onDesktopNotificationClick: () => () => undefined,
   setMenuBarRooms: async (rooms) => {
     console.info('Dummy menu bar rooms', rooms);

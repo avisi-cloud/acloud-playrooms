@@ -60,6 +60,28 @@ after that.
 `core/guards/playhouse-guard.ts` sends the user to `/playhouse` when no
 playhouse is selected and the backend has no cached one.
 
+### Deep links
+
+The desktop bundle registers `acloud-playrooms://`. Links use the current context
+and organisation; the app checks a fresh playhouse list and refuses unavailable
+playhouses or a selection changed during validation. It never switches context
+or organisation. A validated link may select a playhouse inside that scope.
+
+- `acloud-playrooms://rooms/<playhouse>/<room>` opens room details.
+- `acloud-playrooms://connect/<playhouse>/<room>` opens the Connect dialog.
+- `acloud-playrooms://create?playhouse=<playhouse>` opens the create drawer.
+
+Names are percent encoded. Unknown paths, extra parameters and malformed names
+are refused. Links only open screens: Connect and Create still require the user
+to submit the existing dialog or drawer. **Copy link** in room details copies the
+room URL. Links intentionally carry no credentials, context or organisation.
+
+`DeepLinksService` starts after shell initialization. Native URL events wait for
+its listener before delivery, including on a cold launch. The router's one-use
+`connect` and `create` parameters open the existing surfaces and are then cleared.
+Dummy mode accepts a `dummy:deep-link` window CustomEvent with the URL as its
+string detail, for browser tests without registering an operating system scheme.
+
 ## Talking to the backend
 
 Everything goes through `core/services/wails-api.ts`, the one file that touches
@@ -274,6 +296,26 @@ memory, storage size, ports, known capability profile, additions and ephemeral
 storage override the configured defaults. Everything else keeps its defaults,
 with a **Not copied** hint naming those settings. Privileged mode starts off and
 still requires acknowledgement. Closing saves this form as the new create draft.
+
+### Bulk playroom actions
+
+The overview keeps selection in page signals, outside the cache. Select playrooms
+shows card checkboxes; Command-click (or Control-click) toggles a room and
+Shift-click adds the visible range. Select all mine selects owned rooms matching
+the current filters. Unknown ownership cannot be selected. Changing playhouse or
+scope clears selection and any open bulk delete confirmation.
+
+Start applies to stopped rooms, Stop to Ready or No host rooms, Update outdated
+to outdated persistent rooms, and Delete to rooms outside a transition. Delete
+lists every submitted name and requires typing `delete` once. `runForEach` runs
+commands sequentially because CLI config writes can race (see DECISIONS,
+Concurrency). It rechecks ownership, scope, pending commands and eligibility
+before each command, continues after failures, and publishes each room's progress
+and a final succeeded/failed/skipped summary. Success means the CLI accepted the
+command; Start still settles through normal polling. Each command uses the usual
+lifecycle activity entry. Bulk runs suppress per-room progress and success toasts;
+failures remain in the summary and retain their usual error notification. Dummy
+mode uses the same simulated lifecycle methods.
 
 ## State
 
@@ -739,8 +781,8 @@ a screen, add the way in at the same time.
 
 ## Keyboard shortcuts and native menus
 
-`ShortcutsService` owns one shortcut registry, the keyboard listener and the
-`menu:action` listener. The `?` overview renders that registry in the shell.
+`ShortcutsService` owns the shared `APP_ACTIONS` action labels, shortcut registry,
+the keyboard listener and the `menu:action` listener. The `?` overview renders that registry in the shell.
 Page callbacks that change plain fields must notify Angular with `markForCheck()`;
 service listeners do not mark the page like a template event does.
 Shortcuts are ignored while typing, composing text, repeating a key, using other
@@ -749,6 +791,7 @@ guarded, so ⌘R never falls through to a webview reload.
 
 | Keys    | Action                                                       |
 | ------- | ------------------------------------------------------------ |
+| ⌘K      | Command palette                                              |
 | ⌘N      | New Playroom                                                 |
 | ⌘R      | Refresh the current room list, room detail or playhouse list |
 | ⌘,      | Settings                                                     |
@@ -805,3 +848,24 @@ stop actions. Enabling the fast preview resets its clock to 21:49. Editor opens
 are simulated successfully only in these explicit scheduling previews; the normal
 dummy editor-open failure still offers the health check. No native notification
 or real acloud command runs in these modes.
+
+### Command palette
+
+⌘K opens `shared/components/command-palette/`. It searches screen and action
+labels, rooms in the current playhouse, and a fresh playhouse list. It loads
+the room list through the lifecycle service if the selection has not loaded yet.
+Case-insensitive subsequences match; recently used matches come first, then
+contiguous matches before scattered letters. Recent items stay in memory for the
+session (up to twenty); scope and playhouse are part of room identities.
+
+Arrow keys wrap the selection, Enter runs it, and Escape dismisses the palette.
+The search combobox exposes its active listbox option to assistive technology.
+Actions wait until the palette has closed and restored focus. Screen, create,
+refresh and theme actions use the shortcut/menu dispatcher; room actions use the
+same connect/open dialog and lifecycle service as room cards, with the same
+status and pending-operation guards. Direct playhouse choices select and navigate
+like the chooser; Switch playhouse opens that existing chooser. Responses from
+closed palettes are ignored and failed playhouse reads are shown inline.
+
+The shared Connect/Open dialog handles Escape from its own controls, including
+when opened by the palette. A select that consumes Escape keeps the dialog open.

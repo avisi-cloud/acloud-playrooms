@@ -66,6 +66,16 @@ func RunDesktopApplication(appVersion string) error {
 		window.Restore()
 		window.Focus()
 	}
+	delivery := &deepLinkDelivery{send: func(url string) {
+		app.Event.Emit("deep-link:open", url)
+	}}
+	app.Event.On("deep-link:ready", func(_ *application.CustomEvent) {
+		delivery.frontendReady()
+	})
+	app.Event.OnApplicationEvent(events.Common.ApplicationLaunchedWithUrl, func(event *application.ApplicationEvent) {
+		showMainWindow()
+		delivery.open(event.Context().URL())
+	})
 	appService.showMainWindow = showMainWindow
 	// Hiding keeps the Angular app running, which pushes the room list to the menu bar.
 	window.RegisterHook(events.Common.WindowClosing, func(event *application.WindowEvent) {

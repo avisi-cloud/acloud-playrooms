@@ -564,3 +564,11 @@ conservative path. Native notifications reuse the notification permission servic
 and registered action categories. Notification failures are logged; in-app
 reminders remain available. The scheduler does not use OS scheduled delivery or
 wake the Mac. Tests inject time and use fake commands and notification services.
+
+## Deep links
+
+`build/darwin/Info.plist` registers the `acloud-playrooms` URL scheme. `run.go`
+receives Wails `ApplicationLaunchedWithUrl` events, brings the window forward and
+forwards their URL as `deep-link:open`. `deepLinkDelivery` queues launch URLs
+until Angular emits `deep-link:ready`, then delivers each once in order. Parsing,
+scope checks and routing live in the frontend; receiving a URL runs no command.

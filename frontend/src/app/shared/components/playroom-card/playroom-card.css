@@ -369,3 +369,15 @@ button.card-outdated:focus-visible {
 :host ::ng-deep .stopped .card-primary-btn.p-button:hover {
   background: var(--surf-2);
 }
+
+.playroom-card.selected {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+.card-select {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--link);
+  cursor: pointer;
+}

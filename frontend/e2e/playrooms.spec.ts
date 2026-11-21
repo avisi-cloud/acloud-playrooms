@@ -431,3 +431,111 @@ test('reads the list again by itself and says when it was last read', async ({ p
   await header.getByRole('button', { name: /Refresh$/ }).click();
   await expect(updated).toHaveText('Updated just now');
 });
+
+test('runs bulk actions only on selected owned playrooms with one delete confirmation', async ({
+  page,
+}) => {
+  await page.getByRole('button', { name: 'Select playrooms', exact: true }).click();
+  await expect(
+    page.getByRole('checkbox', { name: 'Select playroom review-payments', exact: true }),
+  ).toBeDisabled();
+  await page
+    .getByRole('checkbox', { name: 'Select playroom api-development', exact: true })
+    .check();
+  await page
+    .getByRole('checkbox', { name: 'Select playroom frontend-redesign', exact: true })
+    .check();
+  const actions = page.getByRole('group', { name: 'Selection actions' });
+  await expect(actions).toContainText('2 selected');
+  await actions.getByRole('button', { name: 'Update outdated', exact: true }).click();
+  const progress = page.getByRole('list', { name: 'Progress per playroom' });
+  await expect(progress).toContainText('frontend-redesign: succeeded');
+  await actions.getByRole('button', { name: 'Stop', exact: true }).click();
+  await expect(progress).toContainText('api-development: succeeded');
+  await expect(progress).toContainText('frontend-redesign: succeeded');
+  await actions.getByRole('button', { name: 'Start', exact: true }).click();
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Commands finished: 2 succeeded' }),
+  ).toBeVisible();
+  await actions.getByRole('button', { name: 'Delete selected', exact: true }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('button', { name: 'Close', exact: true })).toBeVisible();
+  await expect(dialog).toContainText('api-development');
+  await expect(dialog).toContainText('frontend-redesign');
+  await expect(dialog.getByRole('button', { name: /Delete selected playrooms$/ })).toBeDisabled();
+  await dialog.getByLabel('Type delete to confirm', { exact: true }).fill('delete');
+  await dialog.getByRole('button', { name: /Delete selected playrooms$/ }).click();
+  await expect(
+    page.getByRole('checkbox', { name: 'Select playroom api-development', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('checkbox', { name: 'Select playroom frontend-redesign', exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByRole('checkbox', { name: 'Select playroom review-payments', exact: true }),
+  ).toBeVisible();
+});
+
+test('selects cards with Command-click and Shift-click without navigating', async ({ page }) => {
+  await page
+    .getByRole('link', { name: 'Open playroom api-development', exact: true })
+    .locator('.card-name')
+    .click({ modifiers: ['Meta'] });
+  await expect(
+    page.getByRole('checkbox', { name: 'Select playroom api-development', exact: true }),
+  ).toBeChecked();
+  await page
+    .getByRole('group', { name: 'Select playroom frontend-redesign', exact: true })
+    .locator('.card-name')
+    .click({ modifiers: ['Shift'] });
+  await expect(
+    page.getByRole('checkbox', { name: 'Select playroom frontend-redesign', exact: true }),
+  ).toBeChecked();
+  await expect(
+    page.getByRole('checkbox', { name: 'Select playroom failed-image-build', exact: true }),
+  ).toBeChecked();
+  await expect(page).toHaveURL(/\/rooms$/);
+});
+
+test('deep links open room details and confirmation surfaces within the current scope', async ({
+  page,
+}) => {
+  const sendLink = async (url: string) => {
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (detail) =>
+            window.dispatchEvent(new CustomEvent('dummy:deep-link', { detail, cancelable: true })),
+          url,
+        ),
+      )
+      .toBe(false);
+  };
+  const playhouse = 'playhouse-platform-dev';
+  await sendLink(`acloud-playrooms://rooms/${playhouse}/api-development`);
+  await expect(page).toHaveURL('/rooms/api-development');
+  await expect(page.getByRole('heading', { level: 1, name: 'api-development.' })).toBeVisible();
+  await page.getByRole('button', { name: /\bCopy link$/ }).click();
+  await expect(
+    page.locator('.page-header-right').getByRole('button', { name: /\bCopied$/ }),
+  ).toBeVisible();
+  await sendLink(`acloud-playrooms://connect/${playhouse}/api-development`);
+  const connect = page.getByRole('dialog', { name: 'Connect to api-development', exact: true });
+  await expect(connect).toBeVisible();
+  await expect(connect.getByRole('button', { name: /\bConnect$/, exact: false })).toBeVisible();
+  await connect.getByRole('button', { name: /\bCancel$/ }).click();
+  await expect(connect).toBeHidden();
+  await sendLink(`acloud-playrooms://create?playhouse=${playhouse}`);
+  const create = page.getByRole('dialog', { name: 'Create playroom', exact: true });
+  await expect(create).toBeVisible();
+  await page.getByRole('button', { name: 'Close create playroom', exact: true }).click();
+  await expect(create).toBeHidden();
+  await sendLink(`acloud-playrooms://create?playhouse=${playhouse}`);
+  await expect(create).toBeVisible();
+  await page.getByRole('button', { name: 'Close create playroom', exact: true }).click();
+  await sendLink('acloud-playrooms://rooms/playhouse-product-dev/api-development');
+  await expect(page.getByRole('alert').filter({ hasText: 'Could not open link' })).toContainText(
+    'current context and organisation',
+  );
+  await expect(page).toHaveURL('/rooms');
+});

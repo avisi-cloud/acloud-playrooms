@@ -15,6 +15,7 @@ beforeEach(() => {
   vi.spyOn(wailsApi, 'onScheduleNotice').mockReturnValue(() => undefined);
   vi.spyOn(wailsApi, 'getRoomKeepRunning').mockResolvedValue(false);
   vi.spyOn(wailsApi, 'setRoomKeepRunning').mockResolvedValue();
+  vi.spyOn(wailsApi, 'onDeepLink').mockReturnValue(() => undefined);
   vi.spyOn(wailsApi, 'setDockBadge').mockResolvedValue();
   vi.spyOn(wailsApi, 'sendDesktopNotification').mockResolvedValue();
   vi.spyOn(wailsApi, 'onDesktopNotificationClick').mockReturnValue(() => undefined);
