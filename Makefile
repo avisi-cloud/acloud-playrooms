@@ -18,8 +18,8 @@ BUILD_DATE ?= $(shell date -u +"%Y-%m-%dT%H:%M:%SZ")
 BUILD_BY ?= make
 LDFLAGS = -X main.version=$(VERSION) -X main.commit=$(COMMIT) -X main.date=$(BUILD_DATE) -X main.builtBy="$(BUILD_BY)"
 
-# The browser-only preview does not need Go or Wails tooling.
-ifneq ($(MAKECMDGOALS),dev-dummy)
+# Browser preview and flow tests do not need Go or Wails tooling.
+ifneq ($(filter-out dev-dummy e2e,$(or $(MAKECMDGOALS),build)),)
 WAILS_VERSION := $(shell go list -m -f '{{.Version}}' github.com/wailsapp/wails/v3)
 GOBIN_DIR := $(shell go env GOBIN)
 ifeq ($(GOBIN_DIR),)
@@ -42,6 +42,9 @@ dev: tools
 # Browser preview: no Wails build, CLI, account or cloud access required.
 dev-dummy:
 	npm --prefix frontend run dev-dummy
+
+e2e:
+	npm --prefix frontend run e2e
 
 dev-local: tools
 	@if [ ! -f "$(LOCAL_ACLOUD_ABS)" ] || [ ! -x "$(LOCAL_ACLOUD_ABS)" ]; then \
@@ -100,4 +103,4 @@ mac-icon-assets: tools
 clean:
 	-rm -rf bin node_modules frontend/node_modules frontend/dist frontend/.angular frontend/.vite frontend/coverage .angular .task icons.icns
 
-.PHONY: tools dev dev-dummy dev-local build test vet fmt fmt-check check package dmg release-snapshot mac-icon-assets clean
+.PHONY: tools dev dev-dummy e2e dev-local build test vet fmt fmt-check check package dmg release-snapshot mac-icon-assets clean

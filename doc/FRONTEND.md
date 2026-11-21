@@ -488,7 +488,23 @@ the only way to know they were the same value was to follow it through.
 npm run check        # format:check + lint + build + test, fastest failure first
 npm run format       # Prettier writes the formatting
 npm run lint:fix     # ESLint writes what it can
+npx playwright install chromium # once, to install the browser
+npm run e2e         # Chromium flows against the dummy preview
 ```
+
+Browser flow tests live in `frontend/e2e/`, with their server and Chromium project
+configured in `playwright.config.ts`. `npm run e2e` (or `make e2e` from the root)
+starts `npm run dev-dummy` on `127.0.0.1:4200`; locally it reuses an existing server,
+which must be this checkout's dummy preview. CI always starts its own server.
+Each test has an isolated browser context; dummy mutations reset on reload.
+Every new screen or flow gets a browser test using `getByRole` or `getByLabel`
+and assertions on user-visible results. Angular's unit-test include pattern is
+relative to `src/`, and `tsconfig.spec.json` only includes `src/` and bindings,
+so the browser specs are excluded from the unit-test run. `make check` stays
+separate from `make e2e`. Prettier and ESLint check the browser specs too.
+The HTML report is in `frontend/playwright-report/`; open it with
+`npx playwright show-report` from `frontend/`. CI uploads it on failure and records
+a trace on the first retry.
 
 Prettier owns formatting and nothing in `eslint.config.mjs` reformats code, so
 the two never fight over a line. ESLint additionally enforces the casing half of
