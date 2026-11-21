@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import {
   Component,
+  ChangeDetectorRef,
   EventEmitter,
   Input,
   OnChanges,
@@ -9,6 +10,7 @@ import {
   SimpleChanges,
   inject,
 } from '@angular/core';
+import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
@@ -117,6 +119,10 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   @Output() visibleChange = new EventEmitter<boolean>();
   @Input() playhouse = '';
 
+  private readonly router = inject(Router);
+  private destroyed = false;
+  private readonly changeDetector = inject(ChangeDetectorRef);
+
   form: CreateForm = blankCreateForm('');
   touched = false;
   step = 0;
@@ -129,12 +135,15 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible'] && this.visible) {
-      const draft = this.session.recall<{ form: CreateForm; step: number }>('create');
+      const draft = this.session.recall<{ form: CreateForm; step: number; options?: boolean }>(
+        'create',
+      );
       this.form = draft?.form ?? blankCreateForm(this.playhouse);
       this.touched = false;
       this.submitFailure = '';
       this.step = draft?.step ?? 0;
       this.advancedSecurityOpenedFromImageError = false;
+      if (draft?.options) this.goToPrivilegedModeOnOptionsStep();
       void this.loadImages();
       if (!draft) void this.seedFromDefaults();
     }
@@ -185,6 +194,7 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     if (this.visible) this.rememberDraft();
   }
 
@@ -402,7 +412,25 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
     if (!this.canCreate()) return;
     this.submitFailure = '';
     this.rememberDraft();
-    if (!this.actions.startCreate(this.form)) {
+    const submittedForm = structuredClone(this.form);
+    if (
+      !this.actions.startCreate(this.form, () => {
+        this.session.remember('create', {
+          form: submittedForm,
+          step: this.steps.findIndex((step) => step.key === 'options'),
+          options: true,
+        });
+        if (this.destroyed) {
+          void this.router.navigate(['/rooms'], { queryParams: { create: true } });
+          return;
+        }
+        this.form = structuredClone(submittedForm);
+        this.visible = true;
+        this.visibleChange.emit(true);
+        this.goToPrivilegedModeOnOptionsStep();
+        this.changeDetector.markForCheck();
+      })
+    ) {
       this.submitFailure = 'This room is already being changed, or the selected playhouse changed.';
       return;
     }

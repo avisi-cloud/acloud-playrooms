@@ -123,6 +123,43 @@
         </div>
       }
     </div>
+    @if (canAllowCurrentIP()) {
+      <p class="field-hint">
+        If NodePort SSH cannot reach this playhouse, allow access from your current IP.
+      </p>
+      @if (confirmingAllowCurrentIP) {
+        <p role="status">Add your current public IP to this playhouse's allowlist?</p>
+        <app-command-preview
+          [input]="allowCurrentIPInput()"
+          [previewFn]="previewAllowCurrentIP"
+          [enabled]="visible"
+          [tight]="true"
+        />
+        <p-button
+          label="Cancel allowlist change"
+          severity="secondary"
+          [text]="true"
+          [disabled]="allowingCurrentIP"
+          (click)="confirmingAllowCurrentIP = false"
+        />
+        <p-button
+          label="Confirm adding my IP"
+          [loading]="allowingCurrentIP"
+          (click)="allowCurrentIP()"
+        />
+      } @else {
+        <p-button
+          label="Add my current IP to the allowlist"
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (click)="requestAllowCurrentIP()"
+        />
+      }
+      @if (allowCurrentIPComplete) {
+        <p role="status">Your IP was added. Connect again when ready.</p>
+      }
+    }
     <!-- The one action that hands off to a real terminal, and the only surface
          in the app that did not show the command it would run. -->
     @if (tab === 'connect') {
@@ -151,9 +188,10 @@
       (click)="close()"
     />
     <p-button
-      [label]="tab === 'connect' ? 'Connect' : 'Open'"
+      [label]="allowCurrentIPComplete ? 'Connect again' : tab === 'connect' ? 'Connect' : 'Open'"
       [icon]="tab === 'connect' ? 'pi pi-terminal' : 'pi pi-code'"
       size="small"
+      [disabled]="allowingCurrentIP || confirmingAllowCurrentIP"
       (click)="execute()"
     />
   </ng-template>

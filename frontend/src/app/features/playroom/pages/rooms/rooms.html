@@ -96,6 +96,14 @@
       <div class="read-failure" role="alert">
         <h2>Could not load playrooms</h2>
         <p>{{ failure() }}</p>
+        @if (actions.loadFix(); as action) {
+          <p-button
+            [label]="action.label"
+            [loading]="action.busy()"
+            size="small"
+            (click)="action.run().then(refreshAfterFix)"
+          />
+        }
         @if (loaded()) {
           <p>The rooms below are from the last successful read and may be out of date.</p>
         }

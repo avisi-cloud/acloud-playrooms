@@ -8,6 +8,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { CommandFixService, FailureAction } from '../../../../core/services/command-fix';
 import { PageLoadingService } from '../../../../core/services/page-loading';
 import { PlayhouseJobsService } from '../../../../core/services/playhouse-jobs';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
@@ -48,6 +49,8 @@ const BACKGROUND_POLL_MS = 15000;
   styleUrl: './playhouse-select.css',
 })
 export class PlayhouseSelectPageComponent implements OnDestroy {
+  readonly failureFix = signal<FailureAction | undefined>(undefined);
+  private readonly fixes = inject(CommandFixService);
   private readonly router = inject(Router);
   readonly state = inject(PlayroomStateService);
   readonly jobs = inject(PlayhouseJobsService);
@@ -137,6 +140,7 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
     const revision = this.state.scopeRevision();
     this.refreshing.set(true);
     this.failure.set(null);
+    this.failureFix.set(undefined);
     try {
       const playhouses = await this.pageLoading.runAndShowIndicatorIf(!background, () =>
         wailsApi.listPlayhouses(),
@@ -146,8 +150,21 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
     } catch (e) {
       // Normalised: this used to be the raw value, and a failed backend call
       // printed an entire HTML error document into the centred error state.
-      if (revision === this.state.scopeRevision() && !this.destroyed)
+      if (revision === this.state.scopeRevision() && !this.destroyed) {
         this.failure.set(explainFailure(e));
+        if (this.state.playhouse())
+          this.failureFix.set(
+            this.fixes.action(e, {
+              signIn: async () => {
+                await wailsApi.listPlayrooms({
+                  Playhouse: this.state.playhouse(),
+                  ForceInstall: true,
+                });
+                await this.refreshPlayhouses();
+              },
+            }),
+          );
+      }
     } finally {
       this.refreshing.set(false);
       this.loading.set(false);

@@ -64,6 +64,14 @@
       <div class="state-center">
         <i class="pi pi-exclamation-circle state-icon danger"></i>
         <span class="state-text">{{ failed.problem }}</span>
+        @if (failureFix(); as action) {
+          <p-button
+            [label]="action.label"
+            [loading]="action.busy()"
+            size="small"
+            (click)="action.run()"
+          />
+        }
         @if (failed.remedy) {
           <span class="state-hint">{{ failed.remedy }}</span>
         }

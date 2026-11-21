@@ -142,3 +142,53 @@ test('remembers the Appearance theme after a reload', async ({ page }) => {
   await page.reload();
   await expect(appearance.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked();
 });
+
+test('offers a session fix on the room error panel', async ({ page }) => {
+  await page.goto('/rooms?failure=session');
+  const failure = page.locator('.read-failure');
+  await expect(failure).toContainText('session not active');
+  await failure
+    .getByRole('button', { name: 'Sign in to the playhouse again', exact: true })
+    .click();
+  await expect(failure).toBeHidden();
+  await expect(
+    page.getByRole('link', { name: 'Open playroom api-development', exact: true }),
+  ).toBeVisible();
+});
+
+test('confirms the NodePort allowlist command and offers another connection', async ({ page }) => {
+  await openRoom(page, 'api-development');
+  await page.getByRole('button', { name: 'Connect', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Connect to api-development', exact: true });
+  await dialog.locator('#connect-via').click();
+  await page.getByRole('option', { name: 'NodePort', exact: true }).click();
+  await dialog
+    .getByRole('button', { name: 'Add my current IP to the allowlist', exact: true })
+    .click();
+  await expect(dialog).toContainText('--allow-current-ip');
+  await dialog.getByRole('button', { name: 'Confirm adding my IP', exact: true }).click();
+  await expect(dialog.getByRole('button', { name: 'Connect again', exact: true })).toBeEnabled();
+  await expect(dialog).toContainText('Your IP was added.');
+});
+
+test('returns a failed create to Options with its draft', async ({ page }) => {
+  await page.goto('/rooms?failure=privileged');
+  await page.getByRole('button', { name: /\bCreate Playroom$/ }).click();
+  const drawer = page.getByRole('dialog', { name: 'Create playroom', exact: true });
+  await drawer.getByRole('textbox', { name: 'Name', exact: true }).fill('fix-options-demo');
+  await drawer.getByRole('button', { name: /\bCreate$/, exact: false }).click();
+  await page.getByRole('button', { name: 'Go to Options', exact: true }).click();
+  await expect(drawer).toBeVisible();
+  await expect(drawer.locator('#create-privileged')).toBeVisible();
+  await expect(drawer.locator('#create-privileged')).not.toBeChecked();
+});
+
+test('offers an update after a recognised room failure', async ({ page }) => {
+  await page.goto('/rooms?failure=outdated');
+  await openRoom(page, 'review-payments');
+  await page.getByRole('button', { name: /\bStart$/ }).click();
+  await page.getByRole('button', { name: 'Update playroom', exact: true }).click();
+  await expect(
+    page.locator('.toast-detail').filter({ hasText: 'Updated "review-payments"' }),
+  ).toBeVisible();
+});

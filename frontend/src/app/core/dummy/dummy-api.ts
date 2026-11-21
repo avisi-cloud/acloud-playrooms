@@ -61,7 +61,10 @@ async function preview(action: string, input: object): Promise<string[]> {
   for (const [key, value] of Object.entries(input)) {
     if (value === '' || value === undefined || value === false || value === null) continue;
     args.push(
-      `--${key.replace(/[A-Z]/g, (letter, index) => `${index ? '-' : ''}${letter.toLowerCase()}`)}`,
+      `--${key
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1-$2')
+        .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+        .toLowerCase()}`,
     );
     args.push(
       /secret|key|env/i.test(key)
@@ -72,6 +75,29 @@ async function preview(action: string, input: object): Promise<string[]> {
     );
   }
   return read(args);
+}
+
+let simulatedFailureUsed = false;
+let simulatedFailureScenario = new URLSearchParams(window.location.search).get('failure');
+function simulateFailure(
+  input: { ForceInstall?: boolean },
+  kind: 'session' | 'outdated' | 'privileged',
+): void {
+  simulatedFailureScenario ??= new URLSearchParams(window.location.search).get('failure');
+  if (simulatedFailureUsed || simulatedFailureScenario !== kind) return;
+  if (kind === 'session' && input.ForceInstall) {
+    simulatedFailureUsed = true;
+    return;
+  }
+  simulatedFailureUsed = true;
+  if (kind === 'session') throw new Error('ensure local kubeconfig: session not active');
+  if (kind === 'outdated')
+    throw new Error(
+      'playroom "demo" is missing the latest security hardening; run acloud playroom update demo --playhouse demo to apply it (the playroom restarts)',
+    );
+  throw new Error(
+    "image \"claude-code-dind\" runs a Docker daemon and requires a privileged playroom (--privileged at create); use 'claude-code' (or 'claude-code-rootless') for an unprivileged playroom",
+  );
 }
 
 const binaryStatus = {
@@ -250,8 +276,12 @@ const simulatedApi: typeof liveApi = {
     entry.LayoutStatus = 'current';
     entry.LayoutVersion = 12;
   },
-  listPlayrooms: (input) => read(rooms[roomKey(input.Playhouse ?? '')] ?? []),
+  listPlayrooms: async (input) => {
+    simulateFailure(input, 'session');
+    return read(rooms[roomKey(input.Playhouse ?? '')] ?? []);
+  },
   createPlayroom: async (_operationId, input) => {
+    simulateFailure(input, 'privileged');
     if (!input.Name || !input.Playhouse) throw new Error('Choose a name and a playhouse.');
     const entries = (rooms[roomKey(input.Playhouse)] ??= []);
     if (entries.some((entry) => entry.Name === input.Name))
@@ -290,13 +320,17 @@ const simulatedApi: typeof liveApi = {
     rooms[key] = rooms[key].filter((entry) => entry !== room);
   },
   startPlayroom: async (_operationId, input) => {
+    simulateFailure(input, 'outdated');
     findRoom(input).Status = 'Ready';
   },
   stopPlayroom: async (_operationId, input) => {
     findRoom(input).Status = 'Stopped';
   },
   openPlayroomInEditor: unavailable,
-  connectPlayroom: unavailable,
+  connectPlayroom: async (input) => {
+    simulateFailure(input, 'session');
+    findRoom(input);
+  },
   getPlayroomDefaults: () => read(defaults),
   setPlayroomDefault: async (_operationId, key, value) => {
     const entry = defaults.find((entry) => entry.Key === key);
