@@ -359,7 +359,7 @@ Activity and Notifications share one row in the sidebar footer.
 ## Scope: context and organisation
 
 The sidebar reads top-down as a hierarchy — context → organisation → playhouse →
-playrooms — and the top two are pickers backed by `config use-context` and
+playrooms — and the top two are switched with `config use-context` and
 `config use-organisation`.
 
 The CLI offers those lists through fzf, but that is only how it obtains an
@@ -375,15 +375,15 @@ The clearing is one method — `forgetEverythingBelongingToPreviousScope()` — 
 signing out calls the same one. It used to be a copy in each, which is how the
 two came to clear slightly different things.
 
-The playhouse picker below them is the same control: a menu of what you can
-switch to, capped at five with the selected one first, ending in **View all /
-Create** — the `/playhouse` screen, where status, version, create and delete
-live. The row names creating as well as listing because someone who opens this
-menu and does not find the playhouse they want is looking for how to make one,
-and "View all" alone does not tell them they can. It opens on the list it already has and re-reads underneath, because the
-list changes from that screen, from a background create, and from a terminal.
-It used to be a button that only navigated, which made the third level of one
-hierarchy behave unlike the two above it.
+The sidebar shows all three in one **Working in** block, set apart from the
+screen navigation: context and organisation on a row each, the playhouse on its
+own line below. Names stay on one line and are cut short, with the full name on
+hover, so a long playhouse name cannot push the block into the links below it. A
+value acloud did not report reads "Not reported". The block opens the playhouse
+chooser (`features/playhouse/components/playhouse-chooser`), where each level has
+one line explaining it and changing context or organisation switches at once.
+Signed out, the block says so and leads to setup instead; see
+[`DECISIONS.md`](DECISIONS.md#working-in-leads-to-setup-only-when-signed-out).
 
 Switching writes to `~/.acloud.yaml`, so it moves the user's terminal too.
 

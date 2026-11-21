@@ -44,6 +44,9 @@ import { wailsApi } from './core/services/wails-api';
  */
 export const BREATH_MS = 5600;
 
+/** What the sidebar's "Working in" block can show; each state has its own action. */
+export type CurrentScopeState = 'signed-out' | 'no-playhouse' | 'playhouse-selected';
+
 /**
  * The application shell: the sidebar, the routed panel, and the coordination
  * between them. It holds no domain state of its own.
@@ -116,6 +119,30 @@ export class App implements OnInit {
           document.getElementById('main-content')?.focus({ preventScroll: true });
       });
     this.hasActivatedRoute = true;
+  }
+
+  readonly currentScopeState = computed<CurrentScopeState>(() => {
+    if (!this.state.loggedIn()) return 'signed-out';
+    return this.state.playhouse() ? 'playhouse-selected' : 'no-playhouse';
+  });
+
+  readonly currentScopeAction = computed(() => {
+    const state = this.currentScopeState();
+    if (state === 'signed-out') return 'Set up Acloud';
+    return state === 'no-playhouse' ? 'Choose a playhouse' : 'Switch playhouse';
+  });
+
+  /** Signed out, there is nothing to switch yet, so the block leads to the setup step that fixes it. */
+  openCurrentScope(): void {
+    if (this.currentScopeState() !== 'signed-out') {
+      this.showPlayhouseChooser = true;
+      return;
+    }
+    void this.router.navigate(['/setup'], {
+      queryParams: {
+        [SETUP_STEP_QUERY_PARAM]: this.session.acloudIsMissing() ? 'acloud' : 'login',
+      },
+    });
   }
 
   readonly authMenuItems = computed<MenuItem[]>(() =>
