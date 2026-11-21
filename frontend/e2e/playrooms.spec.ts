@@ -286,9 +286,8 @@ for (const entry of ['card', 'details'] as const) {
     await expect(drawer.getByRole('navigation', { name: 'Wizard steps' })).toBeVisible();
     await expect(drawer.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('');
     await expect(drawer.getByText(/Not copied:/)).toBeVisible();
-    await expect(
-      drawer.getByRole('textbox', { name: 'Select or type an image', exact: true }),
-    ).toHaveValue('opencode');
+    // By id: once the image catalog loads, the select names its input after the chosen image.
+    await expect(drawer.locator('#create-image')).toHaveValue('opencode');
     await drawer.getByRole('textbox', { name: 'Name', exact: true }).fill(`similar-${entry}`);
     await drawer.getByRole('button', { name: /\bNext$/ }).click();
     await expect(drawer.getByRole('textbox', { name: /Guaranteed CPU/ })).toHaveValue('500m');
