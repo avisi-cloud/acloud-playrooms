@@ -134,6 +134,8 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   @Input() playhouse = '';
   @Input() initialForm: Partial<CreateForm> | null = null;
   @Input() notCopiedHint = '';
+  /** Set by "Create your first playroom": opens on the one Easy screen whichever mode was remembered. */
+  @Input() openInEasyMode = false;
 
   private readonly router = inject(Router);
   private destroyed = false;
@@ -170,6 +172,7 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
       };
       this.notCopiedHint = this.initialForm ? this.notCopiedHint : (draft?.notCopiedHint ?? '');
       if (this.initialForm) this.switchToAdvancedMode();
+      else if (this.openInEasyMode) this.switchToEasyMode();
       this.touched = false;
       this.submitFailure = '';
       this.step = draft?.step ?? 0;

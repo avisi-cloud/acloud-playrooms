@@ -30,10 +30,21 @@
     </div>
   </ng-template>
 
-  @if (warning) {
+  @if (warning || consequences.length) {
     <div class="danger-copy">
       <i class="pi pi-exclamation-triangle"></i>
-      <span>{{ warning }}</span>
+      <div>
+        @if (warning) {
+          <span>{{ warning }}</span>
+        }
+        @if (consequences.length) {
+          <ul class="danger-consequences" aria-label="What deleting removes">
+            @for (consequence of consequences; track consequence) {
+              <li>{{ consequence }}</li>
+            }
+          </ul>
+        }
+      </div>
     </div>
   }
 

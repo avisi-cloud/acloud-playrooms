@@ -135,9 +135,14 @@
           </div>
         } @else {
           <h3 class="empty-state-title">No playrooms yet</h3>
-          <p class="empty-state-text">Create one to get started.</p>
+          <p class="empty-state-text">Pick a name; everything else uses your defaults.</p>
           <div class="empty-state-actions">
-            <p-button label="Create" icon="pi pi-plus" size="small" (click)="openCreate()" />
+            <p-button
+              label="Create your first playroom"
+              icon="pi pi-plus"
+              size="small"
+              (click)="openCreateInEasyMode()"
+            />
           </div>
         }
       </div>
@@ -167,6 +172,10 @@
 </div>
 
 <!-- ── Create wizard ─────────────────────────────────────────────────────── -->
-<app-create-playroom-drawer [(visible)]="showCreate" [playhouse]="state.playhouse()" />
+<app-create-playroom-drawer
+  [(visible)]="showCreate"
+  [playhouse]="state.playhouse()"
+  [openInEasyMode]="createInEasyMode"
+/>
 
 <app-playroom-actions-host #roomActions />

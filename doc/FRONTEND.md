@@ -543,6 +543,19 @@ cards exposing status/owner/image/age/host with direct actions, drawers for
 creation and editing, dialogs for short decisions, typed confirmation for
 deletes.
 
+An empty screen offers one next step. An empty playhouse offers "Create your
+first playroom", which opens the create drawer in Easy mode whatever mode was
+remembered; with a search or filter active it says nothing matches and offers
+Clear filters instead. An organisation without playhouses offers "Create a
+playhouse" and "Switch organisation", which opens the playhouse chooser.
+
+The playroom delete dialog lists what goes with the room, one line each, through
+the dialog's `consequences` input: the home folder with its size, and whether its
+storage is persistent or ephemeral. `listDeleteConsequences()` builds the list
+from what the room reports only: an unreported size and a storage type other
+than those two get no line (`listingToRoom` still reads a missing `DiskType` as
+persistent). `playroom list` reports no workspace namespace, so none is listed.
+
 The shell's styles are four component stylesheets rather than one, listed in
 `styleUrls` on the App component: `app.css` (the frame), `app-sidebar.css`,
 `app-toast.css` and `app-main-panel.css` (the panel and the brand mark in it).

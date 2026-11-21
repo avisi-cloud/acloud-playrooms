@@ -14,6 +14,7 @@ import {
   createFormFromRoom,
   listingToRoom,
   readCache,
+  updateCache,
 } from '../../../../shared/utils';
 import { CreatePlayroomDrawerComponent } from './create-playroom-drawer';
 
@@ -225,6 +226,21 @@ describe('Create playroom drawer', () => {
 
       drawer().switchToEasyMode();
       expect(drawer().mode).toBe('easy');
+    });
+
+    it('opens in Easy mode when asked to, even with Advanced remembered', () => {
+      vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+      vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([]);
+      updateCache({ createPlayroomMode: 'advanced' });
+      const fixture = TestBed.createComponent(CreatePlayroomDrawerComponent);
+      expect(fixture.componentInstance.mode).toBe('advanced');
+
+      fixture.componentRef.setInput('openInEasyMode', true);
+      fixture.componentRef.setInput('visible', true);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.mode).toBe('easy');
+      fixture.destroy();
     });
 
     it('lands on Basics with everything filled in when switching to Advanced', () => {

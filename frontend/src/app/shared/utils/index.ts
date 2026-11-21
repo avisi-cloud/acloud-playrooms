@@ -11,4 +11,5 @@ export * from './playroom-size';
 export * from './playhouse-layout';
 export * from './playroom-outdated';
 export * from './describe-room';
+export * from './delete-consequences';
 export * from './git-repository';
