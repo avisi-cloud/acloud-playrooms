@@ -18,7 +18,9 @@
     <div class="chooser-heading">
       <div>
         <h2 class="dialog-title">Choose a playhouse</h2>
-        <p class="dialog-subtitle">Your playhouse hosts your cloud development workspaces.</p>
+        <p class="dialog-subtitle">
+          Work from left to right: context, organisation, then playhouse.
+        </p>
       </div>
       <p-button
         icon="pi pi-times"
@@ -58,7 +60,7 @@
             </div>
           </ng-template>
         </p-select>
-        <small class="field-hint">Your Acloud connection and account.</small>
+        <small class="field-hint">The Acloud connection and account you sign in with.</small>
         @if (!loadingScopes() && !scopeFailure() && contexts().length === 0) {
           <p-message severity="secondary" variant="simple" size="small">
             No contexts available. Set up your Acloud connection in Settings.
@@ -68,7 +70,7 @@
 
       <section class="organisations-section">
         <h3 class="field-label">Organisations</h3>
-        <p class="support-copy">Choose the team you work in.</p>
+        <p class="support-copy">The team whose playhouses you can use.</p>
         @if (loadingScopes()) {
           <p class="support-copy" role="status">Loading organisations…</p>
         } @else if (scopeFailure()) {
@@ -118,7 +120,11 @@
         <div>
           <h3 id="chooser-playhouses-heading">Playhouses</h3>
           <p class="support-copy">
-            {{ currentOrganisationName() || 'Select an organisation to get started.' }}
+            @if (currentOrganisationName(); as organisation) {
+              The environments in {{ organisation }} that host your playrooms.
+            } @else {
+              Select an organisation to get started.
+            }
           </p>
         </div>
         <p-button

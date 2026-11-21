@@ -1,4 +1,4 @@
-/* The sidebar: brand, the three scope pickers, nav, tool statuses, and the
+/* The sidebar: brand, the Working in block, nav, tool statuses, and the
    footer controls for Activity, Notifications and account.
 
    Split out of app.css, which had grown to hold four unrelated things. Loaded
@@ -281,60 +281,99 @@
   margin-bottom: 6px;
 }
 
-/* One stable identity and one entry point into the chooser. */
+/* "Working in": the context › organisation › playhouse the screens act on, set
+   apart from the screen navigation. Names stay on one line, cut short with the
+   full name on hover, so a long playhouse name cannot push the block into the
+   links below it. */
+.scope-label {
+  margin: 0 20px 6px;
+  flex-shrink: 0;
+}
+
 .current-playhouse {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) 14px;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   gap: 10px;
   margin: 0 10px;
-  padding: 14px 10px;
+  padding: 12px;
   flex-shrink: 0;
   text-align: left;
 }
 
-.playhouse-mark {
+.scope-levels {
   display: grid;
-  place-items: center;
-  width: 30px;
-  height: 34px;
-  color: var(--busy-on-dark);
-  background: rgba(17, 153, 187, 0.18);
-  border-radius: 6px;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: 5px 10px;
+  min-width: 0;
 }
 
-.playhouse-identity {
+.scope-caption {
+  color: var(--side-tx-3);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.scope-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--side-tx-2);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* The playhouse is what the screens act on, so it gets the full width. */
+.scope-value.playhouse-name {
+  grid-column: 1 / -1;
+  margin-top: -2px;
+  color: var(--side-tx);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.scope-value.playhouse-name.not-chosen {
+  color: var(--side-tx-2);
+  font-weight: 400;
+  font-style: italic;
+}
+
+.scope-signed-out {
   display: flex;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
 }
 
-.playhouse-caption,
-.playhouse-organisation {
-  color: var(--side-tx-2);
-  font-size: 11px;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
-}
-
-.playhouse-name {
+.scope-signed-out .scope-value {
   color: var(--side-tx);
   font-size: 13px;
   font-weight: 600;
-  line-height: 1.4;
-  overflow-wrap: anywhere;
 }
 
-.switch-label {
-  margin-top: 5px;
+.scope-hint {
+  color: var(--side-tx-2);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.scope-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(245, 247, 250, 0.1);
   color: var(--busy-on-dark);
   font-size: 11px;
+  line-height: 1.4;
 }
 
-.switch-chevron {
-  color: var(--side-tx-2);
-  font-size: 13px;
+.scope-action .pi {
+  font-size: 12px;
 }
 
 .sidebar button:focus-visible,
