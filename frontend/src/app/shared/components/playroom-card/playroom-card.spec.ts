@@ -79,4 +79,62 @@ describe('PlayroomCardComponent', () => {
       'Recreate to update',
     );
   });
+  afterEach(() => vi.useRealTimers());
+
+  it('opens details on a single click and cancels navigation for a double click', async () => {
+    vi.useFakeTimers();
+    const fixture = TestBed.createComponent(PlayroomCardComponent);
+    fixture.componentInstance.room = room;
+    const open = vi.fn();
+    const doubleClick = vi.fn();
+    fixture.componentInstance.openRoom.subscribe(open);
+    fixture.componentInstance.doubleClickRoom.subscribe(doubleClick);
+    fixture.detectChanges();
+    const card = fixture.nativeElement.querySelector('article') as HTMLElement;
+    card.click();
+    await vi.advanceTimersByTimeAsync(500);
+    expect(open).toHaveBeenCalledOnce();
+    open.mockClear();
+    card.click();
+    card.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 2 }));
+    card.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    await vi.advanceTimersByTimeAsync(500);
+    expect(open).not.toHaveBeenCalled();
+    expect(doubleClick).toHaveBeenCalledExactlyOnceWith('demo');
+  });
+
+  it('ignores double clicks on controls, unavailable rooms and pending operations', () => {
+    const fixture = TestBed.createComponent(PlayroomCardComponent);
+    const component = fixture.componentInstance;
+    component.room = room;
+    const doubleClick = vi.fn();
+    component.doubleClickRoom.subscribe(doubleClick);
+    fixture.detectChanges();
+    fixture.nativeElement
+      .querySelector('p-button')
+      .dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    const card = fixture.nativeElement.querySelector('article');
+    component.pendingOperation = 'Stopping';
+    card.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    component.pendingOperation = '';
+    component.room = { ...room, status: 'stopped' };
+    card.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(doubleClick).not.toHaveBeenCalled();
+  });
+
+  it('copies the SSH alias from the menu and shows Copied', async () => {
+    const copy = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { userAgent: navigator.userAgent, clipboard: { writeText: copy } });
+    try {
+      const fixture = TestBed.createComponent(PlayroomCardComponent);
+      fixture.componentInstance.room = room;
+      await fixture.componentInstance.copySshCommand();
+      expect(copy).toHaveBeenCalledWith('ssh playroom-demo');
+      expect(fixture.componentInstance.menuItems().some((item) => item.label === 'Copied')).toBe(
+        true,
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });

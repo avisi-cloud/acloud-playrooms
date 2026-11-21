@@ -21,7 +21,8 @@
   font-size: 12.5px;
   line-height: 1.5;
 }
-.appearance-settings {
+.appearance-settings,
+.room-card-settings {
   margin-bottom: 28px;
   padding-bottom: 24px;
   border-bottom: 1px solid var(--border);
@@ -33,7 +34,8 @@
   color: var(--tx-2);
   font-size: 12.5px;
 }
-.appearance-settings .field-group:last-child {
+.appearance-settings .field-group:last-child,
+.room-card-settings .field-group:last-child {
   margin-bottom: 0;
 }
 .theme-field {

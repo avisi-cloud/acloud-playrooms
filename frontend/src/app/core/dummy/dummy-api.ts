@@ -85,6 +85,7 @@ const binaryStatus = {
 
 // An exhaustive adapter: dummy mode never imports a live backend implementation at runtime.
 export const dummyApi: typeof liveApi = {
+  getAppVersion: () => read('0.29.1+dummy'),
   getAcloudVersion: () => read('0.39.0'),
   isLoggedIn: () => read(signedIn),
   getCachedPlayhouse: () => read(playhouses[scopeKey()]?.[0]?.Slug ?? ''),
@@ -154,7 +155,9 @@ export const dummyApi: typeof liveApi = {
   getOperatingSystem: () => read('darwin'),
   // The browser preview has no native window to theme.
   setWindowTheme: () => Promise.resolve(),
-  openUrlInDefaultBrowser: unavailable,
+  openUrlInDefaultBrowser: async (url: string) => {
+    console.info('Dummy mode: simulated opening browser', url);
+  },
   loginWithTerminal: async () => {
     signedIn = true;
   },

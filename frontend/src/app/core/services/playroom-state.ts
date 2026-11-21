@@ -1,5 +1,5 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
-import { Playroom, Theme, ThemePreference } from '../../shared/models';
+import { Playroom, PreferredAction, Theme, ThemePreference } from '../../shared/models';
 import { readCache, updateCache } from '../../shared/utils';
 
 export interface PlayroomSelection {
@@ -23,6 +23,13 @@ export class PlayroomStateService {
   private readonly _roomsLoadedFor = signal<string | null>(null);
   private readonly _scopeRevision = signal<number>(0);
   private readonly selectionRevision = signal(0);
+
+  readonly preferredAction = signal<PreferredAction>(readCache().preferredAction);
+
+  setPreferredAction(preferredAction: PreferredAction): void {
+    this.preferredAction.set(preferredAction);
+    updateCache({ preferredAction });
+  }
 
   readonly playhouse = this._playhouse.asReadonly();
   readonly user = this._user.asReadonly();

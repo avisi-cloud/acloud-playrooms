@@ -346,3 +346,31 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.port-row {
+  align-items: center;
+  gap: 12px;
+}
+.port-description {
+  min-width: 0;
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+.port-description span {
+  white-space: normal;
+}
+.port-description a {
+  color: var(--link);
+  text-underline-offset: 3px;
+}
+.port-description a:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 3px;
+}
+
+.ports-label {
+  margin: 0;
+  padding: 10px 20px 0;
+  color: var(--tx-2);
+  font-size: 12.5px;
+}

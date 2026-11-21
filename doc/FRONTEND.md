@@ -334,6 +334,25 @@ from `ngOnInit` alone. Choosing a playhouse in the sidebar navigates to `/rooms`
 component and no second `ngOnInit` fires. Arriving from another screen still
 reads exactly once: the effect's first run is that read.
 
+Room details and each card’s menu copy `ssh playroom-<name>`. The alias works
+after the first Connect or Open, which writes the SSH configuration. Copy buttons
+show Copied. Copy details exports the reported configuration, app launch version
+and the same acloud version as the sidebar as plain text; missing facts say
+Not reported.
+
+Forwarded ports link to `http://<host>:<Port>` in the default browser and offer
+a copy button. The CLI listing has no exposure field: only a reported MagicDNS
+host ending in `.ts.net` enables a link and identifies Tailscale in copied details.
+Other ports retain their numbers and say Reachable on the tailnet only; copying
+one copies the exposed port number. Dummy mode simulates browser opening and
+includes both tailnet and unlinked fixtures.
+
+Settings → Preferred action chooses Connect, Open in editor or Nothing for a
+ready card’s double-click. The typed `preferredAction` cache field defaults to
+Nothing for old caches. Single click still opens details after a short delay so
+a double-click can cancel navigation; keyboard activation opens details immediately.
+Buttons inside a card keep their own actions, and busy rooms ignore double-clicks.
+
 ## Loading
 
 There is **one** loading indicator in the app: the Avisi mark in the main panel

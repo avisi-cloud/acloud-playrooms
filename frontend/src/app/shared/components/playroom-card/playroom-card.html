@@ -8,7 +8,8 @@
   role="link"
   tabindex="0"
   [attr.aria-label]="'Open playroom ' + room.name"
-  (click)="openRoom.emit(room.name)"
+  (click)="onCardClick()"
+  (dblclick)="onCardDoubleClick($event)"
   (keydown)="onCardKeydown($event)"
 >
   <!-- ── Dark navy header ── -->
@@ -139,7 +140,11 @@
           title="More actions"
           (click)="$event.stopPropagation(); menu.toggle($event)"
         />
-        <p-menu #menu [model]="menuItems()" [popup]="true" appendTo="body" />
+        <p-menu #menu [model]="menuItems()" [popup]="true" appendTo="body">
+          <ng-template #end>
+            <p class="ssh-menu-hint">SSH works after the first Connect or Open.</p>
+          </ng-template>
+        </p-menu>
       </div>
     </div>
   </div>

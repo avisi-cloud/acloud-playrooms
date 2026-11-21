@@ -6,6 +6,7 @@ export const CACHE_KEY = runtimeMode.dummy
   : 'acloud-playroom-gui-cache';
 
 export const defaultCache: CacheState = {
+  preferredAction: 'nothing',
   lastPlayhouse: runtimeMode.dummy ? 'playhouse-platform-dev' : '',
   lastPlayroom: '',
   lastEditor: 'vscode',

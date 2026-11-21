@@ -17,6 +17,8 @@ it, update the entry.
 
 **Open — revisit these**
 
+- [Port links require a reported tailnet hostname](#port-links-require-a-reported-tailnet-hostname)
+
 - [Embedded terminal for interactive commands](#embedded-terminal-for-interactive-commands)
 - [Root flags](#root-flags)
 - [Concurrency](#concurrency)
@@ -49,6 +51,14 @@ it, update the entry.
 ---
 
 ## Open — revisit these
+
+### Port links require a reported tailnet hostname
+
+The CLI listing does not report exposure. Until it does, room details enable
+browser links only for a reported `.ts.net` MagicDNS host. Copy details identifies
+those hosts as Tailscale and leaves other exposure values Not reported; an IP,
+blank host or arbitrary DNS name cannot establish the exposure. This deliberately
+leaves tailnet IP-only rooms unlinked. Revisit when the CLI reports exposure.
 
 ### Embedded terminal for interactive commands
 

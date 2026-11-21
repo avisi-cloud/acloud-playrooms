@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   EventEmitter,
+  OnDestroy,
   Input,
   Output,
   computed,
@@ -15,6 +16,8 @@ import { STATUS } from '../../data';
 import { Playroom } from '../../models';
 import {
   describeOutdated,
+  copyToClipboard,
+  sshAlias,
   formatAge,
   ownerLabel as formatOwnerLabel,
   statusLabel as formatStatusLabel,
@@ -33,7 +36,32 @@ import {
   // card only needs to re-render when its inputs change.
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PlayroomCardComponent {
+export class PlayroomCardComponent implements OnDestroy {
+  @Output() doubleClickRoom = new EventEmitter<string>();
+  private clickTimer?: ReturnType<typeof setTimeout>;
+  readonly sshCopied = signal(false);
+
+  ngOnDestroy(): void {
+    clearTimeout(this.clickTimer);
+  }
+
+  onCardClick(): void {
+    clearTimeout(this.clickTimer);
+    this.clickTimer = setTimeout(() => this.openRoom.emit(this.room.name), 500);
+  }
+
+  onCardDoubleClick(event: MouseEvent): void {
+    if ((event.target as HTMLElement).closest('button, p-button, .card-actions, p-menu')) return;
+    clearTimeout(this.clickTimer);
+    if (this.room.status === 'ready' && !this.pendingOperation)
+      this.doubleClickRoom.emit(this.room.name);
+  }
+
+  async copySshCommand(): Promise<void> {
+    await copyToClipboard(`ssh ${sshAlias(this.room.name)}`);
+    this.sshCopied.set(true);
+  }
+
   @Input({ required: true })
   set room(value: Playroom) {
     this.roomSignal.set(value);
@@ -107,6 +135,13 @@ export class PlayroomCardComponent {
         command: () => this.openRoom.emit(room.name),
       },
     ];
+
+    items.push({
+      label: this.sshCopied() ? 'Copied' : 'Copy SSH command',
+      icon: 'pi pi-copy',
+      title: 'Works after the first Connect or Open.',
+      command: () => void this.copySshCommand(),
+    });
 
     if (room.status !== 'failed') {
       items.push({

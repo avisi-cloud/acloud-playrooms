@@ -2,6 +2,8 @@ import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
+import { SelectModule } from 'primeng/select';
+import { PreferredAction } from '../../../../shared/models';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ThemePreference } from '../../../../shared/models';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
@@ -13,6 +15,7 @@ import { T3CodePathCardComponent } from '../../components/t3-code-path/t3-code-p
   selector: 'app-settings-page',
   imports: [
     FormsModule,
+    SelectModule,
     ButtonModule,
     ToggleSwitchModule,
     AcloudBinaryCardComponent,
@@ -23,6 +26,11 @@ import { T3CodePathCardComponent } from '../../components/t3-code-path/t3-code-p
   styleUrl: './settings.css',
 })
 export class SettingsPageComponent {
+  readonly preferredActionOptions: { label: string; value: PreferredAction }[] = [
+    { label: 'Connect', value: 'connect' },
+    { label: 'Open in editor', value: 'open' },
+    { label: 'Nothing', value: 'nothing' },
+  ];
   readonly state = inject(PlayroomStateService);
   readonly themeOptions: { label: string; value: ThemePreference; icon: string }[] = [
     { label: 'Light', value: 'light', icon: 'pi-sun' },

@@ -45,3 +45,18 @@ export function ownerLabel(room: Playroom, currentUser: string): string {
   const owner = room.owner === currentUser ? 'you' : room.owner.split('@')[0];
   return `${owner}${room.ephemeral ? ' · ephemeral' : ''}`;
 }
+
+export function sshAlias(name: string): string {
+  return `playroom-${name}`;
+}
+
+// The listing has no exposure field; only a reported MagicDNS host establishes tailnet access.
+export function hasTailnetHost(room: Playroom): boolean {
+  return /^[a-z0-9-]+(?:\.[a-z0-9-]+)*\.ts\.net\.?$/i.test(room.host);
+}
+
+export function forwardedPortUrl(room: Playroom, port: number): string {
+  return hasTailnetHost(room) && Number.isInteger(port) && port > 0 && port <= 65535
+    ? `http://${room.host}:${port}`
+    : '';
+}

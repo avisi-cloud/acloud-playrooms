@@ -141,6 +141,7 @@
             [currentUser]="state.user()"
             [pendingOperation]="actions.pendingOperation(room.name)"
             (openRoom)="openRoom($event)"
+            (doubleClickRoom)="runPreferredAction($event)"
             (connectRoom)="openConnect($event, 'connect')"
             (openInEditor)="openConnect($event, 'open')"
             (startRoom)="startRoom($event)"

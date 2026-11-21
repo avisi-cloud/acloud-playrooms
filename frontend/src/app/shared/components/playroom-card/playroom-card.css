@@ -297,3 +297,12 @@ button.card-outdated {
 button.card-outdated:focus-visible {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--cyan) 30%, transparent);
 }
+
+.ssh-menu-hint {
+  margin: 0;
+  padding: 8px 12px;
+  max-width: 230px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--tx-2);
+}
