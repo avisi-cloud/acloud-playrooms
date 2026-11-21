@@ -191,6 +191,23 @@ Running rooms, in the loaded current playhouse. Zero and Off remove it. Updates
 are debounced by 150 ms; selection changes clear the previous badge immediately.
 Dummy mode logs notification requests and badge counts instead of using macOS.
 
+### Menu bar
+
+`core/services/menu-bar.ts` pushes the current playhouse's room list to the
+native menu bar whenever the list, its loaded state or a room's running task
+changes; age ticks alone do not rebuild it. Go never reads the list itself. Rooms
+are sorted by name and carry the room card's status label. A room chosen there
+comes back as a `menu-bar:action` event and runs through the room card's paths:
+start and stop through `PlayroomLifecycleService`, connect and open through
+`PlayroomConnectService`. Connect skips the dialog and uses what it would open
+on: the configured user and agent forwarding, and the last terminal. Open uses the
+last editor. A request for a room that is gone, in another playhouse, in another
+status or busy runs nothing; it shows the window with a warning. Connect and open
+failures also show the window, with the same fixes as the connect dialog.
+
+Settings → Menu bar saves **Keep running in the menu bar** (off by default) and
+sends it to Go at startup and on change. Dummy mode logs both pushes.
+
 Before this, every call site passed `String(error)` — which prefixes a thrown
 error with its class name, so the JSON a rejected binding call carries stopped
 looking like JSON, and the whole blob

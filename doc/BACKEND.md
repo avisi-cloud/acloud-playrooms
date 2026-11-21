@@ -506,3 +506,20 @@ prevents an alert after the user returns. Native errors reach the frontend log;
 they never change the result of an acloud command. Zero removes the Dock badge.
 A notification click restores and focuses the main window, then emits its opaque
 target to the frontend, which checks the original selection before navigating.
+
+## Menu bar
+
+`menu_bar.go` adds one system tray icon (`assets/menu-bar-icon.png`, a template
+image) with a menu built from `MenuBarRooms`, which the frontend sends through
+`App.SetMenuBarRooms`. An unknown status or a room without a name is refused.
+`describeMenuBar` turns the list into rows: the playhouse, then each room. A Ready
+room offers Connect, Open in editor and Stop; a Stopped room offers Start; others,
+and rooms with a running task, are plain text. Open Acloud Playrooms, New Playroom
+and Quit follow. `routeMenuBarRequest` shows the window and quits natively, sends
+New Playroom through the existing `menu:action` event, and emits room actions as
+`menu-bar:action` for the frontend to run.
+
+`App.SetKeepRunningInMenuBar` stores the Settings switch in memory. While it is
+on, a `WindowClosing` hook hides the window instead of closing it, so the app and
+its Angular state keep running; ⌘Q and Quit still end the app.
+`App.ShowMainWindow` lets the frontend bring the window back for a failure.

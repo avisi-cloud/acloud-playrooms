@@ -165,6 +165,16 @@ test('remembers the Appearance theme after a reload', async ({ page }) => {
   await expect(appearance.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked();
 });
 
+test('remembers keeping the app running in the menu bar after a reload', async ({ page }) => {
+  await page.getByRole('link', { name: /\bSettings$/ }).click();
+  const menuBar = page.getByRole('region', { name: 'Menu bar', exact: true });
+  const keepRunning = menuBar.getByRole('switch', { name: 'Keep running in the menu bar' });
+  await expect(keepRunning).not.toBeChecked();
+  await keepRunning.check();
+  await page.reload();
+  await expect(keepRunning).toBeChecked();
+});
+
 test('offers a session fix on the room error panel', async ({ page }) => {
   await page.goto('/rooms?failure=session');
   const failure = page.locator('.read-failure');

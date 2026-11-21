@@ -17,6 +17,7 @@ it, update the entry.
 
 **Open — revisit these**
 
+- [The menu bar shows the frontend's room list](#the-menu-bar-shows-the-frontends-room-list)
 - [Git repositories are checked before creation](#git-repositories-are-checked-before-creation)
 
 - [Forwarded variables can come from the login shell](#forwarded-variables-can-come-from-the-login-shell)
@@ -58,6 +59,20 @@ it, update the entry.
 ---
 
 ## Open — revisit these
+
+### The menu bar shows the frontend's room list
+
+The menu bar icon lists the rooms the frontend already holds; Go does not run
+`playroom list` a second time. With Keep running in the menu bar on, closing the
+window hides it rather than destroying it, so the webview, its polling and the
+room list keep running. That a hidden WKWebView keeps its timers and events
+running has not been verified in the desktop build yet. The list is as fresh as
+the frontend's last read; nothing polls just for the menu bar. Connect runs
+without the dialog, using the choices the dialog would open on. The icon is
+always shown; only closing behaviour has a switch.
+
+Revisit if a hidden window stops updating the list, if the list needs to refresh
+on its own while nothing is changing, or if people ask to hide the icon.
 
 ### Git repositories are checked before creation
 
