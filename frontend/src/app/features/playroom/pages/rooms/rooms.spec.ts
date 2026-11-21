@@ -246,6 +246,22 @@ describe('RoomsPageComponent', () => {
   });
 
   // Setup's "Create your first playroom" lands here with the drawer open.
+  it('opens create again when a second link reaches the reused rooms page', async () => {
+    vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([]);
+    vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+    TestBed.inject(Router).resetConfig([{ path: 'rooms', component: RoomsPageComponent }]);
+    TestBed.inject(PlayroomStateService).selectPlayhouse('ph');
+    const harness = await RouterTestingHarness.create();
+    const page = await harness.navigateByUrl('/rooms?create=1', RoomsPageComponent);
+    await harness.fixture.whenStable();
+    expect(page.showCreate).toBe(true);
+    page.showCreate = false;
+    await harness.navigateByUrl('/rooms?create=1', RoomsPageComponent);
+    await harness.fixture.whenStable();
+    expect(page.showCreate).toBe(true);
+    expect(TestBed.inject(Router).url).toBe('/rooms');
+  });
+
   it('opens the create drawer when the URL asks for it, then clears the parameter', async () => {
     vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
     vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([]);

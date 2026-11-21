@@ -57,6 +57,13 @@ export const wailsApi = {
   ): Promise<localModels.EnvironmentPresence[]> =>
     app.GetEnvironmentPresence(entries, readVariablesFromLoginShell),
   getAppVersion: (): Promise<string> => app.GetAppVersion(),
+  onDeepLink: (handler: (url: string) => void): (() => void) => {
+    const unsubscribe = Events.On('deep-link:open', (event) => handler(event.data as string));
+    void Events.Emit('deep-link:ready').catch((error: unknown) =>
+      console.error('Could not receive startup links', error),
+    );
+    return unsubscribe;
+  },
   // Session
   getAcloudVersion: (): Promise<string> => app.GetAcloudVersion(),
   isLoggedIn: (): Promise<boolean> => app.IsLoggedIn(),

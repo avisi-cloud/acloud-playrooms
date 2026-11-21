@@ -496,3 +496,46 @@ test('selects cards with Command-click and Shift-click without navigating', asyn
   ).toBeChecked();
   await expect(page).toHaveURL(/\/rooms$/);
 });
+
+test('deep links open room details and confirmation surfaces within the current scope', async ({
+  page,
+}) => {
+  const sendLink = async (url: string) => {
+    await expect
+      .poll(() =>
+        page.evaluate(
+          (detail) =>
+            window.dispatchEvent(new CustomEvent('dummy:deep-link', { detail, cancelable: true })),
+          url,
+        ),
+      )
+      .toBe(false);
+  };
+  const playhouse = 'playhouse-platform-dev';
+  await sendLink(`acloud-playrooms://rooms/${playhouse}/api-development`);
+  await expect(page).toHaveURL('/rooms/api-development');
+  await expect(page.getByRole('heading', { level: 1, name: 'api-development.' })).toBeVisible();
+  await page.getByRole('button', { name: /\bCopy link$/ }).click();
+  await expect(
+    page.locator('.page-header-right').getByRole('button', { name: /\bCopied$/ }),
+  ).toBeVisible();
+  await sendLink(`acloud-playrooms://connect/${playhouse}/api-development`);
+  const connect = page.getByRole('dialog', { name: 'Connect to api-development', exact: true });
+  await expect(connect).toBeVisible();
+  await expect(connect.getByRole('button', { name: /\bConnect$/, exact: false })).toBeVisible();
+  await connect.getByRole('button', { name: /\bCancel$/ }).click();
+  await expect(connect).toBeHidden();
+  await sendLink(`acloud-playrooms://create?playhouse=${playhouse}`);
+  const create = page.getByRole('dialog', { name: 'Create playroom', exact: true });
+  await expect(create).toBeVisible();
+  await page.getByRole('button', { name: 'Close create playroom', exact: true }).click();
+  await expect(create).toBeHidden();
+  await sendLink(`acloud-playrooms://create?playhouse=${playhouse}`);
+  await expect(create).toBeVisible();
+  await page.getByRole('button', { name: 'Close create playroom', exact: true }).click();
+  await sendLink('acloud-playrooms://rooms/playhouse-product-dev/api-development');
+  await expect(page.getByRole('alert').filter({ hasText: 'Could not open link' })).toContainText(
+    'current context and organisation',
+  );
+  await expect(page).toHaveURL('/rooms');
+});
