@@ -24,6 +24,28 @@ export class PlayroomStateService {
   private readonly _scopeRevision = signal<number>(0);
   private readonly selectionRevision = signal(0);
 
+  private readonly _pinnedRooms = signal(readCache().pinnedRooms);
+  readonly pinnedRooms = this._pinnedRooms.asReadonly();
+
+  isPinned(playhouse: string, name: string): boolean {
+    return this._pinnedRooms()[playhouse]?.includes(name) ?? false;
+  }
+
+  togglePinned(playhouse: string, name: string): void {
+    const names = this._pinnedRooms()[playhouse] ?? [];
+    this.savePinnedRooms({
+      ...this._pinnedRooms(),
+      [playhouse]: names.includes(name)
+        ? names.filter((pinned) => pinned !== name)
+        : [...names, name],
+    });
+  }
+
+  private savePinnedRooms(pinnedRooms: Record<string, string[]>): void {
+    this._pinnedRooms.set(pinnedRooms);
+    updateCache({ pinnedRooms });
+  }
+
   readonly preferredAction = signal<PreferredAction>(readCache().preferredAction);
 
   setPreferredAction(preferredAction: PreferredAction): void {
@@ -96,6 +118,16 @@ export class PlayroomStateService {
   /** Records that a `playroom list` for this playhouse has come back. */
   markRoomsLoaded(playhouse: string): void {
     this._roomsLoadedFor.set(playhouse);
+    const pinned = this._pinnedRooms()[playhouse];
+    if (!pinned) return;
+    const names = new Set(
+      this._rooms()
+        .filter((room) => room.playhouse === playhouse)
+        .map((room) => room.name),
+    );
+    const remaining = pinned.filter((name) => names.has(name));
+    if (remaining.length !== pinned.length)
+      this.savePinnedRooms({ ...this._pinnedRooms(), [playhouse]: remaining });
   }
 
   /** Records that the context or organisation moved. */

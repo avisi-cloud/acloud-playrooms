@@ -7,6 +7,7 @@ export const CACHE_KEY = runtimeMode.dummy
 
 export const defaultCache: CacheState = {
   preferredAction: 'nothing',
+  pinnedRooms: {},
   lastPlayhouse: runtimeMode.dummy ? 'playhouse-platform-dev' : '',
   lastPlayroom: '',
   lastEditor: 'vscode',

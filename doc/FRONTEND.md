@@ -288,7 +288,7 @@ existed (no `setupCompleted` key) with a playhouse counts as completed, so
 upgrades skip it.
 
 `shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal,
-theme, background grain, AME Robot, create-playroom mode and `setupCompleted` to localStorage
+theme, background grain, AME Robot, create-playroom mode, pinned rooms and `setupCompleted` to localStorage
 under `acloud-playroom-gui-cache`. Background grain defaults to on; Settings →
 Appearance applies changes immediately to the outer background and content panel.
 The theme setting offers horizontal radio tiles for Light, Dark and System. System follows live changes to
@@ -326,6 +326,15 @@ It used to be a button that only navigated, which made the third level of one
 hierarchy behave unlike the two above it.
 
 Switching writes to `~/.acloud.yaml`, so it moves the user's terminal too.
+
+The overview uses one active status chip, with counts after Search and Mine but
+before the status filter. Only matching statuses appear, plus an active zero-count
+status so the current filter remains visible. Search matches name, owner, image
+and both forwarded port numbers. Stars on cards and details pin rooms per
+playhouse; pins come first within every sort and persist across launches. A
+successful list load drops pins for rooms no longer reported, while failed or
+pending reads leave them intact. Old caches start with no pins. Stopped cards
+use quieter theme surfaces and neutral text and actions without reduced opacity.
 
 ## Playroom status
 

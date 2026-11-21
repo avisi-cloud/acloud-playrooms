@@ -39,16 +39,38 @@ test('shows fixture statuses and narrows playrooms by search and status', async 
   await expect(
     rooms.getByRole('link', { name: 'Open playroom review-payments', exact: true }),
   ).toBeVisible();
-  await page.getByRole('combobox', { name: 'Filter by status' }).selectOption('ready');
+  await expect(page.getByRole('button', { name: 'Stopped 1', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ready 3', exact: true })).toHaveCount(0);
+  await page.getByRole('textbox', { name: 'Search playrooms' }).clear();
+  await page.getByRole('button', { name: 'Ready 3', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Search playrooms' }).fill('review');
   await expect(rooms.getByRole('link')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'No playrooms match' })).toBeVisible();
   await page.getByRole('textbox', { name: 'Search playrooms' }).clear();
   await expect(rooms.getByRole('link')).toHaveCount(3);
-  await page.getByRole('combobox', { name: 'Filter by status' }).selectOption('stopped');
+  await page.getByRole('button', { name: 'Stopped 1', exact: true }).click();
   await expect(rooms.getByRole('link')).toHaveCount(1);
   await expect(
     rooms.getByRole('link', { name: 'Open playroom review-payments', exact: true }),
   ).toBeVisible();
+});
+
+test('searches images and both forwarded port numbers', async ({ page }) => {
+  const rooms = page.getByRole('region', { name: 'Playrooms', exact: true });
+  const search = page.getByRole('textbox', { name: 'Search playrooms' });
+  await search.fill('custom-image:missing');
+  await expect(rooms.getByRole('link')).toHaveCount(1);
+  await expect(rooms.getByRole('link').first()).toHaveAttribute(
+    'aria-label',
+    'Open playroom failed-image-build',
+  );
+  for (const port of ['8080', '3000']) {
+    await search.fill(port);
+    await expect(rooms.getByRole('link')).toHaveCount(5);
+    await expect(
+      rooms.getByRole('link', { name: 'Open playroom review-payments', exact: true }),
+    ).toHaveCount(0);
+  }
 });
 
 test('opens a room and returns to the overview', async ({ page }) => {
@@ -141,4 +163,33 @@ test('remembers the Appearance theme after a reload', async ({ page }) => {
   await appearance.getByRole('radio', { name: 'Dark', exact: true }).check();
   await page.reload();
   await expect(appearance.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked();
+});
+
+test('pins a room from its card and unpins it from details', async ({ page }) => {
+  const rooms = page.getByRole('region', { name: 'Playrooms', exact: true });
+  await page.getByRole('button', { name: 'Pin playroom review-payments', exact: true }).click();
+  await expect(rooms.getByRole('link').first()).toHaveAttribute(
+    'aria-label',
+    'Open playroom review-payments',
+  );
+  await page.getByRole('combobox', { name: 'Sort playrooms' }).selectOption('status');
+  await expect(rooms.getByRole('link').first()).toHaveAttribute(
+    'aria-label',
+    'Open playroom review-payments',
+  );
+  await page.reload();
+  await expect(rooms.getByRole('link').first()).toHaveAttribute(
+    'aria-label',
+    'Open playroom review-payments',
+  );
+  await openRoom(page, 'review-payments');
+  await page.getByRole('button', { name: 'Unpin playroom review-payments', exact: true }).click();
+  await page.getByRole('button', { name: /\bPlayrooms$/ }).click();
+  await expect(
+    page.getByRole('button', { name: 'Pin playroom review-payments', exact: true }),
+  ).toBeVisible();
+  await expect(rooms.getByRole('link').first()).toHaveAttribute(
+    'aria-label',
+    'Open playroom api-development',
+  );
 });

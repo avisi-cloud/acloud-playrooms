@@ -3,7 +3,7 @@ import { PlayroomStateService } from './playroom-state';
 import { WindowChromeService } from './window-chrome';
 import { wailsApi } from './wails-api';
 import { Theme, ThemePreference } from '../../shared/models';
-import { readCache, updateCache } from '../../shared/utils';
+import { listingToRoom, readCache, updateCache } from '../../shared/utils';
 
 describe('theme preference', () => {
   let systemDarkMode: MediaQueryList;
@@ -116,4 +116,46 @@ describe('theme preference', () => {
       expect(readCache().lastTheme).toBe(themePreference);
     },
   );
+});
+
+describe('pinned rooms', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({});
+  });
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+  });
+
+  it('persists pins separately per playhouse and restores them', () => {
+    const state = TestBed.inject(PlayroomStateService);
+    state.togglePinned('playhouse-platform-dev', 'demo');
+    state.togglePinned('playhouse-platform-shared', 'demo');
+    state.togglePinned('playhouse-platform-dev', 'demo');
+    expect(state.isPinned('playhouse-platform-dev', 'demo')).toBe(false);
+    expect(state.isPinned('playhouse-platform-shared', 'demo')).toBe(true);
+    TestBed.resetTestingModule();
+    expect(TestBed.inject(PlayroomStateService).isPinned('playhouse-platform-shared', 'demo')).toBe(
+      true,
+    );
+  });
+
+  it('prunes missing rooms only after a successful list load in that playhouse', () => {
+    const state = TestBed.inject(PlayroomStateService);
+    state.togglePinned('playhouse-platform-dev', 'kept');
+    state.togglePinned('playhouse-platform-dev', 'removed');
+    state.togglePinned('playhouse-platform-shared', 'other');
+    state.selectPlayhouse('playhouse-platform-dev');
+    expect(state.isPinned('playhouse-platform-dev', 'removed')).toBe(true);
+    state.setRooms([listingToRoom({ Name: 'kept' }, 'playhouse-platform-dev')]);
+    state.markRoomsLoaded('playhouse-platform-dev');
+    expect(readCache().pinnedRooms).toEqual({
+      'playhouse-platform-dev': ['kept'],
+      'playhouse-platform-shared': ['other'],
+    });
+    state.setRooms([]);
+    state.markRoomsLoaded('playhouse-platform-dev');
+    expect(state.isPinned('playhouse-platform-dev', 'kept')).toBe(false);
+  });
 });
