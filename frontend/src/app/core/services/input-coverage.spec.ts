@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import * as playhouseModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/playhouse/models';
 import * as playroomModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/playroom/models';
+import * as localModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/local/models';
 
 /**
  * The other half of the Go parity test: every field on a generated input model
@@ -117,6 +118,7 @@ const WIRED: Record<string, string[]> = {
     'MaxPrivilegedNodes',
     'WaitTimeout',
   ],
+  'local.HealthCheckInput': ['Terminal', 'Editor', 'CheckTailscale'],
 };
 
 /**
@@ -144,6 +146,7 @@ const UNWIRED: Record<string, Record<string, string>> = {
   'playhouse.CreateInput': {},
   'playhouse.DeleteInput': {},
   'playhouse.UpdateInput': {},
+  'local.HealthCheckInput': {},
 };
 
 /** A zero-valued instance of each model, which is where the field names live. */
@@ -159,6 +162,7 @@ const MODELS: Record<string, object> = {
   'playhouse.CreateInput': new playhouseModels.CreateInput({}),
   'playhouse.DeleteInput': new playhouseModels.DeleteInput({}),
   'playhouse.UpdateInput': new playhouseModels.UpdateInput({}),
+  'local.HealthCheckInput': new localModels.HealthCheckInput({}),
 };
 
 describe('every backend input field is either wired to the UI or explained', () => {

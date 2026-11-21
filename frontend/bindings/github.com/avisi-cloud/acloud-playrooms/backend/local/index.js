@@ -4,7 +4,13 @@
 
 export {
     AcloudCompatibility,
+    Editor,
     EnvironmentPresence,
+    HealthAction,
+    HealthCheck,
+    HealthCheckInput,
+    HealthCheckKey,
+    HealthStatus,
     ImageEntry,
     ToolStatus
 } from "./models.js";

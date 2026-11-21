@@ -157,3 +157,16 @@ func TestVSCodeKeepsTheConfiguredTailscaleLauncher(t *testing.T) {
 		t.Fatalf("output = %q, error = %v", output, err)
 	}
 }
+
+func TestFindVSCodeCommandReturnsTheLauncherOrNothing(t *testing.T) {
+	isolateVSCode(t)
+	if found := FindVSCodeCommand(); found != "" {
+		t.Fatalf("found %q without VS Code", found)
+	}
+	directory := filepath.Join(t.TempDir(), "bin")
+	commandPath := fakeVSCodeCommand(t, directory)
+	vsCodeCommandDirectories = []string{directory}
+	if found := FindVSCodeCommand(); found != commandPath {
+		t.Fatalf("found %q, want %q", found, commandPath)
+	}
+}

@@ -6,6 +6,10 @@
 // @ts-ignore: Unused imports
 import { Create as $Create } from "@wailsio/runtime";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as terminal$0 from "../terminal/models.js";
+
 /**
  * AcloudCompatibility says whether the acloud the GUI is running inside is
  * older than it needs, or newer than the one the GUI was verified against.
@@ -81,6 +85,22 @@ export class AcloudCompatibility {
     }
 }
 
+/**
+ * Editor is an `acloud playroom open --editor` value.
+ * @readonly
+ * @enum {string}
+ */
+export const Editor = {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero: "",
+
+    EditorVSCode: "vscode",
+    EditorIntelliJ: "intellij",
+    EditorWebStorm: "webstorm",
+};
+
 export class EnvironmentPresence {
     /**
      * Creates a new EnvironmentPresence instance.
@@ -115,6 +135,180 @@ export class EnvironmentPresence {
         return new EnvironmentPresence(/** @type {Partial<EnvironmentPresence>} */($$parsedSource));
     }
 }
+
+/**
+ * HealthAction is a fix the screen can start itself, next to the copyable command.
+ * @readonly
+ * @enum {string}
+ */
+export const HealthAction = {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero: "",
+
+    HealthActionNone: "",
+    HealthActionOpenSettings: "open-settings",
+    HealthActionSignIn: "sign-in",
+};
+
+/**
+ * HealthCheck is the result of one check: what was found and, when it failed, what to do.
+ */
+export class HealthCheck {
+    /**
+     * Creates a new HealthCheck instance.
+     * @param {Partial<HealthCheck>} [$$source = {}] - The source object to create the HealthCheck.
+     */
+    constructor($$source = {}) {
+        if (!("Key" in $$source)) {
+            /**
+             * @member
+             * @type {HealthCheckKey}
+             */
+            this["Key"] = HealthCheckKey.$zero;
+        }
+        if (!("Name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Name"] = "";
+        }
+        if (!("Status" in $$source)) {
+            /**
+             * @member
+             * @type {HealthStatus}
+             */
+            this["Status"] = HealthStatus.$zero;
+        }
+        if (!("Explanation" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Explanation"] = "";
+        }
+        if (!("Fix" in $$source)) {
+            /**
+             * Fix is empty when there is nothing to do.
+             * @member
+             * @type {string}
+             */
+            this["Fix"] = "";
+        }
+        if (!("Command" in $$source)) {
+            /**
+             * Command is a command the user can copy to fix it, empty when there is none.
+             * @member
+             * @type {string}
+             */
+            this["Command"] = "";
+        }
+        if (!("Action" in $$source)) {
+            /**
+             * @member
+             * @type {HealthAction}
+             */
+            this["Action"] = HealthAction.$zero;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new HealthCheck instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {HealthCheck}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new HealthCheck(/** @type {Partial<HealthCheck>} */($$parsedSource));
+    }
+}
+
+/**
+ * HealthCheckInput is what the health check needs to know about the user's choices.
+ */
+export class HealthCheckInput {
+    /**
+     * Creates a new HealthCheckInput instance.
+     * @param {Partial<HealthCheckInput>} [$$source = {}] - The source object to create the HealthCheckInput.
+     */
+    constructor($$source = {}) {
+        if (!("Terminal" in $$source)) {
+            /**
+             * @member
+             * @type {terminal$0.Emulator}
+             */
+            this["Terminal"] = terminal$0.Emulator.$zero;
+        }
+        if (!("Editor" in $$source)) {
+            /**
+             * @member
+             * @type {Editor}
+             */
+            this["Editor"] = Editor.$zero;
+        }
+        if (!("CheckTailscale" in $$source)) {
+            /**
+             * CheckTailscale is false when the playhouse is known not to use Tailscale.
+             * @member
+             * @type {boolean}
+             */
+            this["CheckTailscale"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new HealthCheckInput instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {HealthCheckInput}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new HealthCheckInput(/** @type {Partial<HealthCheckInput>} */($$parsedSource));
+    }
+}
+
+/**
+ * HealthCheckKey names one check on the health check screen.
+ * @readonly
+ * @enum {string}
+ */
+export const HealthCheckKey = {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero: "",
+
+    HealthCheckAcloud: "acloud",
+    HealthCheckSignIn: "sign-in",
+    HealthCheckSSHKey: "ssh-key",
+    HealthCheckTailscale: "tailscale",
+    HealthCheckTerminal: "terminal",
+    HealthCheckEditor: "editor",
+};
+
+/**
+ * HealthStatus is the outcome of one check. Unknown means the check could not tell.
+ * @readonly
+ * @enum {string}
+ */
+export const HealthStatus = {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero: "",
+
+    HealthPassed: "passed",
+    HealthWarning: "warning",
+    HealthFailed: "failed",
+    HealthUnknown: "unknown",
+    HealthSkipped: "skipped",
+};
 
 /**
  * ImageEntry is a published playroom image: Name is the alias sent as --image,
