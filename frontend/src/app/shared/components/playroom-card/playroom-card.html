@@ -3,19 +3,30 @@
      text link would draw. -->
 <article
   class="playroom-card"
+  [class.selected]="selected"
   [class.stopped]="room.status === 'stopped'"
   [attr.aria-busy]="!!pendingOperation"
   [ngClass]="statusMap[room.status]?.tone"
-  role="link"
+  [attr.role]="selectMode ? 'group' : 'link'"
   tabindex="0"
-  [attr.aria-label]="'Open playroom ' + room.name"
-  (click)="onCardClick()"
+  [attr.aria-label]="(selectMode ? 'Select playroom ' : 'Open playroom ') + room.name"
+  (click)="onCardClick($event)"
   (dblclick)="onCardDoubleClick($event)"
   (keydown)="onCardKeydown($event)"
 >
   <!-- ── Dark navy header ── -->
   <div class="card-head" [attr.data-initial]="initial">
     <div class="card-head-top">
+      @if (selectMode) {
+        <input
+          type="checkbox"
+          class="card-select"
+          [checked]="selected"
+          [disabled]="selectionDisabled || !currentUser || room.owner !== currentUser"
+          [attr.aria-label]="'Select playroom ' + room.name"
+          (click)="$event.stopPropagation(); onSelect($event)"
+        />
+      }
       <button
         type="button"
         class="card-pin"

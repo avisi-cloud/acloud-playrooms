@@ -22,7 +22,12 @@ import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ToastService } from '../../../../core/services/toast';
-import { PlayroomLifecycleService } from '../../../../core/services/playroom-lifecycle';
+import {
+  BulkOperation,
+  BulkResult,
+  canRunBulkOperation,
+  PlayroomLifecycleService,
+} from '../../../../core/services/playroom-lifecycle';
 import { PageLoadingService } from '../../../../core/services/page-loading';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { wailsApi } from '../../../../core/services/wails-api';
@@ -34,6 +39,7 @@ import { buildSearchableRoomText } from '../../../../shared/utils/playroom-searc
 import { ConnectTab, Playroom, StatusKey } from '../../../../shared/models';
 import { describeError, formatTimeSince } from '../../../../shared/utils';
 import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-drawer/create-playroom-drawer';
+import { ConfirmDeleteDialog } from '../../../../shared/components/confirm-delete-dialog/confirm-delete-dialog';
 import { PlayroomBreadcrumbComponent } from '../../components/playroom-breadcrumb/playroom-breadcrumb';
 
 /**
@@ -43,6 +49,7 @@ import { PlayroomBreadcrumbComponent } from '../../components/playroom-breadcrum
 @Component({
   selector: 'app-rooms-page',
   imports: [
+    ConfirmDeleteDialog,
     CommonModule,
     FormsModule,
     ButtonModule,
@@ -76,6 +83,94 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   readonly failure = signal('');
   @ViewChild('listBody') private listBody?: ElementRef<HTMLElement>;
   private restoredScroll = false;
+  readonly selectMode = signal(false);
+  readonly selectedNames = signal<string[]>([]);
+  readonly bulkRunning = signal(false);
+  readonly bulkResults = signal<BulkResult[]>([]);
+  readonly bulkDeleteNames = signal<string[]>([]);
+  readonly selectedRooms = computed(() =>
+    this.state
+      .rooms()
+      .filter((room) => this.selectedNames().includes(room.name) && this.canSelect(room)),
+  );
+  readonly bulkSummary = computed(() => {
+    const results = this.bulkResults();
+    return `${results.filter((result) => result.status === 'succeeded').length} succeeded, ${results.filter((result) => result.status === 'failed').length} failed, ${results.filter((result) => result.status === 'skipped').length} skipped`;
+  });
+  private selectionAnchor = '';
+
+  canSelect(room: Playroom): boolean {
+    return (
+      !!this.state.user() &&
+      room.owner === this.state.user() &&
+      room.playhouse === this.state.playhouse()
+    );
+  }
+
+  toggleSelectMode(): void {
+    if (this.bulkRunning()) return;
+    this.selectMode.update((selected) => !selected);
+    this.selectedNames.set([]);
+    this.selectionAnchor = '';
+  }
+
+  selectRoom(event: { name: string; shiftKey: boolean }): void {
+    if (this.bulkRunning()) return;
+    const room = this.findRoomByName(event.name);
+    if (!room || !this.canSelect(room)) return;
+    this.selectMode.set(true);
+    const visible = this.filteredRooms();
+    const anchor = visible.findIndex((candidate) => candidate.name === this.selectionAnchor);
+    const target = visible.findIndex((candidate) => candidate.name === event.name);
+    if (event.shiftKey && anchor >= 0 && target >= 0) {
+      const range = visible
+        .slice(Math.min(anchor, target), Math.max(anchor, target) + 1)
+        .filter((candidate) => this.canSelect(candidate))
+        .map((candidate) => candidate.name);
+      this.selectedNames.update((names) => [...new Set([...names, ...range])]);
+    } else {
+      this.selectedNames.update((names) =>
+        names.includes(event.name)
+          ? names.filter((name) => name !== event.name)
+          : [...names, event.name],
+      );
+      this.selectionAnchor = event.name;
+    }
+  }
+
+  selectAllMine(): void {
+    if (this.bulkRunning()) return;
+    this.selectedNames.set(
+      this.filteredRooms()
+        .filter((room) => this.canSelect(room))
+        .map((room) => room.name),
+    );
+  }
+
+  bulkNames(operation: BulkOperation): string[] {
+    return this.selectedRooms()
+      .filter(
+        (room) => !this.actions.pendingOperation(room.name) && canRunBulkOperation(room, operation),
+      )
+      .map((room) => room.name);
+  }
+
+  askBulkDelete(): void {
+    if (!this.bulkRunning()) this.bulkDeleteNames.set(this.bulkNames('delete'));
+  }
+
+  async runBulk(operation: BulkOperation): Promise<void> {
+    if (this.bulkRunning()) return;
+    const names = operation === 'delete' ? this.bulkDeleteNames() : this.bulkNames(operation);
+    if (!names.length) return;
+    this.bulkDeleteNames.set([]);
+    this.bulkRunning.set(true);
+    try {
+      await this.actions.runForEach(names, operation, (results) => this.bulkResults.set(results));
+    } finally {
+      this.bulkRunning.set(false);
+    }
+  }
 
   restoreScroll(): void {
     if (!this.loaded() || this.restoredScroll || !this.listBody) return;
@@ -128,7 +223,12 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
     effect(() => {
       this.state.playhouse();
       this.state.scopeRevision();
-      untracked(() => void this.refreshRooms());
+      untracked(() => {
+        this.selectedNames.set([]);
+        this.selectionAnchor = '';
+        this.bulkDeleteNames.set([]);
+        void this.refreshRooms();
+      });
     });
   }
 
@@ -149,7 +249,9 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   }
 
   private anyOverlayOpen(): boolean {
-    return this.showCreate || (this.roomActions?.isOpen() ?? false);
+    return (
+      this.bulkDeleteNames().length > 0 || this.showCreate || (this.roomActions?.isOpen() ?? false)
+    );
   }
 
   /** Whether the empty state is "nothing here" or "nothing matches". */

@@ -37,6 +37,22 @@ export function nextRefreshDelay(conditions: RefreshConditions): number | null {
   return conditions.roomChanging ? REFRESH_DELAY_WHILE_A_ROOM_CHANGES_MS : REFRESH_DELAY_MS;
 }
 
+export type BulkOperation = 'start' | 'stop' | 'update' | 'delete';
+type NotificationMode = 'individual' | 'bulk';
+export type BulkStatus = 'queued' | 'running' | 'succeeded' | 'failed' | 'skipped';
+export interface BulkResult {
+  name: string;
+  status: BulkStatus;
+  reason: string;
+}
+
+export function canRunBulkOperation(room: Playroom, operation: BulkOperation): boolean {
+  if (operation === 'start') return room.status === 'stopped';
+  if (operation === 'stop') return room.status === 'ready' || room.status === 'no-host';
+  if (operation === 'update') return room.outdated && !room.ephemeral;
+  return !isTransitional(room.status);
+}
+
 interface LandedRead {
   selection: PlayroomSelection;
   failedReadsInARow: number;
@@ -118,6 +134,61 @@ export class PlayroomLifecycleService {
       this.cancelPoll();
       document.removeEventListener('visibilitychange', refreshWhenTheWindowIsShownAgain);
     });
+  }
+
+  async runForEach(
+    names: readonly string[],
+    operation: BulkOperation,
+    progress: (results: BulkResult[]) => void = () => undefined,
+  ): Promise<BulkResult[]> {
+    const selection = this.state.captureSelection();
+    const user = this.state.user();
+    const results: BulkResult[] = [...new Set(names)].map((name) => ({
+      name,
+      status: 'queued',
+      reason: '',
+    }));
+    const publish = () => progress(results.map((result) => ({ ...result })));
+    publish();
+    for (const result of results) {
+      const room = this.state
+        .rooms()
+        .find(
+          (candidate) =>
+            candidate.name === result.name && candidate.playhouse === selection.playhouse,
+        );
+      const reason =
+        !this.state.isCurrentSelection(selection) || this.state.user() !== user
+          ? 'The selection changed'
+          : !user || !room || room.owner !== user
+            ? 'Only your own playrooms can be selected'
+            : this.pendingOperation(room.name)
+              ? 'Another command is running'
+              : !canRunBulkOperation(room, operation)
+                ? 'This action does not apply to the current room state'
+                : '';
+      if (reason || !room) {
+        result.status = 'skipped';
+        result.reason = reason;
+      } else {
+        result.status = 'running';
+        publish();
+        try {
+          const succeeded =
+            operation === 'delete'
+              ? await this.delete(room, false, '5m', false, false, 'bulk')
+              : operation === 'update'
+                ? await this.updateOutdated(room, false, 'bulk')
+                : await this[operation](room, false, 'bulk');
+          result.status = succeeded ? 'succeeded' : 'failed';
+        } catch (error) {
+          result.status = 'failed';
+          result.reason = describeError(error);
+        }
+      }
+      publish();
+    }
+    return results;
   }
 
   private cancelPoll(): void {
@@ -261,11 +332,15 @@ export class PlayroomLifecycleService {
     }
   }
 
-  async updateOutdated(room: Playroom, forceInstall = false): Promise<void> {
-    if (room.ephemeral) return;
+  async updateOutdated(
+    room: Playroom,
+    forceInstall = false,
+    notificationMode: NotificationMode = 'individual',
+  ): Promise<boolean> {
+    if (room.ephemeral) return false;
     const selection = this.state.captureSelection();
     const finish = this.beginOperation(room.name, room.playhouse, 'Updating');
-    if (!finish) return;
+    if (!finish) return false;
     let startedOperationId = '';
     try {
       await this.console.run(`Updating "${room.name}"`, (operationId) => {
@@ -281,7 +356,9 @@ export class PlayroomLifecycleService {
           ...(forceInstall ? { ForceInstall: true } : {}),
         });
       });
-      this.notify.toast(`Updated "${room.name}"`, 'ok', startedOperationId);
+      if (notificationMode === 'individual')
+        this.notify.toast(`Updated "${room.name}"`, 'ok', startedOperationId);
+      return true;
     } catch (error) {
       this.notify.failure(
         `Could not update "${room.name}"`,
@@ -289,6 +366,7 @@ export class PlayroomLifecycleService {
         startedOperationId,
         this.fixes.action(error, { signIn: () => this.updateOutdated(room, true) }, selection),
       );
+      return false;
     } finally {
       await this.reloadAfterMutation(selection);
       finish();
@@ -407,10 +485,14 @@ export class PlayroomLifecycleService {
     }
   }
 
-  async stop(room: Playroom, forceInstall = false): Promise<void> {
+  async stop(
+    room: Playroom,
+    forceInstall = false,
+    notificationMode: NotificationMode = 'individual',
+  ): Promise<boolean> {
     const selection = this.state.captureSelection();
     const finish = this.beginOperation(room.name, room.playhouse, 'Stopping');
-    if (!finish) return;
+    if (!finish) return false;
     this.patch(room.name, { status: 'stopped', host: '', rawStatus: '' }, room.playhouse);
     let startedOperationId = '';
     try {
@@ -428,7 +510,9 @@ export class PlayroomLifecycleService {
         });
       });
       this.desktop.roomFinished('stop', room.name, selection);
-      this.notify.toast(`Stopped "${room.name}" (storage retained)`, 'idle', startedOperationId);
+      if (notificationMode === 'individual')
+        this.notify.toast(`Stopped "${room.name}" (storage retained)`, 'idle', startedOperationId);
+      return true;
     } catch (error) {
       this.desktop.roomFinished('stop', room.name, selection, true);
       this.notify.failure(
@@ -444,16 +528,21 @@ export class PlayroomLifecycleService {
           selection,
         ),
       );
+      return false;
     } finally {
       await this.reloadAfterMutation(selection);
       finish();
     }
   }
 
-  async start(room: Playroom, forceInstall = false): Promise<void> {
+  async start(
+    room: Playroom,
+    forceInstall = false,
+    notificationMode: NotificationMode = 'individual',
+  ): Promise<boolean> {
     const selection = this.state.captureSelection();
     const finish = this.beginOperation(room.name, room.playhouse, 'Starting');
-    if (!finish) return;
+    if (!finish) return false;
     this.patch(room.name, { status: 'starting', host: '', rawStatus: '' }, room.playhouse);
     let startedOperationId = '';
     try {
@@ -464,7 +553,8 @@ export class PlayroomLifecycleService {
           playhouse: room.playhouse,
           scopeRevision: selection.scopeRevision,
         });
-        this.notify.toast(`Starting "${room.name}" ...`, 'busy', operationId);
+        if (notificationMode === 'individual')
+          this.notify.toast(`Starting "${room.name}" ...`, 'busy', operationId);
         // --no-wait keeps the call short; the list polls until the room is ready.
         return wailsApi.startPlayroom(operationId, {
           Name: room.name,
@@ -475,6 +565,7 @@ export class PlayroomLifecycleService {
       });
       if (this.state.isCurrentSelection(selection))
         this.settlements.set(room.name, { task: 'start', selection });
+      return true;
     } catch (error) {
       this.desktop.roomFinished('start', room.name, selection, true);
       this.notify.failure(
@@ -490,6 +581,7 @@ export class PlayroomLifecycleService {
           selection,
         ),
       );
+      return false;
     } finally {
       await this.reloadAfterMutation(selection);
       finish();
@@ -564,6 +656,7 @@ export class PlayroomLifecycleService {
     waitTimeout: string,
     force = false,
     forceInstall = false,
+    notificationMode: NotificationMode = 'individual',
   ): Promise<boolean> {
     const selection = this.state.captureSelection();
     const finish = this.beginOperation(room.name, room.playhouse, 'Deleting');
@@ -578,7 +671,8 @@ export class PlayroomLifecycleService {
           playhouse: room.playhouse,
           scopeRevision: selection.scopeRevision,
         });
-        this.notify.toast(`Deleting "${room.name}" ...`, 'busy', operationId);
+        if (notificationMode === 'individual')
+          this.notify.toast(`Deleting "${room.name}" ...`, 'busy', operationId);
         return wailsApi.deletePlayroom(operationId, {
           Name: room.name,
           Playhouse: room.playhouse,
@@ -597,7 +691,8 @@ export class PlayroomLifecycleService {
         if (this.state.isCurrentSelection(selection)) this.remove(room.name, room.playhouse);
         this.desktop.roomFinished('delete', room.name, selection);
       }
-      this.notify.toast(`Deleted "${room.name}"`, 'ok', startedOperationId);
+      if (notificationMode === 'individual')
+        this.notify.toast(`Deleted "${room.name}"`, 'ok', startedOperationId);
       return true;
     } catch (error) {
       this.desktop.roomFinished('delete', room.name, selection, true);

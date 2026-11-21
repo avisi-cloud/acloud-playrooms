@@ -75,8 +75,8 @@ describe('MenuBarService', () => {
     lifecycle = TestBed.inject(PlayroomLifecycleService);
     connections = TestBed.inject(PlayroomConnectService);
     notify = TestBed.inject(ToastService);
-    vi.spyOn(lifecycle, 'start').mockResolvedValue();
-    vi.spyOn(lifecycle, 'stop').mockResolvedValue();
+    vi.spyOn(lifecycle, 'start').mockResolvedValue(true);
+    vi.spyOn(lifecycle, 'stop').mockResolvedValue(true);
     vi.spyOn(connections, 'connect').mockResolvedValue('operation');
     vi.spyOn(connections, 'open').mockResolvedValue();
     vi.spyOn(notify, 'toast');

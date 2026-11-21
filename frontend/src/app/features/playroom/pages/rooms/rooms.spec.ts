@@ -45,6 +45,89 @@ describe('RoomsPageComponent', () => {
       (call: unknown[]) => (call[0] as { Playhouse?: string }).Playhouse,
     );
 
+  it('selects only owned rooms, toggles names and adds a visible Shift range', async () => {
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('playhouse-a');
+    const fixture = TestBed.createComponent(RoomsPageComponent);
+    await fixture.whenStable();
+    state.setUser('developer@example.test');
+    state.setRooms(
+      ['alpha', 'beta', 'gamma', 'zeta'].map((name) =>
+        listingToRoom(
+          {
+            Name: name,
+            Owner: name === 'beta' ? 'other@example.test' : 'developer@example.test',
+            Status: 'Ready',
+          },
+          'playhouse-a',
+        ),
+      ),
+    );
+    const page = fixture.componentInstance;
+    page.selectRoom({ name: 'beta', shiftKey: false });
+    expect(page.selectedRooms()).toEqual([]);
+    page.selectRoom({ name: 'alpha', shiftKey: false });
+    page.selectRoom({ name: 'gamma', shiftKey: true });
+    expect(page.selectedRooms().map((room) => room.name)).toEqual(['alpha', 'gamma']);
+    page.selectRoom({ name: 'alpha', shiftKey: false });
+    expect(page.selectedRooms().map((room) => room.name)).toEqual(['gamma']);
+    page.query.set('zeta');
+    page.selectAllMine();
+    expect(page.selectedNames()).toEqual(['zeta']);
+    state.setUser('');
+    expect(page.selectedRooms()).toEqual([]);
+    page.selectAllMine();
+    expect(page.selectedNames()).toEqual([]);
+    fixture.destroy();
+  });
+
+  it('snapshots delete names, prevents duplicate submission and clears selection on scope changes', async () => {
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('playhouse-a');
+    const fixture = TestBed.createComponent(RoomsPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    const owner = state.user();
+    state.setRooms(
+      ['alpha', 'beta'].map((name) =>
+        listingToRoom({ Name: name, Owner: owner, Status: 'Stopped' }, 'playhouse-a'),
+      ),
+    );
+    page.selectMode.set(true);
+    page.selectAllMine();
+    page.askBulkDelete();
+    page.selectedNames.set(['alpha']);
+    expect(page.bulkDeleteNames()).toEqual(['alpha', 'beta']);
+    let finish = () => {};
+    const run = vi
+      .spyOn(page.actions, 'runForEach')
+      .mockImplementation(async (_names, _operation, progress) => {
+        progress?.([{ name: 'alpha', status: 'running', reason: '' }]);
+        await new Promise<void>((resolve) => {
+          finish = resolve;
+        });
+        progress?.([
+          { name: 'alpha', status: 'failed', reason: '' },
+          { name: 'beta', status: 'succeeded', reason: '' },
+        ]);
+        return [];
+      });
+    const pending = page.runBulk('delete');
+    await page.runBulk('delete');
+    expect(run).toHaveBeenCalledOnce();
+    expect(run.mock.calls[0][0]).toEqual(['alpha', 'beta']);
+    expect(page.bulkRunning()).toBe(true);
+    finish();
+    await pending;
+    expect(page.bulkSummary()).toBe('1 succeeded, 1 failed, 0 skipped');
+    expect(page.bulkRunning()).toBe(false);
+    state.selectPlayhouse('playhouse-b');
+    await fixture.whenStable();
+    expect(page.selectedNames()).toEqual([]);
+    expect(page.bulkDeleteNames()).toEqual([]);
+    fixture.destroy();
+  });
+
   it('shows the selected playhouse in the page header breadcrumb', async () => {
     TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-a');
     const fixture = TestBed.createComponent(RoomsPageComponent);

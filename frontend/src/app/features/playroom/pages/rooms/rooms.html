@@ -34,6 +34,14 @@
         (click)="refreshRooms()"
       />
       <p-button
+        [label]="selectMode() ? 'Done selecting' : 'Select playrooms'"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        [disabled]="bulkRunning()"
+        (click)="toggleSelectMode()"
+      />
+      <p-button
         label="Create Playroom"
         icon="pi pi-plus"
         severity="success"
@@ -85,6 +93,65 @@
       <span class="shortcut-sep">·</span> <kbd>esc</kbd> close
     </span>
   </div>
+
+  @if (selectMode()) {
+    <div class="bulk-toolbar" role="group" aria-label="Selection actions">
+      <span>{{ selectedRooms().length }} selected</span>
+      <p-button
+        label="Select all mine"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        [disabled]="bulkRunning()"
+        (click)="selectAllMine()"
+      />
+      <p-button
+        label="Start"
+        size="small"
+        [disabled]="bulkRunning() || !bulkNames('start').length"
+        (click)="runBulk('start')"
+      />
+      <p-button
+        label="Stop"
+        size="small"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="bulkRunning() || !bulkNames('stop').length"
+        (click)="runBulk('stop')"
+      />
+      <p-button
+        label="Update outdated"
+        size="small"
+        severity="secondary"
+        [outlined]="true"
+        [disabled]="bulkRunning() || !bulkNames('update').length"
+        (click)="runBulk('update')"
+      />
+      <p-button
+        label="Delete selected"
+        size="small"
+        severity="danger"
+        [disabled]="bulkRunning() || !bulkNames('delete').length"
+        (click)="askBulkDelete()"
+      />
+      <small>Only your rooms. Select all mine uses the current filters.</small>
+    </div>
+  }
+  @if (bulkResults().length) {
+    <div class="bulk-progress" role="status" aria-live="polite">
+      <strong
+        >{{ bulkRunning() ? 'Commands in progress' : 'Commands finished' }}:
+        {{ bulkSummary() }}</strong
+      >
+      <ul aria-label="Progress per playroom">
+        @for (result of bulkResults(); track result.name) {
+          <li>
+            {{ result.name }}: {{ result.status }}{{ result.reason ? ' — ' + result.reason : '' }}
+          </li>
+        }
+      </ul>
+    </div>
+  }
 
   <section
     #listBody
@@ -151,6 +218,10 @@
         @for (room of filteredRooms(); track room.name) {
           <app-playroom-card
             [room]="room"
+            [selectMode]="selectMode()"
+            [selected]="canSelect(room) && selectedNames().includes(room.name)"
+            [selectionDisabled]="bulkRunning() || !canSelect(room)"
+            (selectRoom)="selectRoom($event)"
             [currentUser]="state.user()"
             [pinned]="state.isPinned(room.playhouse, room.name)"
             (pinRoom)="state.togglePinned(room.playhouse, $event)"
@@ -179,3 +250,16 @@
 />
 
 <app-playroom-actions-host #roomActions />
+
+<app-confirm-delete-dialog
+  [visible]="bulkDeleteNames().length > 0"
+  (visibleChange)="!$event && bulkDeleteNames.set([])"
+  title="Delete selected playrooms"
+  subtitle="Every playroom listed below will be deleted."
+  warning="This permanently removes these playrooms and their home folders."
+  [consequences]="bulkDeleteNames()"
+  confirmTarget="delete"
+  confirmLabel="Type delete to confirm"
+  deleteLabel="Delete selected playrooms"
+  (confirm)="runBulk('delete')"
+/>
