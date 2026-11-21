@@ -31,6 +31,7 @@ export type ContextEntry = configModels.ContextEntry;
 export type ImageEntry = localModels.ImageEntry;
 export type ToolStatus = localModels.ToolStatus;
 export type AcloudCompatibility = localModels.AcloudCompatibility;
+export type UpdateStatus = localModels.UpdateStatus;
 export type HealthCheck = localModels.HealthCheck;
 export type HealthCheckInput = localModels.HealthCheckInput;
 export type AcloudBinaryStatus = cliModels.BinaryStatus;
@@ -72,6 +73,7 @@ export const wailsApi = {
     readVariablesFromLoginShell: boolean,
   ): Promise<localModels.EnvironmentPresence[]> =>
     app.GetEnvironmentPresence(entries, readVariablesFromLoginShell),
+  checkUpdates: (checkApp: boolean): Promise<UpdateStatus> => app.CheckUpdates(checkApp),
   getAppVersion: (): Promise<string> => app.GetAppVersion(),
   onDeepLink: (handler: (url: string) => void): (() => void) => {
     const unsubscribe = Events.On('deep-link:open', (event) => handler(event.data as string));

@@ -8,6 +8,8 @@ export type PreferredAction = 'connect' | 'open' | 'nothing';
 export type DockBadge = 'failed' | 'running' | 'off';
 
 export interface CacheState {
+  checkForUpdates: boolean;
+  lastSeenAppVersion: string;
   notifications: boolean;
   dockBadge: DockBadge;
   keepRunningInMenuBar: boolean;

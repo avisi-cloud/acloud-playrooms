@@ -572,3 +572,21 @@ receives Wails `ApplicationLaunchedWithUrl` events, brings the window forward an
 forwards their URL as `deep-link:open`. `deepLinkDelivery` queues launch URLs
 until Angular emits `deep-link:ready`, then delivers each once in order. Parsing,
 scope checks and routing live in the frontend; receiving a URL runs no command.
+
+## Version checks
+
+`local/updates.go` reads the public app release from a fixed GitHub API endpoint.
+It sends no user data, authentication or cookies; its User-Agent is the generic
+`desktop-version-check`. Redirects are refused and the request times out after
+five seconds. Attempts and results persist in the operating system cache under
+`acloud-playrooms/updates.json` for 24 hours, including failed attempts. Network
+failures stay out of the UI and log once per daily attempt. If persistence fails,
+the logged fallback is a session cache. Disabling app checks skips GitHub entirely.
+
+Only an acloud binary resolved into Homebrew's `Caskroom/acloud` is eligible for
+`brew outdated --cask --json=v2 avisi-cloud/tools/acloud`. This direct, read-only
+local command has a five-second timeout, with Homebrew auto-update and analytics
+disabled. The notice reflects Homebrew's existing metadata, not a remote freshness
+guarantee. The app never installs an update. Version comparisons accept numeric
+major/minor/patch releases, optional `v`, build metadata and prerelease ordering;
+unreadable versions remain unknown and produce no update notice.
