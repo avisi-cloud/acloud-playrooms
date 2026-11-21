@@ -64,7 +64,7 @@ function room(name: string, extra: Partial<ListingDto> = {}): ListingDto {
     MemLimit: '4Gi',
     DiskSize: '20Gi',
     DiskType: 'persistent',
-    System: 'linux/amd64',
+    System: 'read-only',
     CapabilityProfile: 'standard',
     CapabilityAdditions: [],
     Outdated: false,

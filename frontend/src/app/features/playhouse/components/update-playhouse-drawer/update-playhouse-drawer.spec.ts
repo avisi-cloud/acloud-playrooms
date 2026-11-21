@@ -1,3 +1,4 @@
+import { describeChanges } from './describe-changes';
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
 import { UpdatePlayhouseDrawerComponent } from './update-playhouse-drawer';
@@ -32,6 +33,31 @@ describe('Update playhouse drawer', () => {
     expect(component.hasChanges()).toBe(false);
     component.form.maxPlayroomNodes = 5;
     expect(component.hasChanges()).toBe(true);
+  });
+
+  it('hides unknown unchanged comparisons and compares edited settings in one line', () => {
+    const component = drawer();
+    expect(component.comparisonFor('updateChannel')).toBe('');
+    component.form.updateChannel = 'rapid';
+    expect(component.comparisonFor('updateChannel')).toBe('Not reported → rapid');
+  });
+
+  it.each([
+    ['allowCurrentIP', true, 'Add my current public IP'],
+    ['allowIPs', ['198.51.100.0/24'], 'Add IP addresses or ranges'],
+    ['removeIPs', ['203.0.113.7'], 'Remove IP addresses or ranges'],
+    ['resetAllowlist', true, 'Clear the allowlist first'],
+    ['waitTimeout', '30m', 'Wait timeout'],
+  ] as const)('counts %s in the summary without a comparison', (field, value, label) => {
+    const component = drawer();
+    Object.assign(component.form, { [field]: value });
+    expect(component.changeCount()).toBe(1);
+    expect(component.comparisonFor(field)).toBe('');
+    expect(component.actionSummary()).toBe(label);
+    expect(component.changes().find((change) => change.field === field)).toMatchObject({
+      changed: true,
+      comparison: false,
+    });
   });
 
   it('sends nothing for an exposure left unchanged', () => {
@@ -120,5 +146,78 @@ describe('Update playhouse drawer', () => {
     component.submit();
 
     expect(slug).toBe('playhouse-e2e-default');
+  });
+});
+
+describe('describeChanges for a playhouse', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [UpdatePlayhouseDrawerComponent],
+      providers: [MessageService],
+    }).compileComponents();
+  });
+
+  it('does not infer editable settings from a playhouse listing', () => {
+    const component = drawer();
+    const changes = describeChanges({ ...playhouse, LayoutVersion: 7 }, component.form);
+    expect(changes.every((change) => !change.changed)).toBe(true);
+    expect(changes.find((change) => change.field === 'layout')?.current).toBe('7');
+    expect(
+      changes
+        .filter((change) => !['layout', 'waitTimeout'].includes(change.field))
+        .every((change) => change.current === null),
+    ).toBe(true);
+  });
+
+  it.each([
+    ['exposure', 'tailscale'],
+    ['defaultVia', 'auto'],
+    ['updateChannel', 'rapid'],
+    ['allowCurrentIP', true],
+    ['allowIPs', ['198.51.100.0/24']],
+    ['removeIPs', ['203.0.113.7']],
+    ['resetAllowlist', true],
+    ['maxPlayroomNodes', 5],
+    ['maxPrivilegedNodes', 3],
+    ['waitTimeout', '30m'],
+  ] as const)('describes %s as a proposed change', (field, value) => {
+    const component = drawer();
+    const changes = describeChanges(playhouse, { ...component.form, [field]: value });
+    expect(changes.find((change) => change.field === field)).toMatchObject({
+      changed: true,
+      needsNewSpec: false,
+    });
+    expect(changes.filter((change) => change.changed)).toHaveLength(1);
+  });
+
+  it.each(['tailscaleOAuthClientID', 'tailscaleOAuthClientSecret'] as const)(
+    'never displays %s',
+    (field) => {
+      const component = drawer();
+      Object.assign(component.form, { exposure: 'tailscale', [field]: 'private-value' });
+      const changes = describeChanges(playhouse, component.form);
+      expect(changes.find((change) => change.field === field)).toMatchObject({
+        changed: true,
+        proposed: 'Replacement supplied',
+      });
+      expect(JSON.stringify(changes)).not.toContain('private-value');
+      component.form.exposure = 'nodeport';
+      expect(
+        describeChanges(playhouse, component.form).find((change) => change.field === field)
+          ?.changed,
+      ).toBe(false);
+    },
+  );
+
+  it('ignores blank list rows, zero capacity and whitespace, and keeps an unreported layout unknown', () => {
+    const component = drawer();
+    Object.assign(component.form, { updateChannel: '  ', allowIPs: [' ', ''], removeIPs: [''] });
+    expect(describeChanges(playhouse, component.form).every((change) => !change.changed)).toBe(
+      true,
+    );
+    expect(
+      describeChanges(playhouse, component.form).find((change) => change.field === 'layout')
+        ?.current,
+    ).toBeNull();
   });
 });

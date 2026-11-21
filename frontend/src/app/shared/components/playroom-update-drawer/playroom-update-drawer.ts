@@ -1,3 +1,5 @@
+import { describeComparison } from '../setting-changes/setting-changes';
+import { describeChanges, PlayroomUpdateField } from './describe-changes';
 import {
   Component,
   EventEmitter,
@@ -161,6 +163,33 @@ export class PlayroomUpdateDrawerComponent implements OnChanges, OnDestroy {
       return 'Confirm that the namespace and everything in it may be deleted.';
     }
     return this.storageError();
+  }
+
+  changes() {
+    return describeChanges(this.room ?? EMPTY_ROOM, this.form);
+  }
+
+  comparisonFor(field: PlayroomUpdateField): string {
+    return describeComparison(this.changes().find((change) => change.field === field));
+  }
+
+  actionSummary(): string {
+    return this.changes()
+      .filter((change) => change.changed && !change.comparison)
+      .map((change) => change.label)
+      .join(' · ');
+  }
+
+  cardChanged(...fields: PlayroomUpdateField[]): boolean {
+    return this.changes().some((change) => fields.includes(change.field) && change.changed);
+  }
+
+  needsNewSpec(): boolean {
+    return !!this.room?.outdated || this.changes().some((change) => change.needsNewSpec);
+  }
+
+  changeCount(): number {
+    return this.changes().filter((change) => change.changed).length;
   }
 
   previewInput(): Partial<PlayroomUpdateInput> {

@@ -9,19 +9,19 @@
   (visibleChange)="onVisibleChange($event)"
   position="right"
   [style]="{ width: 'var(--overlay-md)' }"
-  styleClass="av-drawer"
+  styleClass="av-drawer update-comparison-drawer"
   appendTo="body"
 >
   <ng-template pTemplate="header">
     <div class="drawer-head">
       <div class="drawer-title">Update playroom<span class="punt">.</span></div>
       <div class="drawer-subtitle">
-        <code>{{ form.name }}</code> · empty fields keep their current value.
+        <code>{{ form.name }}</code> · review your changes before updating.
       </div>
     </div>
   </ng-template>
 
-  <section class="update-card">
+  <section class="update-card" [class.is-dirty]="cardChanged('image')">
     <div class="update-card-head">Image</div>
     <div class="field-group">
       <label class="field-label" for="update-image">{{ optionTexts.image.label }}</label>
@@ -47,14 +47,17 @@
           </div>
         </ng-template>
       </p-select>
-      <small class="field-hint">{{
-        selectedImage()?.Description ||
-          optionTexts.image.hint + ' Leave the current image to keep it.'
-      }}</small>
+      <small class="field-hint"
+        >{{ comparisonFor('image')
+        }}{{ selectedImage()?.Description ? ' · ' + selectedImage()?.Description : '' }}</small
+      >
     </div>
   </section>
 
-  <section class="update-card">
+  <section
+    class="update-card"
+    [class.is-dirty]="cardChanged('storage', 'cpuReq', 'cpuLim', 'memReq', 'memLim', 'ephemeral')"
+  >
     <div class="update-card-head">Resources</div>
     <div class="field-group" [class.has-error]="storageError()">
       <label class="field-label" for="update-storage">{{ optionTexts.storage.label }}</label><input
@@ -66,8 +69,8 @@
       />
       <small class="field-hint" [class.error]="storageError()">{{
         storageError() ||
-          (room?.disk ? 'Now ' + room?.disk + '. ' : '') +
-            'Storage can only grow, and grows without a restart.'
+          (comparisonFor('storage') ? comparisonFor('storage') + ' · ' : '') +
+            'Storage can only grow, without a restart.'
       }}</small>
     </div>
     <div class="field-row field-row--align-inputs">
@@ -77,6 +80,9 @@
             >--cpu-request</small
           ></label
         ><input id="update-cpu-request" pInputText class="w-full" [(ngModel)]="form.cpuReq" />
+        @if (comparisonFor('cpuReq'); as comparison) {
+          <small class="field-hint">{{ comparison }}</small>
+        }
       </div>
       <div class="field-group">
         <label class="field-label" for="update-cpu-limit"
@@ -84,6 +90,9 @@
             >--cpu-limit</small
           ></label
         ><input id="update-cpu-limit" pInputText class="w-full" [(ngModel)]="form.cpuLim" />
+        @if (comparisonFor('cpuLim'); as comparison) {
+          <small class="field-hint">{{ comparison }}</small>
+        }
       </div>
     </div>
     <div class="field-row field-row--align-inputs">
@@ -93,6 +102,9 @@
             >--memory-request</small
           ></label
         ><input id="update-memory-request" pInputText class="w-full" [(ngModel)]="form.memReq" />
+        @if (comparisonFor('memReq'); as comparison) {
+          <small class="field-hint">{{ comparison }}</small>
+        }
       </div>
       <div class="field-group">
         <label class="field-label" for="update-memory-limit"
@@ -100,6 +112,9 @@
             >--memory-limit</small
           ></label
         ><input id="update-memory-limit" pInputText class="w-full" [(ngModel)]="form.memLim" />
+        @if (comparisonFor('memLim'); as comparison) {
+          <small class="field-hint">{{ comparison }}</small>
+        }
       </div>
     </div>
     <small class="field-hint"
@@ -110,7 +125,7 @@
     >
   </section>
 
-  <section class="update-card">
+  <section class="update-card" [class.is-dirty]="cardChanged('readOnly', 'noWait', 'waitTimeout')">
     <div class="update-card-head">Behaviour</div>
     <div class="field-row">
       <div class="field-group">
@@ -133,6 +148,9 @@
           ><span>Change the read-only setting</span
           ><p-toggleswitch [(ngModel)]="form.changeReadOnly"
         /></label>
+        @if (comparisonFor('readOnly'); as comparison) {
+          <small class="field-hint">{{ comparison }}</small>
+        }
         @if (form.changeReadOnly) {
           <!-- Indented behind a rule: a parent and its revealed child used to sit
              at the same level and read as unrelated siblings. -->
@@ -149,7 +167,7 @@
     </div>
   </section>
 
-  <section class="update-card">
+  <section class="update-card" [class.is-dirty]="cardChanged('ports')">
     <div class="update-card-head">{{ optionTexts.port.label }}</div>
     <label class="toggle-line"
       ><span>Replace the forwarded ports<small class="flag-ref">--port</small></span
@@ -172,9 +190,12 @@
         }
       </div>
     }
+    @if (comparisonFor('ports'); as comparison) {
+      <small class="field-hint">{{ comparison }}</small>
+    }
   </section>
 
-  <section class="update-card">
+  <section class="update-card" [class.is-dirty]="cardChanged('capabilities', 'capAdd')">
     <div class="update-card-head">Linux capabilities</div>
     <div class="field-group">
       <label class="field-label" for="update-capabilities">{{
@@ -196,7 +217,10 @@
           </div>
         </ng-template>
       </p-select>
-      <small class="field-hint">Added capabilities are kept when the profile changes.</small>
+      <small class="field-hint"
+        >{{ comparisonFor('capabilities') }}{{ comparisonFor('capabilities') ? ' · ' : '' }}Added
+        capabilities are kept when the profile changes.</small
+      >
     </div>
     <label class="toggle-line" for="update-change-cap-add"
       ><span>Replace the added capabilities<small class="flag-ref">--cap-add</small></span
@@ -220,9 +244,12 @@
         }
       </div>
     }
+    @if (comparisonFor('capAdd'); as comparison) {
+      <small class="field-hint">{{ comparison }}</small>
+    }
   </section>
 
-  <section class="update-card">
+  <section class="update-card" [class.is-dirty]="cardChanged('workspaceNamespace')">
     <div class="update-card-head">Kubernetes namespace</div>
     <label class="toggle-line" for="update-change-workspace-namespace"
       ><span>Change the namespace setting<small class="flag-ref">--workspace-namespace</small></span
@@ -254,23 +281,25 @@
         }
       </div>
     }
+    @if (comparisonFor('workspaceNamespace'); as comparison) {
+      <small class="field-hint">{{ comparison }}</small>
+    }
   </section>
 
-  <section class="update-card">
+  <section class="update-card" [class.is-dirty]="cardChanged('moveToTailscale', 'nodePortSSH')">
     <div class="update-card-head">Connectivity</div>
     <label class="toggle-line" for="update-move-to-tailscale"
       ><span>Move to Tailscale<small class="flag-ref">--exposure tailscale</small></span
       ><p-toggleswitch inputId="update-move-to-tailscale" [(ngModel)]="form.moveToTailscale"
     /></label>
-    @if (form.moveToTailscale) {
-      <div class="toggle-children">
-        <small class="field-hint"
-          >Connect privately from your Mac instead. Only the SSH service changes, so it applies
-          without a restart and the old NodePorts are released. The playhouse must have Tailscale
-          enabled; a playroom already on Tailscale is left alone.</small
-        >
-      </div>
-    }
+    <small class="field-hint"
+      >{{ comparisonFor('moveToTailscale')
+      }}{{
+        form.moveToTailscale
+          ? ' · Applies without a restart; the playhouse must have Tailscale enabled.'
+          : ''
+      }}</small
+    >
     <label class="toggle-line" for="update-change-nodeport-ssh"
       ><span>Change NodePort SSH</span
       ><p-toggleswitch inputId="update-change-nodeport-ssh" [(ngModel)]="form.changeNodePortSSH"
@@ -283,12 +312,12 @@
             }}<small class="flag-ref">--nodeport-ssh</small></span
           ><p-toggleswitch inputId="update-nodeport-ssh" [(ngModel)]="form.nodePortSSH"
         /></label>
-        <small class="field-hint"
-          >Applies without a restart; off removes it. A NodePort playroom already has its SSH on a
-          NodePort.</small
-        >
       </div>
     }
+    <small class="field-hint"
+      >{{ comparisonFor('nodePortSSH')
+      }}{{ form.changeNodePortSSH ? ' · Applies without a restart; off removes it.' : '' }}</small
+    >
   </section>
 
   @if (submitFailure) {
@@ -304,6 +333,16 @@
   <app-command-preview [input]="previewInput()" [previewFn]="previewUpdate" [enabled]="visible" />
 
   <ng-template pTemplate="footer">
+    <div class="change-summary" aria-live="polite">
+      <strong>{{ changeCount() }} {{ changeCount() === 1 ? 'change' : 'changes' }}</strong>
+      @if (actionSummary()) {
+        <span>{{ actionSummary() }}</span>
+      }
+      @if (needsNewSpec()) {
+        <span>The playroom may restart; SSH sessions disconnect</span>
+      }
+    </div>
+
     <p-button
       label="Discard draft"
       severity="secondary"
