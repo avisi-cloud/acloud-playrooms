@@ -159,3 +159,29 @@ describe('pinned rooms', () => {
     expect(state.isPinned('playhouse-platform-dev', 'kept')).toBe(false);
   });
 });
+
+describe('last refreshed time', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({});
+  });
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    localStorage.clear();
+  });
+
+  it('records each list load and forgets it when the playhouse or scope changes', () => {
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('playhouse-platform-dev');
+    expect(state.lastRefreshedAt()).toBeNull();
+    state.markRoomsLoaded('playhouse-platform-dev');
+    expect(state.lastRefreshedAt()).toBeInstanceOf(Date);
+    state.selectPlayhouse('playhouse-platform-dev');
+    expect(state.lastRefreshedAt()).not.toBeNull();
+    state.selectPlayhouse('playhouse-platform-shared');
+    expect(state.lastRefreshedAt()).toBeNull();
+    state.markRoomsLoaded('playhouse-platform-shared');
+    state.noteScopeChange();
+    expect(state.lastRefreshedAt()).toBeNull();
+  });
+});

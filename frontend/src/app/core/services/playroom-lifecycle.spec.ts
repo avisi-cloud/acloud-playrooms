@@ -1,7 +1,7 @@
 import { DesktopNotificationsService } from './desktop-notifications';
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
-import { PlayroomLifecycleService, updateInputFor } from './playroom-lifecycle';
+import { PlayroomLifecycleService, nextRefreshDelay, updateInputFor } from './playroom-lifecycle';
 import { UpdateForm } from '../../shared/models';
 import { blankCreateForm, listingToRoom, readCache } from '../../shared/utils';
 import { PlayroomStateService } from './playroom-state';
@@ -415,5 +415,170 @@ describe('room task desktop notifications', () => {
     });
     await actions.stop(demo());
     expect(finished).toHaveBeenCalledExactlyOnceWith('stop', 'demo', selection);
+  });
+});
+
+describe('nextRefreshDelay', () => {
+  const visible = { windowVisible: true, roomChanging: false, failedReadsInARow: 0 };
+
+  it('reads every minute, and every ten seconds while a room changes state', () => {
+    expect(nextRefreshDelay(visible)).toBe(60_000);
+    expect(nextRefreshDelay({ ...visible, roomChanging: true })).toBe(10_000);
+  });
+
+  it('pauses while the window is hidden', () => {
+    expect(nextRefreshDelay({ ...visible, windowVisible: false })).toBeNull();
+    expect(
+      nextRefreshDelay({ windowVisible: false, roomChanging: true, failedReadsInARow: 2 }),
+    ).toBeNull();
+  });
+
+  it('backs off after failures, also while a room changes, and stays at five minutes', () => {
+    for (const roomChanging of [false, true]) {
+      const after = (failedReadsInARow: number) =>
+        nextRefreshDelay({ windowVisible: true, roomChanging, failedReadsInARow });
+      expect([after(1), after(2), after(3), after(4), after(10)]).toEqual([
+        60_000, 120_000, 300_000, 300_000, 300_000,
+      ]);
+    }
+  });
+});
+
+describe('background refresh of the room list', () => {
+  let actions: PlayroomLifecycleService;
+  let listPlayrooms: ReturnType<typeof vi.spyOn>;
+  let failure: ReturnType<typeof vi.spyOn>;
+  let visibility: DocumentVisibilityState;
+
+  async function advance(milliseconds: number): Promise<void> {
+    await vi.advanceTimersByTimeAsync(milliseconds);
+    TestBed.tick();
+  }
+
+  async function setWindowVisibility(state: DocumentVisibilityState): Promise<void> {
+    visibility = state;
+    document.dispatchEvent(new Event('visibilitychange'));
+    await advance(0);
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    localStorage.clear();
+    visibility = 'visible';
+    vi.spyOn(document, 'visibilityState', 'get').mockImplementation(() => visibility);
+    TestBed.configureTestingModule({ providers: [MessageService] });
+    TestBed.inject(PlayroomStateService).selectPlayhouse('ph');
+    actions = TestBed.inject(PlayroomLifecycleService);
+    failure = vi.spyOn(TestBed.inject(ToastService), 'failure');
+    listPlayrooms = vi
+      .spyOn(wailsApi, 'listPlayrooms')
+      .mockResolvedValue([{ Name: 'demo', Status: 'Ready' }]);
+  });
+
+  afterEach(() => {
+    TestBed.resetTestingModule();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    localStorage.clear();
+  });
+
+  async function firstRead(): Promise<void> {
+    await actions.reload('ph');
+    await advance(0);
+    listPlayrooms.mockClear();
+  }
+
+  it('does not poll before a screen has read the list', async () => {
+    TestBed.tick();
+    await advance(5 * 60_000);
+    expect(listPlayrooms).not.toHaveBeenCalled();
+  });
+
+  it('reads every minute, and every ten seconds while a room changes state', async () => {
+    await firstRead();
+    await advance(59_000);
+    expect(listPlayrooms).not.toHaveBeenCalled();
+    await advance(1_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(1);
+
+    listPlayrooms.mockResolvedValue([{ Name: 'demo', Status: 'Starting' }]);
+    await advance(60_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(2);
+    await advance(10_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not push the next read back when rooms are edited locally', async () => {
+    await firstRead();
+    const state = TestBed.inject(PlayroomStateService);
+    for (let second = 0; second < 60; second += 20) {
+      state.setRooms(state.rooms().map((room) => ({ ...room, ageMin: room.ageMin + 1 })));
+      await advance(20_000);
+    }
+    expect(listPlayrooms).toHaveBeenCalledTimes(1);
+  });
+
+  it('pauses while the window is hidden and reads once when it is shown again', async () => {
+    await firstRead();
+    await setWindowVisibility('hidden');
+    await advance(10 * 60_000);
+    expect(listPlayrooms).not.toHaveBeenCalled();
+
+    await setWindowVisibility('visible');
+    expect(listPlayrooms).toHaveBeenCalledTimes(1);
+    await advance(59_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(1);
+    await advance(1_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(2);
+  });
+
+  it('drops a poll while another read is still running', async () => {
+    await firstRead();
+    let landRead = () => {};
+    listPlayrooms.mockReturnValueOnce(
+      new Promise((resolve) => (landRead = () => resolve([{ Name: 'demo', Status: 'Ready' }]))),
+    );
+    const userRead = actions.reload('ph');
+    await advance(60_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(1);
+    landRead();
+    await userRead;
+    await advance(60_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(2);
+  });
+
+  it('backs off after failed reads and shows the error once', async () => {
+    await firstRead();
+    listPlayrooms.mockRejectedValue(new Error('Session expired'));
+    await advance(60_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(1);
+    expect(failure).toHaveBeenCalledOnce();
+    expect(actions.loadError()).toContain('Session expired');
+
+    await advance(59_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(1);
+    await advance(1_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(2);
+    await advance(120_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(3);
+    await advance(299_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(3);
+    await advance(1_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(4);
+    expect(failure).toHaveBeenCalledOnce();
+
+    listPlayrooms.mockResolvedValue([]);
+    await advance(300_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(5);
+    expect(actions.loadError()).toBe('');
+    await advance(60_000);
+    expect(listPlayrooms).toHaveBeenCalledTimes(6);
+  });
+
+  it('stops polling the old selection when the playhouse changes', async () => {
+    await firstRead();
+    TestBed.inject(PlayroomStateService).selectPlayhouse('other');
+    await advance(5 * 60_000);
+    expect(listPlayrooms).not.toHaveBeenCalled();
   });
 });
