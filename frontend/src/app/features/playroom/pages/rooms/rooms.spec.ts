@@ -1,5 +1,8 @@
 import { vi } from 'vitest';
 
+import { By } from '@angular/platform-browser';
+import { ShortcutsService } from '../../../../core/services/shortcuts';
+import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-drawer/create-playroom-drawer';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
@@ -98,6 +101,44 @@ describe('RoomsPageComponent', () => {
     // Cleared, so Back or a reload does not open the drawer again.
     expect(router.url).toBe('/rooms');
   });
+
+  for (const source of ['c', 'command-n', 'menu'] as const) {
+    it(`renders the create drawer from ${source} without another template event`, async () => {
+      let menuAction = (_action: string) => {};
+      vi.spyOn(wailsApi, 'onMenuAction').mockImplementation((handler) => {
+        menuAction = handler;
+        return () => undefined;
+      });
+      vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+      vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([]);
+      TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-a');
+      const router = TestBed.inject(Router);
+      router.resetConfig([{ path: 'rooms', component: RoomsPageComponent }]);
+      const harness = await RouterTestingHarness.create();
+      const page = await harness.navigateByUrl('/rooms', RoomsPageComponent);
+      await harness.fixture.whenStable();
+      const openCreate = vi.spyOn(page, 'openCreate');
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+
+      if (source === 'menu') menuAction('new-playroom');
+      else
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key: source === 'c' ? 'c' : 'n',
+            metaKey: source === 'command-n',
+            cancelable: true,
+          }),
+        );
+
+      expect(openCreate).toHaveBeenCalledOnce();
+      expect(page.showCreate).toBe(true);
+      await harness.fixture.whenStable();
+      const drawer = harness.routeDebugElement!.query(By.directive(CreatePlayroomDrawerComponent))
+        .componentInstance as CreatePlayroomDrawerComponent;
+      expect(drawer.visible).toBe(true);
+      expect(TestBed.inject(ShortcutsService).overviewOpen()).toBe(false);
+    });
+  }
 
   it('drops a poll that ticks while a read is already running', async () => {
     const state = TestBed.inject(PlayroomStateService);

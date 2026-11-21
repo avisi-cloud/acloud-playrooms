@@ -1,5 +1,6 @@
+import { WindowTitleStrategy } from './core/services/window-title';
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, TitleStrategy } from '@angular/router';
 import { providePrimeNG } from 'primeng/config';
 import { MessageService } from 'primeng/api';
 import { definePreset } from '@primeuix/themes';
@@ -91,6 +92,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
+    { provide: TitleStrategy, useClass: WindowTitleStrategy },
     { provide: MessageService, useClass: MessageService },
     providePrimeNG({
       theme: {

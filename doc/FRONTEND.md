@@ -530,3 +530,37 @@ in this standalone repository. See [`ARCHITECTURE.md`](ARCHITECTURE.md#coverage-
 dialog wired all fifteen of its fields, passed this test, and sat unreachable in
 a shipping build because the button that opened it had been removed. If you add
 a screen, add the way in at the same time.
+
+## Keyboard shortcuts and native menus
+
+`ShortcutsService` owns one shortcut registry, the keyboard listener and the
+`menu:action` listener. The `?` overview renders that registry in the shell.
+Page callbacks that change plain fields must notify Angular with `markForCheck()`;
+service listeners do not mark the page like a template event does.
+Shortcuts are ignored while typing, composing text, repeating a key, using other
+modifiers, or while an overlay is open. App accelerators are consumed even when
+guarded, so ⌘R never falls through to a webview reload.
+
+| Keys    | Action                                                       |
+| ------- | ------------------------------------------------------------ |
+| ⌘N      | New Playroom                                                 |
+| ⌘R      | Refresh the current room list, room detail or playhouse list |
+| ⌘,      | Settings                                                     |
+| ⌘1 / ⌘2 | Playrooms / Playhouses                                       |
+| ⌘F      | Focus the current screen's search, where available           |
+| ?       | Keyboard shortcut overview                                   |
+| c / /   | New Playroom / search on Playrooms only                      |
+
+The desktop menu supplies About, Settings and Quit; File → New Playroom;
+View → Refresh, Focus Search and Theme (Light, Dark, System); Go → Playrooms,
+Playhouses and Defaults; the standard Edit and Window menus; and Help → Keyboard
+Shortcuts, Documentation and Report an issue. Native app actions emit events to
+the same frontend dispatcher as keyboard shortcuts. About, Quit, Edit and Window
+use native Wails roles. Refresh has a native ⌘R accelerator instead of the reload
+role. Its WebKit precedence needs verification in the desktop build.
+
+Routes declare screen titles. `WindowTitleStrategy` sets both the document and
+native title through `wailsApi`: `demo — Playrooms` for a room,
+`Playrooms — demo` for a selected playhouse's list, and the screen name elsewhere.
+It also updates the list title when the playhouse changes without navigation.
+The dummy API sets `document.title` and opens Help links in a browser tab.

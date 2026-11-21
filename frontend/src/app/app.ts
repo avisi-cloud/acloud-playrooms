@@ -1,3 +1,5 @@
+import { DialogModule } from 'primeng/dialog';
+import { ShortcutsService } from './core/services/shortcuts';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -52,6 +54,7 @@ export const BREATH_MS = 5600;
   },
   // The sidebar has its own dark theme boundary, including when the workspace is light.
   imports: [
+    DialogModule,
     RouterOutlet,
     RouterLink,
     RouterLinkActive,
@@ -72,6 +75,7 @@ export const BREATH_MS = 5600;
   styleUrls: ['./app.css', './app-sidebar.css', './app-toast.css', './app-main-panel.css'],
 })
 export class App implements OnInit {
+  readonly shortcuts = inject(ShortcutsService);
   readonly state = inject(PlayroomStateService);
   readonly console = inject(CliConsoleService);
   readonly pageLoading = inject(PageLoadingService);
