@@ -282,6 +282,14 @@ const simulatedApi: typeof liveApi = {
     console.info('Dummy Dock badge', count);
   },
   onDesktopNotificationClick: () => () => undefined,
+  setMenuBarRooms: async (rooms) => {
+    console.info('Dummy menu bar rooms', rooms);
+  },
+  setKeepRunningInMenuBar: async (keepRunning) => {
+    console.info('Dummy keep running in the menu bar', keepRunning);
+  },
+  showMainWindow: () => Promise.resolve(),
+  onMenuBarAction: () => () => undefined,
   onMenuAction: () => () => undefined,
   setWindowTheme: () => Promise.resolve(),
   openUrlInDefaultBrowser: async (url) => {

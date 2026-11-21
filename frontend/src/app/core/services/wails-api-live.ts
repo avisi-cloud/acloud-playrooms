@@ -3,6 +3,7 @@ import type { ListingDto } from '../../shared/models';
 
 // Generated models keep frontend inputs aligned with the Go service.
 import * as app from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/app.js';
+import * as appModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/models.js';
 import * as playhouseModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/playhouse/models.js';
 import * as playroomModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/playroom/models.js';
 import * as localModels from '../../../../bindings/github.com/avisi-cloud/acloud-playrooms/backend/local/models.js';
@@ -35,6 +36,14 @@ export type HealthCheckInput = localModels.HealthCheckInput;
 export type AcloudBinaryStatus = cliModels.BinaryStatus;
 export type TailscaleBinaryStatus = toolsModels.TailscaleBinaryStatus;
 export type T3CodePathStatus = toolsModels.T3CodePathStatus;
+export type MenuBarRooms = appModels.MenuBarRooms;
+
+/** A room action chosen in the menu bar, for the room list it was built from. */
+export interface MenuBarRequest {
+  action: 'connect' | 'open-in-editor' | 'start' | 'stop';
+  room: string;
+  playhouse: string;
+}
 
 export { newOperationId } from './operation-id';
 
@@ -84,6 +93,15 @@ export const wailsApi = {
   setDockBadge: (count: number): Promise<void> => app.SetDockBadge(count),
   onDesktopNotificationClick: (handler: (target: string) => void): (() => void) =>
     Events.On('notification:clicked', (event) => handler(event.data as string)),
+
+  // Menu bar
+  setMenuBarRooms: (rooms: MenuBarRooms): Promise<void> =>
+    app.SetMenuBarRooms(new appModels.MenuBarRooms(rooms)),
+  setKeepRunningInMenuBar: (keepRunning: boolean): Promise<void> =>
+    app.SetKeepRunningInMenuBar(keepRunning),
+  showMainWindow: (): Promise<void> => app.ShowMainWindow(),
+  onMenuBarAction: (handler: (request: MenuBarRequest) => void): (() => void) =>
+    Events.On('menu-bar:action', (event) => handler(event.data as MenuBarRequest)),
 
   // Window
   setWindowTitle: (title: string): Promise<void> => Window.SetTitle(title),

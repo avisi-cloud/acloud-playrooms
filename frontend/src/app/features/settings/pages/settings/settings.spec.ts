@@ -79,6 +79,22 @@ describe('Settings page', () => {
     expect(readCache().dockBadge).toBe('off');
   });
 
+  it('keeps running in the menu bar off by default, and saves and sends the switch', async () => {
+    const send = vi.spyOn(wailsApi, 'setKeepRunningInMenuBar').mockResolvedValue();
+    const fixture = TestBed.createComponent(SettingsPageComponent);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('label[for="keep-running-in-menu-bar"]')?.textContent).toBe(
+      'Keep running in the menu bar',
+    );
+    const toggle = root.querySelector<HTMLInputElement>('#keep-running-in-menu-bar')!;
+    expect(toggle.checked).toBe(false);
+    toggle.click();
+    await fixture.whenStable();
+    expect(readCache().keepRunningInMenuBar).toBe(true);
+    expect(send).toHaveBeenLastCalledWith(true);
+  });
+
   it('offers three theme tiles and saves a single selection when a tile is clicked', async () => {
     const fixture = TestBed.createComponent(SettingsPageComponent);
     await fixture.whenStable();
