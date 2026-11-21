@@ -47,14 +47,15 @@ src/app/
 `/` redirects to `/setup` until setup has been completed once, and to `/rooms`
 after that.
 
-| Route          | Screen                       |
-| -------------- | ---------------------------- |
-| `/setup`       | setup                        |
-| `/playhouse`   | playhouse selection          |
-| `/rooms`       | playroom list (guarded)      |
-| `/rooms/:name` | playroom detail (guarded)    |
-| `/defaults`    | playroom defaults            |
-| `/settings`    | local tools and app settings |
+| Route              | Screen                       |
+| ------------------ | ---------------------------- |
+| `/setup`           | setup                        |
+| `/playhouse`       | playhouse selection          |
+| `/rooms`           | playroom list (guarded)      |
+| `/rooms/:name`     | playroom detail (guarded)    |
+| `/defaults`        | playroom defaults            |
+| `/settings`        | local tools and app settings |
+| `/settings/health` | health check                 |
 
 `core/guards/playhouse-guard.ts` sends the user to `/playhouse` when no
 playhouse is selected and the backend has no cached one.
@@ -297,6 +298,16 @@ tool status. The cards live in `features/settings/components` and use
 `shared/styles/_binary-card.css`; setup reuses the Acloud card. T3 Code is optional:
 the saved app or CLI path is reserved for future integration and is not launched
 or added to the command environment. Defaults remains dedicated to playroom defaults.
+
+The health check (`features/settings/pages/health-check`, at `/settings/health`) runs
+`CheckHealth` once on open and again with **Run again**. It is opened from the Settings
+header and from the **Run health check** action on a connect or open failure that no
+specific fix recognises (`CommandFixService.healthCheckAction`). It sends the terminal
+and editor the connect dialog would open with. The Tailscale check is skipped only when
+the selected playhouse's listed rooms report hosts and none is a `.ts.net` host; see
+DECISIONS. Each result shows its status, explanation, fix, a copyable command and, for
+acloud, Tailscale paths and sign-in, a button that opens Settings or signs in. **Copy
+results** puts a plain-text summary with the app version on the clipboard.
 
 `core/services/playroom-state.ts` holds the selected playhouse, user, theme and
 room list as signals. Two fields there exist because of specific bugs:

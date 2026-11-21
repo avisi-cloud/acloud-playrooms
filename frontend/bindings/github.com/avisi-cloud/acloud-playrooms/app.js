@@ -65,13 +65,24 @@ export function CancelOperation(operationID) {
 }
 
 /**
+ * CheckHealth runs the health check screen's read-only checks.
+ * @param {local$0.HealthCheckInput} input
+ * @returns {$CancellablePromise<local$0.HealthCheck[]>}
+ */
+export function CheckHealth(input) {
+    return $Call.ByID(3534077411, input).then(/** @type {($result: any) => any} */(($result) => {
+        return $$createType1($result);
+    }));
+}
+
+/**
  * ClearAcloudBinary forgets the saved path and searches again, for when acloud
  * has since been installed normally.
  * @returns {$CancellablePromise<cli$0.BinaryStatus>}
  */
 export function ClearAcloudBinary() {
     return $Call.ByID(1638829581).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType0($result);
+        return $$createType2($result);
     }));
 }
 
@@ -150,7 +161,7 @@ export function ExportActivityLog(content) {
  */
 export function GetAcloudBinaryStatus() {
     return $Call.ByID(298481226).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType0($result);
+        return $$createType2($result);
     }));
 }
 
@@ -161,7 +172,7 @@ export function GetAcloudBinaryStatus() {
  */
 export function GetAcloudCompatibility() {
     return $Call.ByID(137755711).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType1($result);
+        return $$createType3($result);
     }));
 }
 
@@ -214,7 +225,7 @@ export function GetCurrentUserEmail() {
  */
 export function GetEnvironmentPresence(entries, readVariablesFromLoginShell) {
     return $Call.ByID(1205601075, entries, readVariablesFromLoginShell).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType3($result);
+        return $$createType5($result);
     }));
 }
 
@@ -231,7 +242,7 @@ export function GetOperatingSystem() {
  */
 export function GetPlayroomDefaults() {
     return $Call.ByID(2266523266).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType5($result);
+        return $$createType7($result);
     }));
 }
 
@@ -240,7 +251,7 @@ export function GetPlayroomDefaults() {
  */
 export function GetT3CodePathStatus() {
     return $Call.ByID(1150754780).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType6($result);
+        return $$createType8($result);
     }));
 }
 
@@ -249,7 +260,7 @@ export function GetT3CodePathStatus() {
  */
 export function GetTailscaleBinaryStatus() {
     return $Call.ByID(1196906388).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType7($result);
+        return $$createType9($result);
     }));
 }
 
@@ -258,7 +269,7 @@ export function GetTailscaleBinaryStatus() {
  */
 export function GetToolStatuses() {
     return $Call.ByID(1175740481).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType9($result);
+        return $$createType11($result);
     }));
 }
 
@@ -275,7 +286,7 @@ export function IsLoggedIn() {
  */
 export function ListCloudAccounts() {
     return $Call.ByID(1866846424).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType11($result);
+        return $$createType13($result);
     }));
 }
 
@@ -284,7 +295,7 @@ export function ListCloudAccounts() {
  */
 export function ListContexts() {
     return $Call.ByID(1996591047).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType13($result);
+        return $$createType15($result);
     }));
 }
 
@@ -293,7 +304,7 @@ export function ListContexts() {
  */
 export function ListEnvironments() {
     return $Call.ByID(394294985).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType15($result);
+        return $$createType17($result);
     }));
 }
 
@@ -302,7 +313,7 @@ export function ListEnvironments() {
  */
 export function ListOrganisations() {
     return $Call.ByID(90350162).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType17($result);
+        return $$createType19($result);
     }));
 }
 
@@ -311,7 +322,7 @@ export function ListOrganisations() {
  */
 export function ListPlayhouses() {
     return $Call.ByID(2233888008).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType19($result);
+        return $$createType21($result);
     }));
 }
 
@@ -320,7 +331,7 @@ export function ListPlayhouses() {
  */
 export function ListPlayroomImages() {
     return $Call.ByID(3564697124).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType21($result);
+        return $$createType23($result);
     }));
 }
 
@@ -330,7 +341,7 @@ export function ListPlayroomImages() {
  */
 export function ListPlayrooms(input) {
     return $Call.ByID(1813849851, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType23($result);
+        return $$createType25($result);
     }));
 }
 
@@ -366,7 +377,7 @@ export function OpenPlayroomInEditor(operationID, input) {
  */
 export function PreviewConnectPlayroom(input) {
     return $Call.ByID(2452866108, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType24($result);
+        return $$createType26($result);
     }));
 }
 
@@ -376,7 +387,7 @@ export function PreviewConnectPlayroom(input) {
  */
 export function PreviewCreatePlayhouse(input) {
     return $Call.ByID(3520130009, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType24($result);
+        return $$createType26($result);
     }));
 }
 
@@ -386,7 +397,7 @@ export function PreviewCreatePlayhouse(input) {
  */
 export function PreviewCreatePlayroom(input) {
     return $Call.ByID(1511217160, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType24($result);
+        return $$createType26($result);
     }));
 }
 
@@ -396,7 +407,7 @@ export function PreviewCreatePlayroom(input) {
  */
 export function PreviewDeletePlayhouse(input) {
     return $Call.ByID(4046241956, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType24($result);
+        return $$createType26($result);
     }));
 }
 
@@ -406,7 +417,7 @@ export function PreviewDeletePlayhouse(input) {
  */
 export function PreviewDeletePlayroom(input) {
     return $Call.ByID(3324577475, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType24($result);
+        return $$createType26($result);
     }));
 }
 
@@ -416,7 +427,7 @@ export function PreviewDeletePlayroom(input) {
  */
 export function PreviewOpenPlayroomInEditor(input) {
     return $Call.ByID(2022753278, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType24($result);
+        return $$createType26($result);
     }));
 }
 
@@ -426,7 +437,7 @@ export function PreviewOpenPlayroomInEditor(input) {
  */
 export function PreviewUpdatePlayhouse(input) {
     return $Call.ByID(1817471210, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType24($result);
+        return $$createType26($result);
     }));
 }
 
@@ -436,7 +447,7 @@ export function PreviewUpdatePlayhouse(input) {
  */
 export function PreviewUpdatePlayroom(input) {
     return $Call.ByID(2213859593, input).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType24($result);
+        return $$createType26($result);
     }));
 }
 
@@ -459,7 +470,7 @@ export function SendDesktopNotification(title, target) {
  */
 export function SetAcloudBinary(path) {
     return $Call.ByID(1998400028, path).then(/** @type {($result: any) => any} */(($result) => {
-        return $$createType0($result);
+        return $$createType2($result);
     }));
 }
 
@@ -580,28 +591,30 @@ export function UpdatePlayroom(operationID, input) {
 }
 
 // Private type creation functions
-const $$createType0 = cli$0.BinaryStatus.createFrom;
-const $$createType1 = local$0.AcloudCompatibility.createFrom;
-const $$createType2 = local$0.EnvironmentPresence.createFrom;
-const $$createType3 = $Create.Array($$createType2);
-const $$createType4 = playroom$0.DefaultEntry.createFrom;
+const $$createType0 = local$0.HealthCheck.createFrom;
+const $$createType1 = $Create.Array($$createType0);
+const $$createType2 = cli$0.BinaryStatus.createFrom;
+const $$createType3 = local$0.AcloudCompatibility.createFrom;
+const $$createType4 = local$0.EnvironmentPresence.createFrom;
 const $$createType5 = $Create.Array($$createType4);
-const $$createType6 = tools$0.T3CodePathStatus.createFrom;
-const $$createType7 = tools$0.TailscaleBinaryStatus.createFrom;
-const $$createType8 = local$0.ToolStatus.createFrom;
-const $$createType9 = $Create.Array($$createType8);
-const $$createType10 = playhouse$0.CloudAccountEntry.createFrom;
+const $$createType6 = playroom$0.DefaultEntry.createFrom;
+const $$createType7 = $Create.Array($$createType6);
+const $$createType8 = tools$0.T3CodePathStatus.createFrom;
+const $$createType9 = tools$0.TailscaleBinaryStatus.createFrom;
+const $$createType10 = local$0.ToolStatus.createFrom;
 const $$createType11 = $Create.Array($$createType10);
-const $$createType12 = config$0.ContextEntry.createFrom;
+const $$createType12 = playhouse$0.CloudAccountEntry.createFrom;
 const $$createType13 = $Create.Array($$createType12);
-const $$createType14 = playhouse$0.EnvironmentEntry.createFrom;
+const $$createType14 = config$0.ContextEntry.createFrom;
 const $$createType15 = $Create.Array($$createType14);
-const $$createType16 = config$0.OrganisationEntry.createFrom;
+const $$createType16 = playhouse$0.EnvironmentEntry.createFrom;
 const $$createType17 = $Create.Array($$createType16);
-const $$createType18 = playhouse$0.PlayhouseEntry.createFrom;
+const $$createType18 = config$0.OrganisationEntry.createFrom;
 const $$createType19 = $Create.Array($$createType18);
-const $$createType20 = local$0.ImageEntry.createFrom;
+const $$createType20 = playhouse$0.PlayhouseEntry.createFrom;
 const $$createType21 = $Create.Array($$createType20);
-const $$createType22 = playroom$0.Listing.createFrom;
+const $$createType22 = local$0.ImageEntry.createFrom;
 const $$createType23 = $Create.Array($$createType22);
-const $$createType24 = $Create.Array($Create.Any);
+const $$createType24 = playroom$0.Listing.createFrom;
+const $$createType25 = $Create.Array($$createType24);
+const $$createType26 = $Create.Array($Create.Any);

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { CommandFixService } from './command-fix';
 import { PlayroomLifecycleService } from './playroom-lifecycle';
@@ -187,4 +188,12 @@ it('offers a forced retry if updating an outdated room needs a new session', asy
     Playhouse: 'ph',
     ForceInstall: true,
   });
+});
+
+it('opens the health check from a failure no fix recognises', async () => {
+  const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+  const action = TestBed.inject(CommandFixService).healthCheckAction();
+  expect(action.label).toBe('Run health check');
+  await action.run();
+  expect(navigate).toHaveBeenCalledWith(['/settings/health']);
 });

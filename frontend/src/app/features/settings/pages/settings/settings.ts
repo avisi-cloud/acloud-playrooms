@@ -53,6 +53,10 @@ export class SettingsPageComponent {
     void this.router.navigate(['/rooms']);
   }
 
+  openHealthCheck(): void {
+    void this.router.navigate(['/settings/health']);
+  }
+
   runSetupAgain(): void {
     void this.router.navigate(['/setup']);
   }

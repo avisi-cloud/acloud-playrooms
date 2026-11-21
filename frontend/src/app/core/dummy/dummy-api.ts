@@ -2,9 +2,12 @@ import { simulateActivity } from './activity-events';
 import type { ListingDto } from '../../shared/models';
 import type {
   wailsApi as liveApi,
+  HealthCheck,
+  HealthCheckInput,
   PlayroomCreateInput,
   PlayroomUpdateInput,
 } from '../services/wails-api-live';
+import { TERMINALS } from '../../shared/data';
 import {
   dummyContexts,
   dummyLoginShellEnvironmentKeys,
@@ -112,6 +115,74 @@ const binaryStatus = {
   EnvironmentOverride: false,
 };
 
+// One result per check, like local.CheckHealth; the editor check fails so the preview shows a fix.
+function simulateHealthChecks(input: Partial<HealthCheckInput>): HealthCheck[] {
+  const terminal = TERMINALS.find((entry) => entry.id === (input.Terminal || 'terminal'));
+  const check = (fields: Partial<HealthCheck>): HealthCheck =>
+    ({ Fix: '', Command: '', Action: '', Status: 'passed', ...fields }) as HealthCheck;
+  return [
+    check({
+      Key: 'acloud',
+      Name: 'acloud',
+      Explanation: `acloud ${binaryStatus.Version} at ${binaryStatus.Path}. Simulated.`,
+    }),
+    signedIn
+      ? check({
+          Key: 'sign-in',
+          Name: 'Signed in to Acloud',
+          Explanation: `Signed in as ${dummyUser}.`,
+        })
+      : check({
+          Key: 'sign-in',
+          Name: 'Signed in to Acloud',
+          Status: 'failed',
+          Explanation: 'The current acloud context has no stored credentials.',
+          Fix: 'Sign in.',
+          Command: 'acloud auth login',
+          Action: 'sign-in',
+        }),
+    check({ Key: 'ssh-key', Name: 'SSH public key', Explanation: 'Found ~/.ssh/id_ed25519.pub.' }),
+    input.CheckTailscale
+      ? check({
+          Key: 'tailscale',
+          Name: 'Tailscale',
+          Explanation: 'Tailscale 1.80.0 is logged in.',
+        })
+      : check({
+          Key: 'tailscale',
+          Name: 'Tailscale',
+          Status: 'skipped',
+          Explanation: 'Not needed: this playhouse does not use Tailscale.',
+        }),
+    terminal
+      ? check({
+          Key: 'terminal',
+          Name: 'Terminal app',
+          Explanation: `${terminal.label} found. Simulated.`,
+        })
+      : check({
+          Key: 'terminal',
+          Name: 'Terminal app',
+          Status: 'unknown',
+          Explanation: `"${input.Terminal}" is not a terminal this app knows.`,
+        }),
+    input.Editor === 'vscode'
+      ? check({
+          Key: 'editor',
+          Name: 'Editor',
+          Status: 'failed',
+          Explanation: 'VS Code is installed, but the Remote - SSH extension is not.',
+          Fix: 'Install the Remote - SSH extension.',
+          Command: 'code --install-extension ms-vscode-remote.remote-ssh',
+        })
+      : check({
+          Key: 'editor',
+          Name: 'Editor',
+          Explanation: 'Opens through JetBrains Gateway. Simulated.',
+        }),
+  ];
+}
+
 // An exhaustive adapter: dummy mode never imports a live backend implementation at runtime.
 const simulatedApi: typeof liveApi = {
   getEnvironmentPresence: (entries, readVariablesFromLoginShell) =>
@@ -169,6 +240,7 @@ const simulatedApi: typeof liveApi = {
       RunningVersionIsOlderThanMinimum: false,
       Explanation: '',
     }),
+  checkHealth: (input) => read(simulateHealthChecks(input)),
   getAcloudBinaryStatus: () => read(binaryStatus),
   setAcloudBinary: unavailable,
   clearAcloudBinary: unavailable,

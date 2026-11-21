@@ -288,3 +288,37 @@ test('pins a room from its card and unpins it from details', async ({ page }) =>
     'Open playroom api-development',
   );
 });
+
+test('runs the health check from Settings and copies the results', async ({ page }) => {
+  await page.goto('/settings');
+  await page.getByRole('button', { name: /Health check$/ }).click();
+  await expect(page).toHaveURL(/\/settings\/health$/);
+  await expect(page.getByRole('heading', { name: 'Health check.', exact: true })).toBeVisible();
+  const editor = page.getByRole('region', { name: 'Editor', exact: true });
+  await expect(editor).toContainText('Remote - SSH extension is not');
+  await expect(editor).toContainText('code --install-extension ms-vscode-remote.remote-ssh');
+  await expect(page.getByRole('region', { name: 'Tailscale', exact: true })).toContainText(
+    'logged in',
+  );
+  await expect(page.getByRole('status').filter({ hasText: 'need' })).toHaveText(
+    '1 check needs attention.',
+  );
+  await page.getByRole('button', { name: /Run again$/ }).click();
+  await expect(editor).toBeVisible();
+  await page.getByRole('button', { name: /Copy results$/ }).click();
+  await expect(
+    page.locator('.toast-detail').filter({ hasText: 'Copied the health check results' }),
+  ).toBeVisible();
+});
+
+test('offers the health check after a failed open in the editor', async ({ page }) => {
+  await openRoom(page, 'api-development');
+  await page.getByRole('button', { name: /Open in editor$/ }).click();
+  const dialog = page.getByRole('dialog', { name: 'Connect to api-development', exact: true });
+  await dialog.getByRole('button', { name: /Open$/ }).click();
+  await page.getByRole('button', { name: 'Run health check', exact: true }).first().click();
+  await expect(page).toHaveURL(/\/settings\/health$/);
+  await expect(page.getByRole('region', { name: 'SSH public key', exact: true })).toContainText(
+    'id_ed25519.pub',
+  );
+});

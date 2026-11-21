@@ -30,6 +30,8 @@ export type ContextEntry = configModels.ContextEntry;
 export type ImageEntry = localModels.ImageEntry;
 export type ToolStatus = localModels.ToolStatus;
 export type AcloudCompatibility = localModels.AcloudCompatibility;
+export type HealthCheck = localModels.HealthCheck;
+export type HealthCheckInput = localModels.HealthCheckInput;
 export type AcloudBinaryStatus = cliModels.BinaryStatus;
 export type TailscaleBinaryStatus = toolsModels.TailscaleBinaryStatus;
 export type T3CodePathStatus = toolsModels.T3CodePathStatus;
@@ -54,6 +56,9 @@ export const wailsApi = {
   getToolStatuses: (): Promise<ToolStatus[]> => app.GetToolStatuses(),
   /** Whether the running acloud is newer than the one this GUI was verified against. */
   getAcloudCompatibility: (): Promise<AcloudCompatibility> => app.GetAcloudCompatibility(),
+  /** Read-only checks for everything a working connection needs. */
+  checkHealth: (input: Partial<HealthCheckInput>): Promise<HealthCheck[]> =>
+    app.CheckHealth(new localModels.HealthCheckInput(input)),
 
   // The acloud binary itself. Nothing else works until this resolves, so these
   // stay callable when every other read is failing.

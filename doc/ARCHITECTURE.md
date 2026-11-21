@@ -183,6 +183,8 @@ The limited exceptions live in `backend/local` and `backend/tools`:
   shell, and passing resolved values only in the acloud child environment.
 - Remembering the app theme in a GUI-specific file.
 - Remembering and applying the app's Tailscale executable path.
+- The health check's read-only probes: `~/.ssh/id_*.pub`, app bundles in
+  Applications, `tailscale status --json` and `code --list-extensions`, each with a timeout.
 
 Configuration is read again on each lookup so a login or context change made by
 a subprocess becomes visible. The GUI does not write the CLI configuration

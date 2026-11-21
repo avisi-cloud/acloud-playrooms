@@ -20,6 +20,7 @@ it, update the entry.
 - [Forwarded variables can come from the login shell](#forwarded-variables-can-come-from-the-login-shell)
 
 - [Port links require a reported tailnet hostname](#port-links-require-a-reported-tailnet-hostname)
+- [The health check judges Tailscale use from room hosts](#the-health-check-judges-tailscale-use-from-room-hosts)
 
 - [Embedded terminal for interactive commands](#embedded-terminal-for-interactive-commands)
 - [Root flags](#root-flags)
@@ -82,6 +83,16 @@ browser links only for a reported `.ts.net` MagicDNS host. Copy details identifi
 those hosts as Tailscale and leaves other exposure values Not reported; an IP,
 blank host or arbitrary DNS name cannot establish the exposure. This deliberately
 leaves tailnet IP-only rooms unlinked. Revisit when the CLI reports exposure.
+
+### The health check judges Tailscale use from room hosts
+
+The health check checks Tailscale "only when the playhouse uses Tailscale", but no
+command reports a playhouse's exposure. Following the port-link rule above, a listed
+room with a `.ts.net` host means the playhouse uses Tailscale. The check is skipped
+only when the selected playhouse's rooms were listed, at least one reports a host,
+and none is a tailnet host. Without that evidence (no playhouse, no listing, or only
+rooms without a host) the check runs, so a missing Tailscale is never hidden. Revisit
+when the CLI reports the playhouse exposure or default connection path.
 
 ### Embedded terminal for interactive commands
 

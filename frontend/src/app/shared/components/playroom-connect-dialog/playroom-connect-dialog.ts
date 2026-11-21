@@ -269,7 +269,7 @@ export class PlayroomConnectDialogComponent implements OnChanges {
             ...(!room.ephemeral
               ? { updatePlayroom: () => this.lifecycle.updateOutdated(room) }
               : {}),
-          }),
+          }) ?? this.fixes.healthCheckAction(),
         );
     }
   }

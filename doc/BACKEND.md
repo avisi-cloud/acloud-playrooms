@@ -331,6 +331,7 @@ and it lives in one package so the exceptions are easy to count.
 | `tools.go`         | a `$PATH` probe for tailscale and ssh                                                             |
 | `theme.go`         | the remembered theme — the one write                                                              |
 | `compatibility.go` | the acloud release these screens need and were verified against, and how the running one compares |
+| `health.go`        | the health check screen's read-only checks, one typed result each                                 |
 
 Tailscale discovery and its saved GUI-only path live in `backend/tools`. The
 runner and terminal hand-off use its PATH setup, and `local.ToolStatuses` uses
@@ -339,7 +340,20 @@ the same resolver so the sidebar reports the executable commands will use.
 `tools/vscode.go` finds the `code` launcher in the child process PATH, standard
 package-manager locations and VS Code application bundles. When needed, the
 runner appends its directory to the child process PATH and logs the discovery.
-It preserves existing command choices and the configured Tailscale launcher.
+It preserves existing command choices and the configured Tailscale launcher. `FindVSCodeCommand`
+returns the same launcher for the health check.
+
+`health.go` runs six independent checks at the same time: acloud and its version
+(the compatibility rules above), stored credentials, an SSH public key in
+`~/.ssh/id_*.pub`, Tailscale installed and logged in (`tailscale status --json`,
+skipped when the frontend says the playhouse does not use it), the chosen terminal's
+app bundle, and the chosen editor: for VS Code the `code` launcher and the Remote -
+SSH extension (`code --list-extensions`), for IntelliJ and WebStorm JetBrains Gateway
+or the Toolbox App, which open acloud's `jetbrains://` link. Each check only reads,
+every command it runs has its own timeout, and a check that cannot tell reports
+`unknown`. A result carries a short explanation, a fix, an optional copyable command
+and an optional `HealthAction` the screen can start itself. Tests drive each check
+with fake commands and temporary folders.
 
 `tools/t3code.go` owns the optional T3 Code preference, desktop-app metadata
 checks and CLI discovery. The app's bundle identifier and executable are checked

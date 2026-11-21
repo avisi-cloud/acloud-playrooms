@@ -38,3 +38,12 @@ export interface ToastMessage {
   message: string;
   tone: 'ok' | 'busy' | 'warn' | 'bad' | 'idle';
 }
+
+/** A `local.HealthStatus`; the generated binding types it as a plain string. */
+export type HealthStatus = 'passed' | 'warning' | 'failed' | 'unknown' | 'skipped';
+
+/** A `local.HealthAction`: a fix the health check screen starts itself, or blank for none. */
+export type HealthAction = '' | 'open-settings' | 'sign-in';
+
+/** Whether the selected playhouse uses Tailscale, read from its rooms' reported hosts. */
+export type TailscaleUse = 'used' | 'not-used' | 'not-reported';
