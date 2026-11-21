@@ -1,3 +1,4 @@
+import { roomDeepLink } from '../../../../shared/utils/deep-link';
 import { ShortcutsService } from '../../../../core/services/shortcuts';
 import { CommonModule } from '@angular/common';
 import {
@@ -5,7 +6,7 @@ import {
   Component,
   DestroyRef,
   OnDestroy,
-  ViewChild,
+  viewChild,
   computed,
   effect,
   inject,
@@ -27,7 +28,7 @@ import { wailsApi } from '../../../../core/services/wails-api';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { PlayroomActionsHostComponent } from '../../../../shared/components';
 import { PlayroomBreadcrumbComponent } from '../../components/playroom-breadcrumb/playroom-breadcrumb';
-import { STATUS } from '../../../../shared/data';
+import { CONNECT_PLAYROOM_QUERY_PARAM, STATUS } from '../../../../shared/data';
 import { ConnectTab, Playroom } from '../../../../shared/models';
 import {
   Severity,
@@ -70,7 +71,20 @@ export class RoomDetailPageComponent implements OnDestroy {
   private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly console = inject(CliConsoleService);
   readonly state = inject(PlayroomStateService);
-  @ViewChild('roomActions') private roomActions?: PlayroomActionsHostComponent;
+  private readonly roomActions = viewChild<PlayroomActionsHostComponent>('roomActions');
+  private readonly connectRequested = signal(false);
+  readonly linkCopied = signal(false);
+
+  async copyLink(): Promise<void> {
+    const room = this.room();
+    if (!room) return;
+    try {
+      await copyToClipboard(roomDeepLink(room.playhouse, room.name));
+      this.linkCopied.set(true);
+    } catch (error) {
+      this.notify.failure('Could not copy link', error);
+    }
+  }
 
   private readonly session = inject(AcloudSessionService);
   readonly sshAlias = sshAlias;
@@ -163,6 +177,26 @@ export class RoomDetailPageComponent implements OnDestroy {
   private readonly pollTimer: ReturnType<typeof setInterval>;
 
   constructor() {
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(inject(DestroyRef)))
+      .subscribe((params) => this.connectRequested.set(params.has(CONNECT_PLAYROOM_QUERY_PARAM)));
+    effect(() => {
+      const requested = this.connectRequested();
+      const room = this.room();
+      const host = this.roomActions();
+      const roomsLoaded = this.state.roomsLoadedFor() === this.state.playhouse();
+      if (!requested || !host || (!room && !roomsLoaded)) return;
+      untracked(() => {
+        this.connectRequested.set(false);
+        if (room) host.openConnect(room, 'connect');
+        void this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: { [CONNECT_PLAYROOM_QUERY_PARAM]: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+      });
+    });
     effect(() => {
       if (!this.actions.loadError()) {
         this.failure = '';
@@ -190,6 +224,7 @@ export class RoomDetailPageComponent implements OnDestroy {
       this.commandCopied.set(false);
       this.sshCopied.set(false);
       this.detailsCopied.set(false);
+      this.linkCopied.set(false);
       this.copiedPort.set(null);
       if (!target.name || !target.playhouse) return;
       let active = true;
@@ -243,7 +278,7 @@ export class RoomDetailPageComponent implements OnDestroy {
       icon: 'pi pi-plus',
       command: () => {
         const room = this.room();
-        if (room) this.roomActions?.openCreateSimilar(room);
+        if (room) this.roomActions()?.openCreateSimilar(room);
       },
     },
     {
@@ -279,13 +314,13 @@ export class RoomDetailPageComponent implements OnDestroy {
 
   openConnect(tab: ConnectTab): void {
     const room = this.room();
-    if (room) this.roomActions?.openConnect(room, tab);
+    if (room) this.roomActions()?.openConnect(room, tab);
   }
 
   openUpdate(): void {
     if (this.actions.pendingOperation(this.roomName())) return;
     const room = this.room();
-    if (room) this.roomActions?.openUpdate(room);
+    if (room) this.roomActions()?.openUpdate(room);
   }
 
   // ── Lifecycle actions ──────────────────────────────────────────────────────
@@ -305,7 +340,7 @@ export class RoomDetailPageComponent implements OnDestroy {
   askDelete(): void {
     if (this.actions.pendingOperation(this.roomName())) return;
     const room = this.room();
-    if (room) this.roomActions?.openDelete(room);
+    if (room) this.roomActions()?.openDelete(room);
   }
 
   onDeleted(): void {

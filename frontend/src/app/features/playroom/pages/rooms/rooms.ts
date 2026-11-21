@@ -1,3 +1,4 @@
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ShortcutsService } from '../../../../core/services/shortcuts';
 import { CommonModule } from '@angular/common';
 import {
@@ -109,6 +110,8 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   /** Set when a read arrived mid-flight, to repeat once that one lands. */
   private rereadWhenTheCurrentReadLands = false;
 
+  private readonly destroyRef = inject(DestroyRef);
+
   constructor() {
     effect(() => {
       if (!this.actions.loadError()) {
@@ -133,7 +136,9 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
-    this.openCreateWhenTheUrlAsksForIt();
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.openCreateWhenTheUrlAsksForIt());
     this.ageTimer = setInterval(() => this.incrementAges(), 60000);
     this.clockTimer = setInterval(() => this.now.set(Date.now()), 1000);
     try {

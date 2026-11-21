@@ -63,3 +63,15 @@ describe('Dummy environment presence', () => {
     ]);
   });
 });
+
+it('receives simulated deep links until unsubscribed', () => {
+  const handler = vi.fn();
+  const unsubscribe = api.onDeepLink(handler);
+  window.dispatchEvent(
+    new CustomEvent('dummy:deep-link', { detail: 'acloud-playrooms://rooms/ph/demo' }),
+  );
+  expect(handler).toHaveBeenCalledWith('acloud-playrooms://rooms/ph/demo');
+  unsubscribe();
+  window.dispatchEvent(new CustomEvent('dummy:deep-link', { detail: 'ignored' }));
+  expect(handler).toHaveBeenCalledTimes(1);
+});

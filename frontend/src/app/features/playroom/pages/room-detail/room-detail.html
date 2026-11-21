@@ -43,6 +43,14 @@
           size="small"
           (click)="state.togglePinned(current.playhouse, current.name)"
         />
+        <p-button
+          [label]="linkCopied() ? 'Copied' : 'Copy link'"
+          icon="pi pi-link"
+          size="small"
+          severity="secondary"
+          [outlined]="true"
+          (click)="copyLink()"
+        />
         @if (describeOutdated(current); as badge) {
           @if (badge.opensUpdate) {
             <p-button
