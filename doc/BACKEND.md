@@ -116,6 +116,12 @@ cosmetic:
 Polled reads pass no id on purpose. A room list refreshing every ten seconds
 would bury everything worth reading.
 
+Started events carry `startedAt`; done events carry the same start, `endedAt`,
+`durationMilliseconds` and the actual exit code. Times are UTC RFC3339 with
+subsecond precision; duration uses Go's monotonic clock. `App.ExportActivityLog`
+opens the Wails save dialog and writes the frontend's retained redacted log as
+UTF-8 text; it does not fetch or re-run any command.
+
 ### Cancellation
 
 `Run` registers its cancel func under the `OperationID` while in flight.

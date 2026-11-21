@@ -8,11 +8,13 @@ export const routes: Routes = [
   { path: '', redirectTo: () => inject(SetupService).pathToOpenAtLaunch(), pathMatch: 'full' },
   {
     path: 'setup',
+    title: 'Setup',
     loadComponent: () =>
       import('./features/setup/pages/setup/setup').then((module) => module.SetupPageComponent),
   },
   {
     path: 'playhouse',
+    title: 'Playhouses',
     loadComponent: () =>
       import('./features/playhouse/pages/playhouse-select/playhouse-select').then(
         (module) => module.PlayhouseSelectPageComponent,
@@ -20,12 +22,14 @@ export const routes: Routes = [
   },
   {
     path: 'rooms',
+    title: 'Playrooms',
     loadComponent: () =>
       import('./features/playroom/pages/rooms/rooms').then((module) => module.RoomsPageComponent),
     canActivate: [playhouseGuard],
   },
   {
     path: 'rooms/:name',
+    title: 'Playrooms',
     loadComponent: () =>
       import('./features/playroom/pages/room-detail/room-detail').then(
         (module) => module.RoomDetailPageComponent,
@@ -34,6 +38,7 @@ export const routes: Routes = [
   },
   {
     path: 'defaults',
+    title: 'Defaults',
     loadComponent: () =>
       import('./features/defaults/pages/defaults/defaults').then(
         (module) => module.DefaultsPageComponent,
@@ -41,6 +46,7 @@ export const routes: Routes = [
   },
   {
     path: 'settings',
+    title: 'Settings',
     loadComponent: () =>
       import('./features/settings/pages/settings/settings').then(
         (module) => module.SettingsPageComponent,

@@ -22,6 +22,29 @@ development. See the README for using a local `acloud` checkout.
 The tests use fake commands and temporary configuration. They do not need an
 Acloud account, access to the private CLI source, or a running cluster.
 
+## Browser flow tests
+
+Playwright drives the real Angular UI with the dummy adapter, without an Acloud
+account, CLI or cluster. Install Chromium once, then run from the repository root:
+
+```sh
+(cd frontend && npx playwright install chromium)
+npm --prefix frontend run e2e
+# or: make e2e
+```
+
+The tests start `npm run dev-dummy` at `http://127.0.0.1:4200` automatically.
+Locally an existing server at that address is reused; make sure it is the dummy
+preview for this checkout. Each test gets an isolated browser context and fresh
+fixtures; simulated room changes reset on reload.
+
+Add a test in `frontend/e2e/` for every new screen or flow. Use accessible roles
+and labels, and wait for visible results rather than fixed delays. Unit tests
+stay under `frontend/src/`; browser tests run separately from `make check`.
+Open the HTML report with `cd frontend && npx playwright show-report`.
+CI runs Chromium tests on Ubuntu and uploads the report on failure, with a trace
+from the first retry.
+
 ## Before opening a pull request
 
 ```sh
@@ -47,7 +70,7 @@ when it is done.
 
 | The pull request                                                            | Runs                                                       |
 | --------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Is a draft, or changes only the frontend                                    | Frontend checks (Ubuntu)                                   |
+| Is a draft, or changes only the frontend                                    | Frontend checks and browser flow tests (Ubuntu)            |
 | Changes Go code or the bindings                                             | Also gofmt, the bindings check, vet and race tests (macOS) |
 | Changes `go.mod`, `Makefile`, `build/`, `scripts/`, GoReleaser or workflows | Also the full release rehearsal (macOS)                    |
 

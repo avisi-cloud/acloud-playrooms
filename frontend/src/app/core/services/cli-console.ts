@@ -1,5 +1,7 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { DestroyRef, Injectable, computed, inject, signal } from '@angular/core';
 import { Events } from '@wailsio/runtime';
+import { runtimeMode } from '../development/runtime-mode';
+import { onDummyActivityEvent } from '../dummy/activity-events';
 import { newOperationId, wailsApi } from './wails-api';
 
 export type LogKind = 'command' | 'stdout' | 'stderr' | 'failure' | 'cancelled' | 'spacer';
@@ -26,13 +28,29 @@ interface PlayroomOperation extends PlayroomActivityScope {
 }
 
 /** Mirrors gui/backend/cli.Event. */
-interface CliEvent {
+export interface CliEvent {
+  startedAt?: string;
+  endedAt?: string;
+  durationMilliseconds?: number;
   operationId?: string;
   command?: string[];
   stream?: 'stdout' | 'stderr';
   line?: string;
   exitCode?: number;
   error?: string;
+}
+
+export type ActivityStatus =
+  'OK' | 'Failed' | 'Running' | 'Cancelled' | 'Handed off' | 'Not reported';
+export interface ActivityEntry {
+  operationId: string;
+  command: string;
+  output: LogLine[];
+  startedAt?: string;
+  endedAt?: string;
+  durationMilliseconds?: number;
+  exitCode?: number;
+  status: ActivityStatus;
 }
 
 /** The most the log keeps, so a runaway command cannot grow the page. */
@@ -49,6 +67,7 @@ export class CliConsoleService {
    * set, so a streamed command need not rebuild the array per line.
    */
   private readonly _lines = signal<LogLine[]>([], { equal: () => false });
+  private readonly metadata = signal<ReadonlyMap<string, Omit<ActivityEntry, 'output'>>>(new Map());
   private readonly _running = signal<RunningOperation[]>([]);
   private readonly _visible = signal(false);
   private readonly _lastFailed = signal(false);
@@ -62,6 +81,37 @@ export class CliConsoleService {
   private readonly cancelled = new Set<string>();
 
   readonly lines = this._lines.asReadonly();
+  readonly entries = computed(() => {
+    const entries = new Map<string, ActivityEntry>();
+    for (const line of this.lines()) {
+      if (line.kind === 'spacer') continue;
+      let entry = entries.get(line.operationId);
+      if (!entry) {
+        entry = {
+          operationId: line.operationId,
+          command: '',
+          status: 'Not reported',
+          ...this.metadata().get(line.operationId),
+          output: [],
+        };
+        entries.set(line.operationId, entry);
+      }
+      if (line.kind === 'command') entry.command = line.text;
+      else entry.output.push(line);
+    }
+    return [...entries.values()];
+  });
+  readonly filter = signal<'all' | 'failures'>('all');
+  readonly search = signal('');
+  readonly filteredEntries = computed(() => {
+    const search = this.search().toLocaleLowerCase();
+    return this.entries().filter(
+      (entry) =>
+        (this.filter() === 'all' || entry.status === 'Failed') &&
+        (search === '' ||
+          entry.output.some((line) => line.text.toLocaleLowerCase().includes(search))),
+    );
+  });
   readonly running = this._running.asReadonly();
   readonly visible = this._visible.asReadonly();
   readonly lastFailed = this._lastFailed.asReadonly();
@@ -78,9 +128,17 @@ export class CliConsoleService {
   });
 
   constructor() {
-    Events.On('cli:started', (event) => this.recordCommandStarted(event.data as CliEvent));
-    Events.On('cli:output', (event) => this.recordOutputLine(event.data as CliEvent));
-    Events.On('cli:done', (event) => this.recordCommandFinished(event.data as CliEvent));
+    const receive = (name: 'cli:started' | 'cli:output' | 'cli:done', event: CliEvent) => {
+      if (name === 'cli:started') this.recordCommandStarted(event);
+      else if (name === 'cli:output') this.recordOutputLine(event);
+      else this.recordCommandFinished(event);
+    };
+    const unsubscribe = runtimeMode.dummy
+      ? [onDummyActivityEvent(receive)]
+      : (['cli:started', 'cli:output', 'cli:done'] as const).map((name) =>
+          Events.On(name, (event) => receive(name, event.data as CliEvent)),
+        );
+    inject(DestroyRef).onDestroy(() => unsubscribe.forEach((off) => off()));
   }
 
   /**
@@ -95,6 +153,7 @@ export class CliConsoleService {
     } catch (error) {
       // A command that never started emits no done event, so record it here.
       if (!this.hasLinesFor(operationId)) {
+        this.setMetadata(operationId, { status: 'Failed' });
         this.appendLine({
           operationId,
           kind: this.cancelled.has(operationId) ? 'cancelled' : 'failure',
@@ -115,6 +174,11 @@ export class CliConsoleService {
    */
   recordHandoff(command: string, destination: string): string {
     const operationId = newOperationId();
+    this.setMetadata(operationId, {
+      command,
+      status: 'Handed off',
+      startedAt: new Date().toISOString(),
+    });
     if (!this.isEmpty()) this.appendLine({ operationId, kind: 'spacer', text: '' });
     this.appendLine({ operationId, kind: 'command', text: command });
     this.appendLine({ operationId, kind: 'stdout', text: `Handed to ${destination}.` });
@@ -122,6 +186,8 @@ export class CliConsoleService {
   }
 
   open(operationId = ''): void {
+    this.filter.set('all');
+    this.search.set('');
     this._focus.set(operationId);
     this._visible.set(true);
   }
@@ -166,6 +232,7 @@ export class CliConsoleService {
 
   clearLog(): void {
     this._lines.set([]);
+    this.metadata.set(new Map());
     this.playroomOperations.set([]);
     this._lastFailed.set(false);
   }
@@ -181,6 +248,11 @@ export class CliConsoleService {
 
   private recordCommandStarted(event: CliEvent): void {
     if (!event.operationId) return;
+    this.setMetadata(event.operationId, {
+      command: (event.command ?? []).join(' '),
+      status: 'Running',
+      startedAt: event.startedAt,
+    });
     if (!this.isEmpty())
       this.appendLine({ operationId: event.operationId, kind: 'spacer', text: '' });
     this.appendLine({
@@ -201,12 +273,29 @@ export class CliConsoleService {
 
   private recordCommandFinished(event: CliEvent): void {
     if (!event.operationId) return;
-    if (!event.error) return;
+    this.setMetadata(event.operationId, {
+      startedAt: event.startedAt ?? this.metadata().get(event.operationId)?.startedAt,
+      endedAt: event.endedAt,
+      durationMilliseconds: event.durationMilliseconds,
+      exitCode: event.exitCode,
+      status: this.cancelled.has(event.operationId)
+        ? 'Cancelled'
+        : event.error || (event.exitCode !== undefined && event.exitCode !== 0)
+          ? 'Failed'
+          : event.exitCode === 0
+            ? 'OK'
+            : 'Not reported',
+    });
+    if (!event.error && (event.exitCode === undefined || event.exitCode === 0)) return;
     if (this.cancelled.has(event.operationId)) {
       this.appendLine({ operationId: event.operationId, kind: 'cancelled', text: 'Cancelled.' });
       return;
     }
-    this.appendLine({ operationId: event.operationId, kind: 'failure', text: event.error });
+    this.appendLine({
+      operationId: event.operationId,
+      kind: 'failure',
+      text: event.error ?? `Exit code ${event.exitCode}`,
+    });
     this.openLogBecauseSomethingFailed(event.operationId);
   }
 
@@ -224,8 +313,36 @@ export class CliConsoleService {
   private appendLine(line: LogLine): void {
     const lines = this._lines();
     lines.push(line);
-    if (lines.length > MAX_LINES) lines.splice(0, lines.length - MAX_LINES);
+    if (lines.length > MAX_LINES) {
+      lines.splice(0, lines.length - MAX_LINES);
+      const retained = new Set(lines.map((line) => line.operationId));
+      this.metadata.update((metadata) => new Map([...metadata].filter(([id]) => retained.has(id))));
+    }
     this._lines.set(lines);
+  }
+
+  logText(): string {
+    return this.entries()
+      .map((entry) =>
+        [
+          `$ ${entry.command || 'Command not reported'}`,
+          `Started: ${entry.startedAt ?? 'Not reported'} | Duration: ${entry.durationMilliseconds === undefined ? 'Not reported' : `${entry.durationMilliseconds} ms`} | ${entry.status} | Exit code: ${entry.exitCode ?? 'Not reported'}`,
+          ...entry.output.map((line) => line.text),
+        ].join('\n'),
+      )
+      .join('\n\n');
+  }
+
+  private setMetadata(operationId: string, values: Partial<Omit<ActivityEntry, 'output'>>): void {
+    this.metadata.update((metadata) =>
+      new Map(metadata).set(operationId, {
+        operationId,
+        command: '',
+        status: 'Not reported',
+        ...metadata.get(operationId),
+        ...values,
+      }),
+    );
   }
 
   private hasLinesFor(operationId: string): boolean {

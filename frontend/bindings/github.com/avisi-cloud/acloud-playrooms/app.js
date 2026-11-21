@@ -135,6 +135,15 @@ export function DeletePlayroom(operationID, input) {
 }
 
 /**
+ * ExportActivityLog saves only the redacted text retained by the activity log.
+ * @param {string} content
+ * @returns {$CancellablePromise<void>}
+ */
+export function ExportActivityLog(content) {
+    return $Call.ByID(3187682934, content);
+}
+
+/**
  * GetAcloudBinaryStatus describes the binary the app will run, why, and what to
  * do when there is none.
  * @returns {$CancellablePromise<cli$0.BinaryStatus>}

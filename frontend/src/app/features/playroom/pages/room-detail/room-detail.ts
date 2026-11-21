@@ -1,3 +1,4 @@
+import { ShortcutsService } from '../../../../core/services/shortcuts';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectorRef,
@@ -154,6 +155,10 @@ export class RoomDetailPageComponent implements OnDestroy {
   private readonly pollTimer: ReturnType<typeof setInterval>;
 
   constructor() {
+    inject(ShortcutsService).registerPageActions(
+      { refresh: () => void this.refreshRooms() },
+      inject(DestroyRef),
+    );
     this.route.paramMap
       .pipe(takeUntilDestroyed(inject(DestroyRef)))
       .subscribe((params) => this.roomName.set(params.get('name') ?? ''));

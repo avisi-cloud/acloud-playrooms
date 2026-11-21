@@ -1,4 +1,4 @@
-import { Browser } from '@wailsio/runtime';
+import { Browser, Events, Window } from '@wailsio/runtime';
 import type { ListingDto } from '../../shared/models';
 
 // Generated models keep frontend inputs aligned with the Go service.
@@ -70,6 +70,9 @@ export const wailsApi = {
   browseForT3CodePath: (): Promise<string> => app.BrowseForT3CodePath(),
 
   // Window
+  setWindowTitle: (title: string): Promise<void> => Window.SetTitle(title),
+  onMenuAction: (handler: (action: string) => void): (() => void) =>
+    Events.On('menu:action', (event) => handler(event.data as string)),
   getOperatingSystem: (): Promise<string> => app.GetOperatingSystem(),
   setWindowTheme: (theme: string): Promise<void> => app.SetWindowTheme(theme),
   /** A plain link would load the page inside the app window, with no way back. */
@@ -79,6 +82,8 @@ export const wailsApi = {
   /** Opens a terminal running the interactive login; poll isLoggedIn after. */
   loginWithTerminal: (terminal: string): Promise<void> => app.LoginWithTerminal(terminal),
   logout: (operationID: string): Promise<void> => app.Logout(operationID),
+
+  exportActivityLog: (content: string): Promise<void> => app.ExportActivityLog(content),
 
   // Operations
   cancelOperation: (operationID: string): Promise<boolean> => app.CancelOperation(operationID),

@@ -419,3 +419,24 @@
     <router-outlet (activate)="focusRoutedContent()" />
   </main>
 </div>
+
+<p-dialog
+  header="Keyboard shortcuts"
+  [visible]="shortcuts.overviewOpen()"
+  (visibleChange)="shortcuts.overviewOpen.set($event)"
+  [modal]="true"
+  [dismissableMask]="true"
+  [style]="{ width: '28rem', maxWidth: 'calc(100vw - 2rem)' }"
+  styleClass="av-dialog"
+>
+  <dl class="shortcuts-list">
+    @for (shortcut of shortcuts.shortcuts; track shortcut.keys) {
+      <div>
+        <dt>{{ shortcut.label }}</dt>
+        <dd>
+          <kbd>{{ shortcut.keys }}</kbd>
+        </dd>
+      </div>
+    }
+  </dl>
+</p-dialog>

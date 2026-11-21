@@ -6,3 +6,8 @@
 .command-block--readonly {
   cursor: default;
 }
+
+.command-flag {
+  color: var(--cyan);
+  font-weight: 600;
+}

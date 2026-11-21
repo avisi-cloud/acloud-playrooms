@@ -1,3 +1,4 @@
+import { describeChanges } from './describe-changes';
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
 import { PlayroomLifecycleService } from '../../../core/services/playroom-lifecycle';
@@ -5,7 +6,7 @@ import { PlayroomStateService } from '../../../core/services/playroom-state';
 import { UiSessionService } from '../../../core/services/ui-session';
 import { ToastService } from '../../../core/services/toast';
 import { wailsApi } from '../../../core/services/wails-api';
-import { Playroom } from '../../models';
+import { Playroom, UpdateForm } from '../../models';
 import { blankUpdateForm } from '../../utils';
 import { PlayroomUpdateDrawerComponent } from './playroom-update-drawer';
 
@@ -65,6 +66,34 @@ describe('Update playroom drawer', () => {
     component.storageTouched = true;
     expect(component.storageError()).toBe('Storage can only grow: pick more than 20Gi.');
     expect(component.blockingError()).toBe(component.storageError());
+  });
+
+  it('counts draft changes, tints only edited cards, and clears them when discarded', () => {
+    const component = drawerFor('20Gi');
+    expect(component.changeCount()).toBe(0);
+    component.form.storage = '40Gi';
+    expect(component.changeCount()).toBe(1);
+    expect(component.cardChanged('storage')).toBe(true);
+    expect(component.cardChanged('image')).toBe(false);
+    expect(component.needsNewSpec()).toBe(false);
+    component.form.memLim = '8Gi';
+    expect(component.changeCount()).toBe(2);
+    expect(component.needsNewSpec()).toBe(true);
+    component.discardDraft();
+    expect(component.changeCount()).toBe(0);
+    expect(component.needsNewSpec()).toBe(false);
+    component.room = { ...component.room!, outdated: true };
+    expect(component.needsNewSpec()).toBe(true);
+  });
+
+  it('counts run options by name without comparing them', () => {
+    const component = drawerFor('20Gi');
+    component.form.noWait = true;
+    component.form.waitTimeout = '30m';
+    expect(component.changeCount()).toBe(2);
+    expect(component.comparisonFor('noWait')).toBe('');
+    expect(component.comparisonFor('waitTimeout')).toBe('');
+    expect(component.actionSummary()).toBe('Return immediately · Wait timeout');
   });
 
   it('allows a size that grows the volume', () => {
@@ -150,5 +179,87 @@ describe('Update playroom drawer', () => {
     expect(component.visible).toBe(false);
     finishCommand();
     await vi.waitFor(() => expect(actions.pendingOperation('demo')).toBe(''));
+  });
+});
+
+describe('describeChanges for a playroom', () => {
+  it('starts with every setting unchanged and keeps unknown values unknown', () => {
+    const current = room('20Gi');
+    const changes = describeChanges(current, blankUpdateForm(current));
+    expect(changes.every((change) => !change.changed)).toBe(true);
+    expect(changes.find((change) => change.field === 'workspaceNamespace')?.current).toBeNull();
+    expect(changes.find((change) => change.field === 'ephemeral')?.current).toBe('Off');
+  });
+
+  it.each([
+    ['image', { image: 'another-image' }, true],
+    ['storage', { storage: '40Gi' }, false],
+    ['cpuReq', { cpuReq: '1' }, true],
+    ['cpuLim', { cpuLim: '8' }, true],
+    ['memReq', { memReq: '4Gi' }, true],
+    ['memLim', { memLim: '8Gi' }, true],
+    ['readOnly', { changeReadOnly: true, readOnly: false }, true],
+    ['ports', { changePorts: true, ports: ['8080'] }, false],
+    ['capabilities', { capabilities: 'standard' }, true],
+    ['capAdd', { changeCapAdd: true, capAdd: ['NET_ADMIN'] }, true],
+    ['workspaceNamespace', { changeWorkspaceNamespace: true }, true],
+    ['moveToTailscale', { moveToTailscale: true }, false],
+    ['nodePortSSH', { changeNodePortSSH: true }, false],
+    ['noWait', { noWait: true }, false],
+    ['waitTimeout', { waitTimeout: '30m' }, false],
+  ] as const)('describes %s and its restart impact', (field, edit, needsNewSpec) => {
+    const current = room('20Gi');
+    const form = { ...blankUpdateForm(current), ...edit } as UpdateForm;
+    const change = describeChanges(current, form).find((change) => change.field === field);
+    expect(change).toMatchObject({ changed: true, needsNewSpec });
+    expect(describeChanges(current, form).filter((change) => change.changed)).toHaveLength(1);
+  });
+
+  it('does not count equivalent quantities or blank keep-current fields', () => {
+    const current = room('20Gi');
+    const form = blankUpdateForm(current);
+    Object.assign(form, {
+      cpuReq: '0.25',
+      cpuLim: '4000m',
+      memReq: '2048Mi',
+      storage: '20480Mi',
+      image: ' ',
+    });
+    expect(describeChanges(current, form).every((change) => !change.changed)).toBe(true);
+  });
+
+  it('compares replacement lists without counting blank rows or order', () => {
+    const current = {
+      ...room('20Gi'),
+      ports: '80 → 3000, 8080',
+      capabilityAdditions: ['NET_ADMIN', 'SYS_PTRACE'],
+    };
+    const form = blankUpdateForm(current);
+    Object.assign(form, {
+      changePorts: true,
+      ports: ['8080', '80:3000', ''],
+      changeCapAdd: true,
+      capAdd: ['SYS_PTRACE', ' NET_ADMIN ', ''],
+    });
+    expect(describeChanges(current, form).every((change) => !change.changed)).toBe(true);
+    Object.assign(form, { clearPorts: true, clearCapAdd: true });
+    expect(
+      describeChanges(current, form)
+        .filter((change) => change.changed)
+        .map((change) => change.proposed),
+    ).toEqual(['None', 'None']);
+  });
+
+  it('compares an explicitly unchanged read-only setting and leaves missing system unknown', () => {
+    const current = room('20Gi');
+    const form = { ...blankUpdateForm(current), changeReadOnly: true };
+    expect(
+      describeChanges(current, form).find((change) => change.field === 'readOnly')?.changed,
+    ).toBe(false);
+    expect(
+      describeChanges({ ...current, system: '' }, form).find(
+        (change) => change.field === 'readOnly',
+      ),
+    ).toMatchObject({ current: null, changed: true });
   });
 });

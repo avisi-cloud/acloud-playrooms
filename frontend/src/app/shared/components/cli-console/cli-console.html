@@ -5,7 +5,7 @@
        the panel, so it also swallows the click on the sidebar's Activity
        button, which is what makes that button close rather than re-toggle. -->
   <div class="cli-log__backdrop" (click)="console.close()"></div>
-  <section class="cli-log" role="log" aria-live="polite" aria-label="Activity log">
+  <section class="cli-log" role="region" aria-label="Activity log">
     <header class="cli-log__head">
       <span class="cli-log__title">
         @if (console.isRunning()) {
@@ -28,6 +28,13 @@
           />
         }
         @if (!console.isEmpty()) {
+          <p-button
+            label="Export log…"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            (click)="exportLog()"
+          />
           <p-button
             icon="pi pi-copy"
             severity="secondary"
@@ -56,34 +63,104 @@
       </span>
     </header>
 
+    <div class="cli-log__filters">
+      <label for="activity-filter">Show</label>
+      <select
+        id="activity-filter"
+        [ngModel]="console.filter()"
+        (ngModelChange)="console.filter.set($event)"
+      >
+        <option value="all">All</option>
+        <option value="failures">Failures only</option>
+      </select>
+      <input
+        pInputText
+        type="search"
+        aria-label="Search output"
+        placeholder="Search output"
+        [ngModel]="console.search()"
+        (ngModelChange)="console.search.set($event)"
+      />
+    </div>
+    @if (exportError()) {
+      <p class="cli-log__error" role="alert">{{ exportError() }}</p>
+    }
     <div class="cli-log__output" #output>
-      @for (line of console.lines(); track $index) {
-        @switch (line.kind) {
-          @case ('command') {
-            <!-- The "$ " prompt is drawn by CSS so it never lands in a text selection. -->
-            <div class="cli-log__line cli-log__line--cmd" [attr.data-op]="line.operationId">
-              {{ line.text }}
-            </div>
-          }
-          @case ('stderr') {
-            <div class="cli-log__line cli-log__line--err">{{ line.text }}</div>
-          }
-          @case ('failure') {
-            <div class="cli-log__line cli-log__line--fail">{{ line.text }}</div>
-          }
-          @case ('cancelled') {
-            <div class="cli-log__line cli-log__line--muted">{{ line.text }}</div>
-          }
-          @case ('spacer') {
-            <div class="cli-log__spacer"></div>
-          }
-          @default {
-            <div class="cli-log__line">{{ line.text }}</div>
-          }
-        }
+      @for (entry of console.filteredEntries(); track entry.operationId) {
+        <article class="cli-log__entry" [attr.data-op]="entry.operationId">
+          <div class="cli-log__metadata">
+            <p-tag
+              [value]="entry.status"
+              [severity]="
+                entry.status === 'Failed'
+                  ? 'danger'
+                  : entry.status === 'OK'
+                    ? 'success'
+                    : entry.status === 'Running'
+                      ? 'info'
+                      : 'secondary'
+              "
+            />
+            <span
+              >Started:
+              {{ entry.startedAt ? (entry.startedAt | date: 'medium') : 'Not reported' }}</span
+            >
+            <span>Duration: {{ duration(entry) }}</span>
+            <span>Exit code: {{ entry.exitCode ?? 'Not reported' }}</span>
+          </div>
+          <div class="cli-log__line cli-log__line--cmd">
+            {{ entry.command || 'Command not reported' }}
+          </div>
+          <div class="cli-log__entry-actions">
+            <p-button
+              [label]="copied() === entry.operationId + '-command' ? 'Copied' : 'Copy command'"
+              severity="secondary"
+              [text]="true"
+              size="small"
+              [disabled]="!entry.command"
+              (click)="copyEntry(entry, 'command')"
+            />
+            <p-button
+              [label]="copied() === entry.operationId + '-output' ? 'Copied' : 'Copy output'"
+              severity="secondary"
+              [text]="true"
+              size="small"
+              [disabled]="!entry.output.length"
+              (click)="copyEntry(entry, 'output')"
+            />
+            <button
+              type="button"
+              class="cli-log__toggle"
+              [attr.aria-expanded]="outputExpanded(entry)"
+              [attr.aria-controls]="'activity-output-' + entry.operationId"
+              (click)="toggleOutput(entry)"
+            >
+              {{ outputExpanded(entry) ? 'Hide output' : 'Show output' }} ({{
+                entry.output.length
+              }})
+            </button>
+          </div>
+          <div [id]="'activity-output-' + entry.operationId" [hidden]="!outputExpanded(entry)">
+            @for (line of entry.output; track $index) {
+              <div
+                class="cli-log__line"
+                [class.cli-log__line--err]="line.kind === 'stderr'"
+                [class.cli-log__line--fail]="line.kind === 'failure'"
+              >
+                {{ line.text }}
+              </div>
+            } @empty {
+              <div class="cli-log__line cli-log__line--muted">No output reported.</div>
+            }
+          </div>
+        </article>
       } @empty {
         <div class="cli-log__line cli-log__line--muted">
-          Nothing has run yet this session. Commands you start will appear here.
+          {{
+            console.isEmpty()
+              ? 'Nothing has run yet this session. Commands you start will appear here.'
+              : 'No commands match these filters.'
+          }}
         </div>
       }
     </div>

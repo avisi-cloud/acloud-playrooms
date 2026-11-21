@@ -3,19 +3,24 @@
   (visibleChange)="visibleChange.emit($event); visible = $event"
   position="right"
   [style]="{ width: 'var(--overlay-md)' }"
-  styleClass="av-drawer ph-update-drawer"
+  styleClass="av-drawer update-comparison-drawer ph-update-drawer"
   appendTo="body"
 >
   <ng-template pTemplate="header">
     <div class="drawer-head">
       <div class="drawer-title">Edit playhouse<span class="punt">.</span></div>
       <div class="drawer-subtitle">
-        <code>{{ playhouse?.Slug }}</code> — runs <code>acloud playhouse update</code>.
+        <code>{{ playhouse?.Slug }}</code> · review your changes before updating.
       </div>
     </div>
   </ng-template>
 
-  <section class="ph-update-card">
+  <section
+    class="ph-update-card"
+    [class.is-dirty]="
+      cardChanged('exposure', 'defaultVia', 'tailscaleOAuthClientID', 'tailscaleOAuthClientSecret')
+    "
+  >
     <div class="ph-update-card-head">Connectivity</div>
     <div class="field-group">
       <label class="field-label">Exposure</label>
@@ -35,10 +40,9 @@
           </div>
         </ng-template>
       </p-select>
-      <small class="field-hint"
-        >Re-bootstraps how playrooms are reached. Existing playrooms keep their own exposure — move
-        one with Move to Tailscale when you update it.</small
-      >
+      <small class="field-hint">{{
+        comparisonFor('exposure') || 'Existing playrooms keep their own exposure.'
+      }}</small>
     </div>
 
     <div class="field-group">
@@ -61,7 +65,10 @@
           </div>
         </ng-template>
       </p-select>
-      <small class="field-hint">{{ defaultConnectionPathHint }}</small>
+      <small class="field-hint"
+        >{{ comparisonFor('defaultVia') }}{{ comparisonFor('defaultVia') ? ' · ' : ''
+        }}{{ defaultConnectionPathHint }}</small
+      >
     </div>
 
     @if (showsTailscaleCredentials()) {
@@ -74,6 +81,9 @@
           spellcheck="false"
           autocomplete="off"
         />
+        @if (comparisonFor('tailscaleOAuthClientID'); as comparison) {
+          <small class="field-hint">{{ comparison }}</small>
+        }
       </div>
       <div class="field-group">
         <label class="field-label">Tailscale OAuth client secret</label>
@@ -85,15 +95,19 @@
           autocomplete="off"
         />
         <small class="field-hint"
-          >Stored in the cluster on first use, so leave both blank for a playhouse already on
-          Tailscale. Fill them in to switch a playhouse over, or to replace expired
-          credentials.</small
+          >{{ comparisonFor('tailscaleOAuthClientSecret')
+          }}{{ comparisonFor('tailscaleOAuthClientSecret') ? ' · ' : '' }}Stored in the cluster on
+          first use, so leave both blank for a playhouse already on Tailscale. Fill them in to
+          switch a playhouse over, or to replace expired credentials.</small
         >
       </div>
     }
   </section>
 
-  <section class="ph-update-card">
+  <section
+    class="ph-update-card"
+    [class.is-dirty]="cardChanged('allowCurrentIP', 'allowIPs', 'removeIPs', 'resetAllowlist')"
+  >
     <div class="ph-update-card-head">IP allowlist</div>
     <small class="field-hint">{{ ipAllowlistHint }}</small>
     <label class="toggle-line mt-2" for="ph-update-allow-current-ip"
@@ -129,7 +143,7 @@
     }
   </section>
 
-  <section class="ph-update-card">
+  <section class="ph-update-card" [class.is-dirty]="cardChanged('updateChannel')">
     <div class="ph-update-card-head">Updates</div>
     <div class="field-group">
       <label class="field-label" for="ph-update-channel">Update channel</label>
@@ -142,11 +156,16 @@
         spellcheck="false"
         autocomplete="off"
       />
-      <small class="field-hint">The AME release channel the playhouse follows.</small>
+      @if (comparisonFor('updateChannel'); as comparison) {
+        <small class="field-hint">{{ comparison }}</small>
+      }
     </div>
   </section>
 
-  <section class="ph-update-card">
+  <section
+    class="ph-update-card"
+    [class.is-dirty]="cardChanged('maxPlayroomNodes', 'maxPrivilegedNodes')"
+  >
     <div class="ph-update-card-head">Capacity</div>
     <div class="field-row">
       <div class="field-group">
@@ -158,6 +177,9 @@
           min="0"
           [(ngModel)]="form.maxPlayroomNodes"
         />
+        @if (comparisonFor('maxPlayroomNodes'); as comparison) {
+          <small class="field-hint">{{ comparison }}</small>
+        }
       </div>
       <div class="field-group">
         <label class="field-label">Max privileged nodes</label>
@@ -168,9 +190,21 @@
           min="0"
           [(ngModel)]="form.maxPrivilegedNodes"
         />
+        @if (comparisonFor('maxPrivilegedNodes'); as comparison) {
+          <small class="field-hint">{{ comparison }}</small>
+        }
       </div>
     </div>
     <small class="field-hint">Zero keeps the current maximum of that node pool.</small>
+  </section>
+
+  <section class="ph-update-card" [class.is-dirty]="cardChanged('waitTimeout')">
+    <div class="ph-update-card-head">Behaviour</div>
+    <div class="field-group">
+      <label class="field-label" for="ph-update-wait-timeout">Wait timeout</label>
+      <input id="ph-update-wait-timeout" pInputText class="w-full" [(ngModel)]="form.waitTimeout" />
+      <small class="field-hint">How long to wait for the update to finish.</small>
+    </div>
   </section>
 
   <!-- Said plainly, because the omission is the surprising part. -->
@@ -185,6 +219,13 @@
   <app-command-preview [input]="previewInput()" [previewFn]="previewUpdate" [enabled]="visible" />
 
   <ng-template pTemplate="footer">
+    <div class="change-summary" aria-live="polite">
+      <strong>{{ changeCount() }} {{ changeCount() === 1 ? 'change' : 'changes' }}</strong>
+      @if (actionSummary()) {
+        <span>{{ actionSummary() }}</span>
+      }
+    </div>
+
     <p-button
       label="Bring up to date"
       icon="pi pi-refresh"

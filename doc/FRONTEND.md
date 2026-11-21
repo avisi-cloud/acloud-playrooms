@@ -95,8 +95,20 @@ this.notify.toast(`Created "${name}"`, 'ok', runId);
 
 The log stays **closed** by default. The toast and the room's own state are what
 a user sees; the log opens from the Activity button in the sidebar footer, from
-clicking a toast, or by itself when a command fails. It is one continuous
-scrollback for the whole session, held in memory.
+clicking a toast, or by itself when a command fails. Each command has its own
+entry with a start time, reported duration, exit code
+and status (OK, Failed or Running). Cancelled commands and terminal handoffs
+are labeled separately; missing timing or exit codes say **Not reported**.
+Entries remain in memory for the session, bounded to the latest 5,000 lines.
+
+Output folds per entry. More than 20 lines or 2,000 characters starts folded;
+Show output reveals it. **All / Failures only** and **Search output** combine to
+filter entries. Opening a command from a notification or room resets filters so
+that command is visible. Copy command and Copy output copy that entry's retained
+text. Copy whole log and **Export log…** include all retained entries, regardless
+of filters or folding, with their timing and status. Export uses a native save
+dialog (cancellation saves nothing); dummy mode downloads `activity-log.txt`.
+Both use only the already redacted text, never a second source of CLI output.
 
 Pass the operation id to `toast()` and the toast becomes a link into the log at
 that command. The banner itself is the link, with Enter and Space support;
@@ -149,7 +161,28 @@ backend preview function and the result of its `toInput()` method; the component
 fingerprints that input, ignores stale responses, and disables requests while
 its overlay is closed. The same `toInput()` result is submitted, so the preview
 and the action cannot describe different commands. The frontend never assembles
-command lines.
+command lines. Copy shows **Copied** briefly; flag names have a separate theme
+color from values, with quotes and spacing preserved by `splitCommandPreview`.
+The dummy preview labels its commands `dummy-preview` and emits simulated
+activity for room and playhouse actions without running acloud.
+
+### Reviewing updates
+
+Both update drawers use each control’s existing hint for current → proposed
+values or "Unchanged", tint edited cards cyan like unsaved Defaults, and count
+changes above the submit buttons. Blank fields and disabled replacement toggles
+keep the current setting. Each drawer's pure `describeChanges(current, form)`
+feeds the comparisons, tint and count, including drafts restored for a playroom.
+Unreported current values show "Not reported → proposed" only after a setting
+is edited; unchanged unknown settings have no comparison. Playhouse list reports
+no editable settings, so choosing one counts without assuming its current value.
+Credentials only say "Replacement supplied".
+
+Run options and allowlist actions have no comparison. They still count as changes
+and appear by name in the summary when used. Playroom spec changes (image, CPU, memory, read-only system, capabilities, namespace), or an
+outdated room layout, warn that the playroom may restart and disconnect SSH.
+Storage, forwarded ports and connectivity changes alone do not show that warning.
+Ephemeral storage cannot be changed here.
 
 ### Easy and Advanced create
 
@@ -507,7 +540,23 @@ the only way to know they were the same value was to follow it through.
 npm run check        # format:check + lint + build + test, fastest failure first
 npm run format       # Prettier writes the formatting
 npm run lint:fix     # ESLint writes what it can
+npx playwright install chromium # once, to install the browser
+npm run e2e         # Chromium flows against the dummy preview
 ```
+
+Browser flow tests live in `frontend/e2e/`, with their server and Chromium project
+configured in `playwright.config.ts`. `npm run e2e` (or `make e2e` from the root)
+starts `npm run dev-dummy` on `127.0.0.1:4200`; locally it reuses an existing server,
+which must be this checkout's dummy preview. CI always starts its own server.
+Each test has an isolated browser context; dummy mutations reset on reload.
+Every new screen or flow gets a browser test using `getByRole` or `getByLabel`
+and assertions on user-visible results. Angular's unit-test include pattern is
+relative to `src/`, and `tsconfig.spec.json` only includes `src/` and bindings,
+so the browser specs are excluded from the unit-test run. `make check` stays
+separate from `make e2e`. Prettier and ESLint check the browser specs too.
+The HTML report is in `frontend/playwright-report/`; open it with
+`npx playwright show-report` from `frontend/`. CI uploads it on failure and records
+a trace on the first retry.
 
 Prettier owns formatting and nothing in `eslint.config.mjs` reformats code, so
 the two never fight over a line. ESLint additionally enforces the casing half of
@@ -549,3 +598,37 @@ in this standalone repository. See [`ARCHITECTURE.md`](ARCHITECTURE.md#coverage-
 dialog wired all fifteen of its fields, passed this test, and sat unreachable in
 a shipping build because the button that opened it had been removed. If you add
 a screen, add the way in at the same time.
+
+## Keyboard shortcuts and native menus
+
+`ShortcutsService` owns one shortcut registry, the keyboard listener and the
+`menu:action` listener. The `?` overview renders that registry in the shell.
+Page callbacks that change plain fields must notify Angular with `markForCheck()`;
+service listeners do not mark the page like a template event does.
+Shortcuts are ignored while typing, composing text, repeating a key, using other
+modifiers, or while an overlay is open. App accelerators are consumed even when
+guarded, so ⌘R never falls through to a webview reload.
+
+| Keys    | Action                                                       |
+| ------- | ------------------------------------------------------------ |
+| ⌘N      | New Playroom                                                 |
+| ⌘R      | Refresh the current room list, room detail or playhouse list |
+| ⌘,      | Settings                                                     |
+| ⌘1 / ⌘2 | Playrooms / Playhouses                                       |
+| ⌘F      | Focus the current screen's search, where available           |
+| ?       | Keyboard shortcut overview                                   |
+| c / /   | New Playroom / search on Playrooms only                      |
+
+The desktop menu supplies About, Settings and Quit; File → New Playroom;
+View → Refresh, Focus Search and Theme (Light, Dark, System); Go → Playrooms,
+Playhouses and Defaults; the standard Edit and Window menus; and Help → Keyboard
+Shortcuts, Documentation and Report an issue. Native app actions emit events to
+the same frontend dispatcher as keyboard shortcuts. About, Quit, Edit and Window
+use native Wails roles. Refresh has a native ⌘R accelerator instead of the reload
+role. Its WebKit precedence needs verification in the desktop build.
+
+Routes declare screen titles. `WindowTitleStrategy` sets both the document and
+native title through `wailsApi`: `demo — Playrooms` for a room,
+`Playrooms — demo` for a selected playhouse's list, and the screen name elsewhere.
+It also updates the list title when the playhouse changes without navigation.
+The dummy API sets `document.title` and opens Help links in a browser tab.
