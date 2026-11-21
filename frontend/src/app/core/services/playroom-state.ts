@@ -21,6 +21,7 @@ export class PlayroomStateService {
   private readonly _roomsCount = signal<number>(0);
   private readonly _rooms = signal<Playroom[]>([]);
   private readonly _roomsLoadedFor = signal<string | null>(null);
+  private readonly _lastRefreshedAt = signal<Date | null>(null);
   private readonly _scopeRevision = signal<number>(0);
   private readonly selectionRevision = signal(0);
 
@@ -69,6 +70,9 @@ export class PlayroomStateService {
    */
   readonly roomsLoadedFor = this._roomsLoadedFor.asReadonly();
 
+  /** When the current room list last came back from `playroom list`; null before the first read. */
+  readonly lastRefreshedAt = this._lastRefreshedAt.asReadonly();
+
   /**
    * Bumped every time the CLI context or organisation changes, so screens reload
    * rather than trusting what belonged to the scope being left.
@@ -94,6 +98,7 @@ export class PlayroomStateService {
     // again rather than showing the previous playhouse's rooms.
     if (slug !== this._playhouse()) {
       this._roomsLoadedFor.set(null);
+      this._lastRefreshedAt.set(null);
       this._rooms.set([]);
       this._roomsCount.set(0);
       this.selectionRevision.update((revision) => revision + 1);
@@ -118,6 +123,7 @@ export class PlayroomStateService {
   /** Records that a `playroom list` for this playhouse has come back. */
   markRoomsLoaded(playhouse: string): void {
     this._roomsLoadedFor.set(playhouse);
+    this._lastRefreshedAt.set(new Date());
     const pinned = this._pinnedRooms()[playhouse];
     if (!pinned) return;
     const names = new Set(
@@ -133,6 +139,7 @@ export class PlayroomStateService {
   /** Records that the context or organisation moved. */
   noteScopeChange(): void {
     this._roomsLoadedFor.set(null);
+    this._lastRefreshedAt.set(null);
     this._scopeRevision.update((revision) => revision + 1);
   }
 

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { StringListEditorComponent } from './string-list-editor';
+import { StringListEditorComponent, valuesWithPastedLinesAt } from './string-list-editor';
 
 describe('StringListEditorComponent', () => {
   beforeEach(async () => {
@@ -47,5 +47,42 @@ describe('StringListEditorComponent', () => {
     expect(fixture.nativeElement.querySelector('.field-hint')?.textContent).toBe(
       'Copied from your Mac.',
     );
+  });
+
+  it('fills one row per pasted line', () => {
+    const fixture = TestBed.createComponent(StringListEditorComponent);
+    fixture.componentRef.setInput('values', ['first', '']);
+    fixture.detectChanges();
+    const paste = new Event('paste', { cancelable: true });
+    Object.defineProperty(paste, 'clipboardData', {
+      value: { getData: () => 'second\r\n\n  third  \n' },
+    });
+    fixture.nativeElement.querySelectorAll('input')[1].dispatchEvent(paste);
+
+    expect(paste.defaultPrevented).toBe(true);
+    expect(fixture.componentInstance.values()).toEqual(['first', 'second', 'third']);
+  });
+
+  it('shows an item error instead of its hint', () => {
+    const fixture = TestBed.createComponent(StringListEditorComponent);
+    fixture.componentRef.setInput('values', ['bad']);
+    fixture.componentRef.setInput('itemHints', ['A hint']);
+    fixture.componentRef.setInput('itemErrors', ['Wrong']);
+    fixture.detectChanges();
+    const hint = fixture.nativeElement.querySelector('.field-hint');
+    expect(hint.textContent.trim()).toBe('Wrong');
+    expect(hint.classList).toContain('error');
+  });
+});
+
+describe('valuesWithPastedLinesAt', () => {
+  it('leaves a single-line paste to the browser', () => {
+    expect(valuesWithPastedLinesAt([''], 0, 'one')).toBeNull();
+    expect(valuesWithPastedLinesAt([''], 0, 'one\n')).toBeNull();
+  });
+
+  it('replaces a blank row and inserts after a filled one', () => {
+    expect(valuesWithPastedLinesAt(['a', '', 'c'], 1, 'x\ny')).toEqual(['a', 'x', 'y', 'c']);
+    expect(valuesWithPastedLinesAt(['a', 'c'], 0, 'x\ny')).toEqual(['a', 'x', 'y', 'c']);
   });
 });

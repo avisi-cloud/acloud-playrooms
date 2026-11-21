@@ -17,10 +17,14 @@ it, update the entry.
 
 **Open — revisit these**
 
+- [Git repositories are checked before creation](#git-repositories-are-checked-before-creation)
+
 - [Forwarded variables can come from the login shell](#forwarded-variables-can-come-from-the-login-shell)
 
 - [Port links require a reported tailnet hostname](#port-links-require-a-reported-tailnet-hostname)
 - [The health check judges Tailscale use from room hosts](#the-health-check-judges-tailscale-use-from-room-hosts)
+
+- [Working in leads to setup only when signed out](#working-in-leads-to-setup-only-when-signed-out)
 
 - [Embedded terminal for interactive commands](#embedded-terminal-for-interactive-commands)
 - [Root flags](#root-flags)
@@ -55,6 +59,27 @@ it, update the entry.
 ---
 
 ## Open — revisit these
+
+### Git repositories are checked before creation
+
+Each `--git` entry is split as acloud splits `URL[@REF]`: the last `@` after
+`://` starts the ref. acloud forbids credentials in the URL, so
+`https://user@host/repo` would be cloned from `https://user`. The create drawer
+explains such an entry, an SSH remote (acloud skips it with a warning), a
+non-HTTPS URL and a URL without a repository path inline, and blocks Create
+until it is fixed, so the room does not start without its clone.
+
+The token hint is a hint, not a block, because a public repository needs no
+token. It shows for GitLab hosts (a host containing `gitlab`) without
+`GITLAB_TOKEN`, and for `github.com` without `GITHUB_TOKEN` or `GH_TOKEN`. acloud
+clones every repository with the first of `GITLAB_TOKEN`, `GITHUB_TOKEN`,
+`GH_TOKEN` that is forwarded, so the hint also names a forwarded token that is
+the wrong one for the host. Other hosts get no hint: their token is unknown.
+
+The last ten repositories of successful creates are kept in the cache without
+ref or credentials, and offered through a native `datalist` rather than a new
+picker. Revisit if the hint proves noisy for public repositories, or if acloud
+starts reporting which token a host needs.
 
 ### Forwarded variables can come from the login shell
 
@@ -93,6 +118,14 @@ only when the selected playhouse's rooms were listed, at least one reports a hos
 and none is a tailnet host. Without that evidence (no playhouse, no listing, or only
 rooms without a host) the check runs, so a missing Tailscale is never hidden. Revisit
 when the CLI reports the playhouse exposure or default connection path.
+
+### Working in leads to setup only when signed out
+
+The sidebar's Working in block sends a signed-out user to setup (the acloud step
+when acloud is missing, the login step otherwise). Signed in without a playhouse,
+it opens the playhouse chooser instead: setup's playhouse step cannot change
+context or organisation, so someone in an organisation without playhouses would
+have no way out there. Revisit if setup gains those pickers.
 
 ### Embedded terminal for interactive commands
 
