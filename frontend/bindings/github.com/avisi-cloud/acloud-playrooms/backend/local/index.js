@@ -12,11 +12,15 @@ export {
     HealthCheckKey,
     HealthStatus,
     ImageEntry,
+    PlayroomTemplate,
+    PlayroomTemplateOptions,
     ScheduleAction,
     ScheduleDays,
     ScheduleEvent,
     ScheduleKind,
     ScheduleRoom,
     ScheduleSettings,
+    TemplateCapabilities,
+    TemplateExposure,
     ToolStatus
 } from "./models.js";

@@ -572,3 +572,13 @@ receives Wails `ApplicationLaunchedWithUrl` events, brings the window forward an
 forwards their URL as `deep-link:open`. `deepLinkDelivery` queues launch URLs
 until Angular emits `deep-link:ready`, then delivers each once in order. Parsing,
 scope checks and routing live in the frontend; receiving a URL runs no command.
+
+## Playroom templates
+
+`local/templates.go` validates version-1 template files and atomically replaces
+`gui-templates.json` in the app's acloud configuration directory, with private
+file permissions. A missing file is an empty list; unreadable or invalid files
+are reported. `App` exposes read/save and native JSON export/import dialogs.
+Import returns validated templates for merging; duplicate names refuse the
+whole merge. Cancelled dialogs change nothing. This is local GUI data with no
+CLI equivalent; creation still runs the normal acloud command.

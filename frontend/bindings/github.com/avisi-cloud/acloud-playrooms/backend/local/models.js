@@ -371,6 +371,240 @@ export class ImageEntry {
     }
 }
 
+export class PlayroomTemplate {
+    /**
+     * Creates a new PlayroomTemplate instance.
+     * @param {Partial<PlayroomTemplate>} [$$source = {}] - The source object to create the PlayroomTemplate.
+     */
+    constructor($$source = {}) {
+        if (!("name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("options" in $$source)) {
+            /**
+             * @member
+             * @type {PlayroomTemplateOptions}
+             */
+            this["options"] = (new PlayroomTemplateOptions());
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new PlayroomTemplate instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {PlayroomTemplate}
+     */
+    static createFrom($$source = {}) {
+        const $$createField1_0 = $$createType0;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("options" in $$parsedSource) {
+            $$parsedSource["options"] = $$createField1_0($$parsedSource["options"]);
+        }
+        return new PlayroomTemplate(/** @type {Partial<PlayroomTemplate>} */($$parsedSource));
+    }
+}
+
+export class PlayroomTemplateOptions {
+    /**
+     * Creates a new PlayroomTemplateOptions instance.
+     * @param {Partial<PlayroomTemplateOptions>} [$$source = {}] - The source object to create the PlayroomTemplateOptions.
+     */
+    constructor($$source = {}) {
+        if (!("image" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["image"] = "";
+        }
+        if (!("storage" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["storage"] = "";
+        }
+        if (!("cpuReq" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["cpuReq"] = "";
+        }
+        if (!("cpuLim" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["cpuLim"] = "";
+        }
+        if (!("memReq" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["memReq"] = "";
+        }
+        if (!("memLim" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["memLim"] = "";
+        }
+        if (!("env" in $$source)) {
+            /**
+             * @member
+             * @type {string[]}
+             */
+            this["env"] = [];
+        }
+        if (!("git" in $$source)) {
+            /**
+             * @member
+             * @type {string[]}
+             */
+            this["git"] = [];
+        }
+        if (!("copy" in $$source)) {
+            /**
+             * @member
+             * @type {string[]}
+             */
+            this["copy"] = [];
+        }
+        if (!("ports" in $$source)) {
+            /**
+             * @member
+             * @type {string[]}
+             */
+            this["ports"] = [];
+        }
+        if (!("proxyGroup" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["proxyGroup"] = "";
+        }
+        if (!("exposure" in $$source)) {
+            /**
+             * @member
+             * @type {TemplateExposure}
+             */
+            this["exposure"] = TemplateExposure.$zero;
+        }
+        if (!("nodePortSSH" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["nodePortSSH"] = false;
+        }
+        if (!("capabilities" in $$source)) {
+            /**
+             * @member
+             * @type {TemplateCapabilities}
+             */
+            this["capabilities"] = TemplateCapabilities.$zero;
+        }
+        if (!("capAdd" in $$source)) {
+            /**
+             * @member
+             * @type {string[]}
+             */
+            this["capAdd"] = [];
+        }
+        if (!("ephemeral" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["ephemeral"] = false;
+        }
+        if (!("readOnly" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["readOnly"] = false;
+        }
+        if (!("privileged" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["privileged"] = false;
+        }
+        if (!("workspaceNamespace" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["workspaceNamespace"] = false;
+        }
+        if (!("noWait" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["noWait"] = false;
+        }
+        if (!("waitTimeout" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["waitTimeout"] = "";
+        }
+        if (!("forceInstall" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["forceInstall"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new PlayroomTemplateOptions instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {PlayroomTemplateOptions}
+     */
+    static createFrom($$source = {}) {
+        const $$createField6_0 = $$createType1;
+        const $$createField7_0 = $$createType1;
+        const $$createField8_0 = $$createType1;
+        const $$createField9_0 = $$createType1;
+        const $$createField14_0 = $$createType1;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("env" in $$parsedSource) {
+            $$parsedSource["env"] = $$createField6_0($$parsedSource["env"]);
+        }
+        if ("git" in $$parsedSource) {
+            $$parsedSource["git"] = $$createField7_0($$parsedSource["git"]);
+        }
+        if ("copy" in $$parsedSource) {
+            $$parsedSource["copy"] = $$createField8_0($$parsedSource["copy"]);
+        }
+        if ("ports" in $$parsedSource) {
+            $$parsedSource["ports"] = $$createField9_0($$parsedSource["ports"]);
+        }
+        if ("capAdd" in $$parsedSource) {
+            $$parsedSource["capAdd"] = $$createField14_0($$parsedSource["capAdd"]);
+        }
+        return new PlayroomTemplateOptions(/** @type {Partial<PlayroomTemplateOptions>} */($$parsedSource));
+    }
+}
+
 /**
  * @readonly
  * @enum {string}
@@ -444,7 +678,7 @@ export class ScheduleEvent {
      * @returns {ScheduleEvent}
      */
     static createFrom($$source = {}) {
-        const $$createField3_0 = $$createType1;
+        const $$createField3_0 = $$createType3;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("Rooms" in $$parsedSource) {
             $$parsedSource["Rooms"] = $$createField3_0($$parsedSource["Rooms"]);
@@ -561,6 +795,37 @@ export class ScheduleSettings {
 }
 
 /**
+ * @readonly
+ * @enum {string}
+ */
+export const TemplateCapabilities = {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero: "",
+
+    TemplateCapabilitiesDefault: "",
+    TemplateCapabilitiesMinimal: "minimal",
+    TemplateCapabilitiesStandard: "standard",
+};
+
+/**
+ * @readonly
+ * @enum {string}
+ */
+export const TemplateExposure = {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero: "",
+
+    TemplateExposureDefault: "",
+    TemplateExposureTailscale: "tailscale",
+    TemplateExposureNodeport: "nodeport",
+    TemplateExposurePortforward: "portforward",
+};
+
+/**
  * ToolStatus reports whether an external tool a playroom depends on is usable.
  */
 export class ToolStatus {
@@ -621,5 +886,7 @@ export class ToolStatus {
 }
 
 // Private type creation functions
-const $$createType0 = ScheduleRoom.createFrom;
-const $$createType1 = $Create.Array($$createType0);
+const $$createType0 = PlayroomTemplateOptions.createFrom;
+const $$createType1 = $Create.Array($Create.Any);
+const $$createType2 = ScheduleRoom.createFrom;
+const $$createType3 = $Create.Array($$createType2);

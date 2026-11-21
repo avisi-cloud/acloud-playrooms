@@ -1,10 +1,12 @@
+import type { PlayroomTemplate } from '../../../../shared/models/playroom-template';
+import { PlayroomTemplatesService } from '../../../../core/services/playroom-templates';
 import { EveningStopService } from '../../../../core/services/evening-stop';
 import { InputTextModule } from 'primeng/inputtext';
 import { EnvironmentService } from '../../../../core/services/environment';
 import { DesktopNotificationsService } from '../../../../core/services/desktop-notifications';
 import { MenuBarService } from '../../../../core/services/menu-bar';
 import { DockBadge } from '../../../../shared/models';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -33,6 +35,35 @@ import { T3CodePathCardComponent } from '../../components/t3-code-path/t3-code-p
   styleUrl: './settings.css',
 })
 export class SettingsPageComponent {
+  readonly templates = inject(PlayroomTemplatesService);
+
+  readonly renamingTemplate = signal('');
+  readonly templateName = signal('');
+
+  beginTemplateRename(template: PlayroomTemplate): void {
+    this.renamingTemplate.set(template.name);
+    this.templateName.set(template.name);
+    setTimeout(() => {
+      const input = document.getElementById('rename-template') as HTMLInputElement | null;
+      input?.focus();
+      input?.select();
+    });
+  }
+
+  cancelTemplateRename(): void {
+    this.renamingTemplate.set('');
+    this.templateName.set('');
+  }
+
+  async saveTemplateName(template: PlayroomTemplate): Promise<void> {
+    if (await this.templates.renameTemplate(template, this.templateName()))
+      this.cancelTemplateRename();
+  }
+
+  constructor() {
+    void this.templates.loadTemplates();
+  }
+
   readonly schedule = inject(EveningStopService);
   readonly scheduleDays = [
     { label: 'Weekdays', value: 'weekdays' },
