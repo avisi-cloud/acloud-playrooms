@@ -10,6 +10,7 @@ export const defaultCache: CacheState = {
   readVariablesFromLoginShell: false,
   notifications: true,
   dockBadge: 'failed',
+  keepRunningInMenuBar: false,
   pinnedRooms: {},
   lastPlayhouse: runtimeMode.dummy ? 'playhouse-platform-dev' : '',
   lastPlayroom: '',

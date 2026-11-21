@@ -6,6 +6,7 @@ import (
 	"embed"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 	"github.com/wailsapp/wails/v3/pkg/services/dock"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 
@@ -19,13 +20,14 @@ var assets embed.FS
 func RunDesktopApplication(appVersion string) error {
 	notificationService := notifications.New()
 	dockService := dock.New()
+	appService := &App{appVersion: appVersion, notifications: notificationService, dock: dockService}
 	app := application.New(application.Options{
 		Name:        "Acloud Playrooms",
 		Description: "Acloud Playrooms",
 		Services: []application.Service{
 			application.NewService(notificationService),
 			application.NewService(dockService),
-			application.NewService(&App{appVersion: appVersion, notifications: notificationService, dock: dockService}),
+			application.NewService(appService),
 		},
 		Assets: application.AssetOptions{
 			Handler: serveAppIndexForAngularRoutes(application.BundledAssetFileServer(assets)),
@@ -35,9 +37,10 @@ func RunDesktopApplication(appVersion string) error {
 		},
 	})
 
-	app.Menu.Set(buildApplicationMenu(func(action menuAction) {
+	emitMenuAction := func(action menuAction) {
 		app.Event.EmitEvent(&application.CustomEvent{Name: "menu:action", Data: string(action)})
-	}))
+	}
+	app.Menu.Set(buildApplicationMenu(emitMenuAction))
 
 	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:            "Acloud Playrooms",
@@ -57,15 +60,35 @@ func RunDesktopApplication(appVersion string) error {
 		URL: "/",
 	})
 
+	showMainWindow := func() {
+		window.Show()
+		window.Restore()
+		window.Focus()
+	}
+	appService.showMainWindow = showMainWindow
+	// Hiding keeps the Angular app running, which pushes the room list to the menu bar.
+	window.RegisterHook(events.Common.WindowClosing, func(event *application.WindowEvent) {
+		if appService.keepRunningInMenuBar.Load() {
+			event.Cancel()
+			window.Hide()
+		}
+	})
+	appService.menuBar = startMenuBar(app, func(request menuBarRequest) {
+		routeMenuBarRequest(request, menuBarHandlers{
+			showWindow:     showMainWindow,
+			emitMenuAction: emitMenuAction,
+			quit:           app.Quit,
+			sendToFrontend: func(request menuBarRequest) {
+				app.Event.EmitEvent(&application.CustomEvent{Name: "menu-bar:action", Data: request})
+			},
+		})
+	})
+
 	notificationService.OnNotificationResponse(func(result notifications.NotificationResult) {
 		if result.Error != nil || result.Response.ActionIdentifier != notifications.DefaultActionIdentifier {
 			return
 		}
-		if window != nil {
-			window.Show()
-			window.Restore()
-			window.Focus()
-		}
+		showMainWindow()
 		app.Event.EmitEvent(&application.CustomEvent{Name: "notification:clicked", Data: result.Response.ID})
 	})
 
