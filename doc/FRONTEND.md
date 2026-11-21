@@ -350,6 +350,11 @@ use quieter theme surfaces and neutral text and actions without reduced opacity.
 
 ## Playroom status
 
+The Playrooms and room detail headers share an organisation → playhouse breadcrumb;
+details add the room name. It reads `ScopeService` and `PlayroomStateService` directly.
+The playhouse button opens the same chooser as the sidebar. Names truncate within
+the header, with full names in tooltips available on hover and keyboard focus.
+
 `mapStatus()` in `shared/utils/playroom-mappers.ts` folds backend status strings
 into the GUI's status keys, and `shared/data/status.ts` holds their labels,
 tones and descriptions. When the backend gains a status, update both together —

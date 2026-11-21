@@ -34,6 +34,7 @@ import { buildSearchableRoomText } from '../../../../shared/utils/playroom-searc
 import { ConnectTab, Playroom, StatusKey } from '../../../../shared/models';
 import { describeError } from '../../../../shared/utils';
 import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-drawer/create-playroom-drawer';
+import { PlayroomBreadcrumbComponent } from '../../components/playroom-breadcrumb/playroom-breadcrumb';
 
 /**
  * Playroom overview: search, the card grid, and the create/connect/update/
@@ -52,6 +53,7 @@ import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-
     PlayroomCardComponent,
     PlayroomActionsHostComponent,
     CreatePlayroomDrawerComponent,
+    PlayroomBreadcrumbComponent,
   ],
   templateUrl: './rooms.html',
   styleUrl: './rooms.css',

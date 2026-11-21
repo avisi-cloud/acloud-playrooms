@@ -3,6 +3,7 @@
     <div class="page-header-left">
       <div class="page-header-stack">
         <h1 class="page-header-title">Playrooms<span class="punt">.</span></h1>
+        <app-playroom-breadcrumb />
         <div class="status-chips" role="group" aria-label="Filter by status">
           @for (chip of statusChips(); track chip.status) {
             <button

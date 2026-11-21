@@ -45,6 +45,16 @@ describe('RoomsPageComponent', () => {
       (call: unknown[]) => (call[0] as { Playhouse?: string }).Playhouse,
     );
 
+  it('shows the selected playhouse in the page header breadcrumb', async () => {
+    TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-a');
+    const fixture = TestBed.createComponent(RoomsPageComponent);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const breadcrumb = fixture.nativeElement.querySelector('header nav[aria-label="Breadcrumb"]');
+    expect(breadcrumb?.textContent).toContain('playhouse-a');
+    fixture.destroy();
+  });
+
   it('opens Create similar when a card emits the action', async () => {
     vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
     vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([]);

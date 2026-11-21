@@ -72,6 +72,14 @@ describe('Playroom details', () => {
     return fixture;
   }
 
+  it('shows the selected playhouse and room in the page header breadcrumb', async () => {
+    const fixture = await render();
+    const breadcrumb = fixture.nativeElement.querySelector('header nav[aria-label="Breadcrumb"]');
+    expect(breadcrumb?.textContent).toContain('ph');
+    expect(breadcrumb?.querySelector('[aria-current="page"]')?.textContent).toBe('demo');
+    fixture.destroy();
+  });
+
   it('shows four sections, distinct port mappings, the real date and the disposable-storage warning', async () => {
     const fixture = await render();
     const root = fixture.nativeElement as HTMLElement;
