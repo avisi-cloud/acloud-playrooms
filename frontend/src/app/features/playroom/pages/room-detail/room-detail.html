@@ -8,6 +8,7 @@
       <div class="page-header-divider"></div>
       <div class="page-header-stack">
         <h1 class="page-header-title">{{ roomName() }}<span class="punt">.</span></h1>
+        <app-playroom-breadcrumb [roomName]="roomName()" />
         @if (room(); as room) {
           <p class="page-header-sub">
             {{ ownerLabel() }} · {{ room.playhouse }} · {{ ageLabel() }}

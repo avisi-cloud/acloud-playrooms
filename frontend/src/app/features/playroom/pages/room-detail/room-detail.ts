@@ -26,6 +26,7 @@ import { CliConsoleService } from '../../../../core/services/cli-console';
 import { wailsApi } from '../../../../core/services/wails-api';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { PlayroomActionsHostComponent } from '../../../../shared/components';
+import { PlayroomBreadcrumbComponent } from '../../components/playroom-breadcrumb/playroom-breadcrumb';
 import { STATUS } from '../../../../shared/data';
 import { ConnectTab, Playroom } from '../../../../shared/models';
 import {
@@ -49,7 +50,14 @@ import {
 /** Reported room details stay separate from editable form drafts. */
 @Component({
   selector: 'app-room-detail-page',
-  imports: [CommonModule, ButtonModule, MenuModule, TagModule, PlayroomActionsHostComponent],
+  imports: [
+    CommonModule,
+    ButtonModule,
+    MenuModule,
+    TagModule,
+    PlayroomActionsHostComponent,
+    PlayroomBreadcrumbComponent,
+  ],
   templateUrl: './room-detail.html',
   styleUrl: './room-detail.css',
 })
