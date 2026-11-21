@@ -1,3 +1,5 @@
+import { describeComparison } from '../../../../shared/components/setting-changes/setting-changes';
+import { describeChanges, PlayhouseUpdateField } from './describe-changes';
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -19,7 +21,7 @@ import {
   wailsApi,
 } from '../../../../core/services/wails-api';
 
-interface UpdatePlayhouseForm {
+export interface UpdatePlayhouseForm {
   updateChannel: string;
   exposure: string;
   defaultVia: string;
@@ -129,17 +131,30 @@ export class UpdatePlayhouseDrawerComponent implements OnChanges {
 
   /** Whether anything would actually change. */
   hasChanges(): boolean {
-    return (
-      this.form.updateChannel.trim() !== '' ||
-      this.form.exposure !== '' ||
-      this.form.defaultVia !== '' ||
-      this.form.resetAllowlist ||
-      this.form.allowCurrentIP ||
-      filled(this.form.removeIPs).length > 0 ||
-      filled(this.form.allowIPs).length > 0 ||
-      this.form.maxPlayroomNodes > 0 ||
-      this.form.maxPrivilegedNodes > 0
-    );
+    return this.changes().some((change) => change.changed);
+  }
+
+  changes() {
+    return describeChanges(this.playhouse, this.form);
+  }
+
+  comparisonFor(field: PlayhouseUpdateField): string {
+    return describeComparison(this.changes().find((change) => change.field === field));
+  }
+
+  actionSummary(): string {
+    return this.changes()
+      .filter((change) => change.changed && !change.comparison)
+      .map((change) => change.label)
+      .join(' · ');
+  }
+
+  cardChanged(...fields: PlayhouseUpdateField[]): boolean {
+    return this.changes().some((change) => fields.includes(change.field) && change.changed);
+  }
+
+  changeCount(): number {
+    return this.changes().filter((change) => change.changed).length;
   }
 
   previewInput(): Partial<PlayhouseUpdateInput> {

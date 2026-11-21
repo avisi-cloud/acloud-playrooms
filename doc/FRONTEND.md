@@ -166,6 +166,24 @@ color from values, with quotes and spacing preserved by `splitCommandPreview`.
 The dummy preview labels its commands `dummy-preview` and emits simulated
 activity for room and playhouse actions without running acloud.
 
+### Reviewing updates
+
+Both update drawers use each control’s existing hint for current → proposed
+values or "Unchanged", tint edited cards cyan like unsaved Defaults, and count
+changes above the submit buttons. Blank fields and disabled replacement toggles
+keep the current setting. Each drawer's pure `describeChanges(current, form)`
+feeds the comparisons, tint and count, including drafts restored for a playroom.
+Unreported current values show "Not reported → proposed" only after a setting
+is edited; unchanged unknown settings have no comparison. Playhouse list reports
+no editable settings, so choosing one counts without assuming its current value.
+Credentials only say "Replacement supplied".
+
+Run options and allowlist actions have no comparison. They still count as changes
+and appear by name in the summary when used. Playroom spec changes (image, CPU, memory, read-only system, capabilities, namespace), or an
+outdated room layout, warn that the playroom may restart and disconnect SSH.
+Storage, forwarded ports and connectivity changes alone do not show that warning.
+Ephemeral storage cannot be changed here.
+
 ### Easy and Advanced create
 
 The create-playroom drawer shows one form in two modes. **Easy** is one screen

@@ -26,3 +26,17 @@
   padding-bottom: 7px;
   border-bottom: 1px solid var(--border);
 }
+
+.update-card.is-dirty {
+  background: color-mix(in srgb, var(--cyan) 5%, transparent);
+  box-shadow: inset 2px 0 0 var(--cyan);
+}
+.change-summary {
+  flex-basis: 100%;
+  color: var(--tx-2);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.change-summary span {
+  display: block;
+}

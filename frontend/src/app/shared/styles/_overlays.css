@@ -261,3 +261,7 @@ body:has(.p-dialog-mask) .app-shell {
   color: #9fe3f5;
   white-space: nowrap;
 }
+
+.update-comparison-drawer .p-drawer-footer {
+  flex-wrap: wrap;
+}
