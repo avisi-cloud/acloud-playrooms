@@ -7,6 +7,7 @@ import type {
 } from '../services/wails-api-live';
 import {
   dummyContexts,
+  dummyLoginShellEnvironmentKeys,
   dummyDefaults,
   dummyImages,
   dummyOrganisations,
@@ -59,6 +60,7 @@ function applyRoomSettings(
 async function preview(action: string, input: object): Promise<string[]> {
   const args = ['dummy-preview', ...action.split(' ')];
   for (const [key, value] of Object.entries(input)) {
+    if (key === 'ReadVariablesFromLoginShell' || key === 'MissingEnvironmentConfirmed') continue;
     if (value === '' || value === undefined || value === false || value === null) continue;
     args.push(
       `--${key
@@ -112,6 +114,15 @@ const binaryStatus = {
 
 // An exhaustive adapter: dummy mode never imports a live backend implementation at runtime.
 const simulatedApi: typeof liveApi = {
+  getEnvironmentPresence: (entries, readVariablesFromLoginShell) =>
+    read(
+      entries
+        .filter((entry) => entry.trim() && !entry.includes('='))
+        .map((entry) => ({
+          Key: entry.trim(),
+          Set: readVariablesFromLoginShell && dummyLoginShellEnvironmentKeys.includes(entry.trim()),
+        })),
+    ),
   getAppVersion: () => read('0.29.1+dummy'),
   exportActivityLog: async (content: string): Promise<void> => {
     const url = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));

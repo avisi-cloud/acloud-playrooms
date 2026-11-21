@@ -208,14 +208,21 @@ export class PlayroomLifecycleService {
     }
   }
 
-  startCreate(form: CreateForm, options?: () => void): boolean {
+  startCreate(form: CreateForm, input = createInputFor(form), options?: () => void): boolean {
     const selection = this.state.captureSelection();
     if (form.playhouse !== selection.playhouse) return false;
     const finish = this.beginOperation(form.name, form.playhouse, 'Creating');
     if (!finish) return false;
     const submittedForm = structuredClone(form);
     const submittedRevision = this.session.draftRevision('create');
-    void this.create(submittedForm, selection, submittedRevision, finish, options);
+    void this.create(
+      submittedForm,
+      selection,
+      submittedRevision,
+      finish,
+      structuredClone(input),
+      options,
+    );
     return true;
   }
 
@@ -224,6 +231,7 @@ export class PlayroomLifecycleService {
     selection: PlayroomSelection,
     submittedRevision: number | undefined,
     finish: () => void,
+    input: Partial<PlayroomCreateInput>,
     options?: () => void,
   ): Promise<void> {
     const optimistic: Playroom = {
@@ -266,7 +274,7 @@ export class PlayroomLifecycleService {
           scopeRevision: selection.scopeRevision,
         });
         this.notify.toast(`Creating "${form.name}" ...`, 'busy', operationId);
-        return wailsApi.createPlayroom(operationId, createInputFor(form));
+        return wailsApi.createPlayroom(operationId, input);
       });
       if (form.noWait) {
         if (this.state.isCurrentSelection(selection))
@@ -287,7 +295,11 @@ export class PlayroomLifecycleService {
           error,
           {
             signIn: () => {
-              this.startCreate({ ...form, forceInstall: true }, options);
+              this.startCreate(
+                { ...form, forceInstall: true },
+                { ...input, ForceInstall: true },
+                options,
+              );
             },
             options,
           },

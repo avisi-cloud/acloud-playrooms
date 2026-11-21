@@ -7,6 +7,7 @@ export const CACHE_KEY = runtimeMode.dummy
 
 export const defaultCache: CacheState = {
   preferredAction: 'nothing',
+  readVariablesFromLoginShell: false,
   notifications: true,
   dockBadge: 'failed',
   pinnedRooms: {},

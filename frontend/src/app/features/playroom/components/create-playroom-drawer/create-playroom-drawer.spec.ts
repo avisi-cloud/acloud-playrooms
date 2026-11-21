@@ -530,3 +530,97 @@ describe('Create playroom drawer', () => {
     await vi.waitFor(() => expect(actions.pendingOperation('demo')).toBe(''));
   });
 });
+
+describe('Create environment confirmation', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CreatePlayroomDrawerComponent],
+      providers: [MessageService, provideRouter([])],
+    }).compileComponents();
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  function readyDrawer() {
+    const component = drawer();
+    component.visible = true;
+    component.form = { ...blankCreateForm('playhouse-demo'), name: 'demo', env: ['MISSING_KEY'] };
+    return component;
+  }
+
+  it('asks before creating, cancels safely, then sends only the confirmed key', async () => {
+    vi.spyOn(wailsApi, 'getEnvironmentPresence').mockResolvedValue([
+      { Key: 'MISSING_KEY', Set: false },
+    ]);
+    const start = vi
+      .spyOn(TestBed.inject(PlayroomLifecycleService), 'startCreate')
+      .mockReturnValue(true);
+    const component = readyDrawer();
+    component.create();
+    await vi.waitFor(() => expect(component.missingEnvironment).toEqual(['MISSING_KEY']));
+    expect(start).not.toHaveBeenCalled();
+    component.cancelMissingEnvironment();
+    expect(start).not.toHaveBeenCalled();
+    component.create();
+    await vi.waitFor(() => expect(component.missingEnvironment).toEqual(['MISSING_KEY']));
+    component.confirmMissingEnvironment();
+    expect(start).toHaveBeenCalledWith(
+      component.form,
+      expect.objectContaining({
+        EnvVars: ['MISSING_KEY'],
+        MissingEnvironmentConfirmed: ['MISSING_KEY'],
+      }),
+      expect.any(Function),
+    );
+    expect(component.visible).toBe(false);
+  });
+
+  it('creates without confirmation when a bare key is set', async () => {
+    vi.spyOn(wailsApi, 'getEnvironmentPresence').mockResolvedValue([
+      { Key: 'MISSING_KEY', Set: true },
+    ]);
+    const start = vi
+      .spyOn(TestBed.inject(PlayroomLifecycleService), 'startCreate')
+      .mockReturnValue(true);
+    const component = readyDrawer();
+    component.create();
+    await vi.waitFor(() => expect(start).toHaveBeenCalled());
+    expect(component.missingEnvironment).toEqual([]);
+  });
+
+  it('blocks failed checks and ignores stale confirmations after form changes', async () => {
+    const check = vi
+      .spyOn(wailsApi, 'getEnvironmentPresence')
+      .mockRejectedValue(new Error('shell failed'));
+    const start = vi
+      .spyOn(TestBed.inject(PlayroomLifecycleService), 'startCreate')
+      .mockReturnValue(true);
+    const component = readyDrawer();
+    component.create();
+    await vi.waitFor(() => expect(component.submitFailure).toContain('Could not check'));
+    expect(start).not.toHaveBeenCalled();
+    check.mockResolvedValue([{ Key: 'MISSING_KEY', Set: false }]);
+    component.create();
+    await vi.waitFor(() => expect(component.missingEnvironment).toEqual(['MISSING_KEY']));
+    component.form.env = ['OTHER_KEY'];
+    component.confirmMissingEnvironment();
+    expect(start).not.toHaveBeenCalled();
+  });
+  it('ignores a delayed check after dismissal and reopening', async () => {
+    let finishCheck!: (presence: { Key: string; Set: boolean }[]) => void;
+    vi.spyOn(wailsApi, 'getEnvironmentPresence').mockReturnValue(
+      new Promise((resolve) => {
+        finishCheck = resolve;
+      }),
+    );
+    const start = vi
+      .spyOn(TestBed.inject(PlayroomLifecycleService), 'startCreate')
+      .mockReturnValue(true);
+    const component = readyDrawer();
+    component.create();
+    component.close();
+    component.visible = true;
+    finishCheck([{ Key: 'MISSING_KEY', Set: true }]);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(start).not.toHaveBeenCalled();
+  });
+});

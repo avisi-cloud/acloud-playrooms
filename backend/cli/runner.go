@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -83,7 +84,9 @@ type Options struct {
 	OperationID string
 
 	// Stdin pre-answers confirmation prompts on commands with no --yes flag.
-	Stdin string
+	Stdin            string
+	Environment      []string
+	UnsetEnvironment []string
 }
 
 // Result is what a finished command produced.
@@ -112,6 +115,20 @@ func (runner *Runner) Run(ctx context.Context, arguments []string, options Optio
 	}
 
 	cmd := exec.CommandContext(ctx, binary, arguments...)
+	cmd.Env = []string{}
+	for _, assignment := range os.Environ() {
+		key, _, _ := strings.Cut(assignment, "=")
+		remove := false
+		for _, unset := range options.UnsetEnvironment {
+			if key == unset {
+				remove = true
+			}
+		}
+		if !remove {
+			cmd.Env = append(cmd.Env, assignment)
+		}
+	}
+	cmd.Env = append(cmd.Env, options.Environment...)
 	if err := tools.ConfigureCommandEnvironment(cmd); err != nil {
 		return Result{}, err
 	}
@@ -140,6 +157,19 @@ func (runner *Runner) Run(ctx context.Context, arguments []string, options Optio
 
 	// Extracted once: every streamed line is checked against these.
 	secrets := sensitiveValues(arguments)
+	for _, assignment := range options.Environment {
+		_, value, _ := strings.Cut(assignment, "=")
+		if value != "" {
+			secrets = append(secrets, value)
+			for _, line := range strings.Split(value, "\n") {
+				if line = strings.TrimSuffix(line, "\r"); line != "" {
+					secrets = append(secrets, line)
+				}
+			}
+		}
+	}
+
+	sort.Slice(secrets, func(i, j int) bool { return len(secrets[i]) > len(secrets[j]) })
 
 	var stdoutCapture, stderrCapture boundedBuffer
 	var streams sync.WaitGroup
@@ -158,6 +188,10 @@ func (runner *Runner) Run(ctx context.Context, arguments []string, options Optio
 	waitErr := cmd.Wait()
 	result := Result{Stdout: stdoutCapture.String(), Stderr: stderrCapture.String(), ExitCode: exitCode(waitErr)}
 
+	if len(options.Environment) > 0 {
+		result.Stdout = redactWith(result.Stdout, secrets)
+		result.Stderr = redactWith(result.Stderr, secrets)
+	}
 	runErr := runner.outcomeOf(ctx, arguments, result, waitErr)
 	endedAt := time.Now()
 	event := doneEvent(options.OperationID, result.ExitCode, runErr)

@@ -81,6 +81,41 @@ export class AcloudCompatibility {
     }
 }
 
+export class EnvironmentPresence {
+    /**
+     * Creates a new EnvironmentPresence instance.
+     * @param {Partial<EnvironmentPresence>} [$$source = {}] - The source object to create the EnvironmentPresence.
+     */
+    constructor($$source = {}) {
+        if (!("Key" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Key"] = "";
+        }
+        if (!("Set" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["Set"] = false;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new EnvironmentPresence instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {EnvironmentPresence}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new EnvironmentPresence(/** @type {Partial<EnvironmentPresence>} */($$parsedSource));
+    }
+}
+
 /**
  * ImageEntry is a published playroom image: Name is the alias sent as --image,
  * Reference the full registry path shown beside it.

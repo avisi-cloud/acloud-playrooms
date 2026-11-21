@@ -40,6 +40,11 @@ const playroomInput = playroomModels;
 const playhouseInput = playhouseModels;
 
 export const wailsApi = {
+  getEnvironmentPresence: (
+    entries: string[],
+    readVariablesFromLoginShell: boolean,
+  ): Promise<localModels.EnvironmentPresence[]> =>
+    app.GetEnvironmentPresence(entries, readVariablesFromLoginShell),
   getAppVersion: (): Promise<string> => app.GetAppVersion(),
   // Session
   getAcloudVersion: (): Promise<string> => app.GetAcloudVersion(),

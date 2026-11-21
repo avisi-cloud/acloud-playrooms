@@ -371,6 +371,21 @@ The rule governing what is allowed in here is in
 [ARCHITECTURE.md](ARCHITECTURE.md#what-may-bypass-the-cli). Read it before
 adding anything.
 
+## Forwarded environment variables
+
+`local/environment.go` resolves only requested bare `--env KEY` entries and exposes
+presence through `App.GetEnvironmentPresence`. By default it reads the app environment.
+The optional login-shell source runs `$SHELL -l -c 'env -0'` with a three-second
+timeout, once per presence check and again before creation. Shell failures log a
+fixed message without output and block creation; there is no fallback source.
+Empty values count as set. Inline `KEY=VALUE` entries bypass this resolution.
+
+Resolved values stay in Go memory and reach only the acloud child environment,
+never arguments, previews or browser storage. The runner redacts them from output
+and errors too. Missing keys require a matching `MissingEnvironmentConfirmed`
+entry before creation, and are removed from the child's inherited environment.
+`ReadVariablesFromLoginShell` selects the source; neither input becomes a CLI flag.
+
 ## Tests
 
 The tests cover the public GUI contract without importing the private CLI:

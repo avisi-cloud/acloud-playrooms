@@ -49,3 +49,17 @@ it('previews and simulates allow-current-ip without contacting a real backend', 
     api.connectPlayroom({ Name: 'api-development', Playhouse: playhouse, Via: 'nodeport' }),
   ).resolves.toBeUndefined();
 });
+
+describe('Dummy environment presence', () => {
+  it('simulates login-shell presence without exposing any values', async () => {
+    const entries = ['DEMO_API_KEY', 'MISSING_KEY', 'INLINE=example'];
+    expect(await api.getEnvironmentPresence(entries, false)).toEqual([
+      { Key: 'DEMO_API_KEY', Set: false },
+      { Key: 'MISSING_KEY', Set: false },
+    ]);
+    expect(await api.getEnvironmentPresence(entries, true)).toEqual([
+      { Key: 'DEMO_API_KEY', Set: true },
+      { Key: 'MISSING_KEY', Set: false },
+    ]);
+  });
+});

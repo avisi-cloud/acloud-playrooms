@@ -3,29 +3,33 @@ package playroom
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/avisi-cloud/acloud-playrooms/backend/cli"
+	"github.com/avisi-cloud/acloud-playrooms/backend/local"
 )
 
 // CreateInput is what the GUI sends for `acloud playroom create`. A blank or
 // false field is omitted, except ReadOnly, Privileged and WorkspaceNamespace;
 // see the builder.
 type CreateInput struct {
-	Name          string
-	Playhouse     string
-	Image         string
-	Storage       string
-	CPURequest    string
-	CPULimit      string
-	MemoryRequest string
-	MemoryLimit   string
-	SSHKey        string
-	EnvVars       []string
-	GitRepos      []string
-	Copies        []string
-	Ports         []string
-	ProxyGroup    string
-	Exposure      Exposure
+	Name                        string
+	Playhouse                   string
+	Image                       string
+	Storage                     string
+	CPURequest                  string
+	CPULimit                    string
+	MemoryRequest               string
+	MemoryLimit                 string
+	SSHKey                      string
+	EnvVars                     []string
+	ReadVariablesFromLoginShell bool
+	MissingEnvironmentConfirmed []string
+	GitRepos                    []string
+	Copies                      []string
+	Ports                       []string
+	ProxyGroup                  string
+	Exposure                    Exposure
 	// NodePortSSH adds SSH on a NodePort next to the room's own path; acloud refuses it on a nodeport room.
 	NodePortSSH  bool
 	Capabilities Capabilities
@@ -45,7 +49,27 @@ func Create(ctx context.Context, operationID string, input CreateInput) error {
 	if err := validateCreateInput(input); err != nil {
 		return err
 	}
-	_, err := cli.Run(ctx, buildCreateArguments(input), cli.Options{OperationID: operationID})
+	environment, err := local.ResolveEnvironment(ctx, input.EnvVars, input.ReadVariablesFromLoginShell)
+	if err != nil {
+		return err
+	}
+	unsetEnvironment := []string{}
+	for _, presence := range environment.Presence {
+		if presence.Set {
+			continue
+		}
+		unsetEnvironment = append(unsetEnvironment, presence.Key)
+		confirmed := false
+		for _, key := range input.MissingEnvironmentConfirmed {
+			if key == presence.Key {
+				confirmed = true
+			}
+		}
+		if !confirmed {
+			return fmt.Errorf("%s is not set. Create without it?", presence.Key)
+		}
+	}
+	_, err = cli.Run(ctx, buildCreateArguments(input), cli.Options{OperationID: operationID, Environment: environment.ChildEnvironment(), UnsetEnvironment: unsetEnvironment})
 	return err
 }
 

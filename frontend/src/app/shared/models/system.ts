@@ -19,6 +19,7 @@ export interface CacheState {
   lastTheme: ThemePreference;
   backgroundGrain: boolean;
   ameRobot: boolean;
+  readVariablesFromLoginShell: boolean;
   createPlayroomMode: CreatePlayroomMode;
   /** Set once setup is finished; leaving it with "Set up later" does not set it. */
   setupCompleted: boolean;

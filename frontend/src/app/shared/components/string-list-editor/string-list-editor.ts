@@ -15,6 +15,7 @@ export class StringListEditorComponent {
   @Input() label = '';
   /** One line under the list saying what it does for you; nothing when empty. */
   @Input() hint = '';
+  @Input() itemHints: string[] = [];
   @Input() placeholder = '';
   @Input() addLabel = 'add value';
   @Input() itemLabel = 'value';
