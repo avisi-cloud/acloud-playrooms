@@ -30,6 +30,8 @@ export class ConfirmDeleteDialog implements OnChanges {
   @Input() title = '';
   @Input() subtitle = '';
   @Input() warning = '';
+  /** What the delete takes with it, one fact per line, listed under the warning. */
+  @Input() consequences: string[] = [];
   @Input({ required: true }) confirmTarget = '';
   @Input() confirmLabel = 'Confirm name';
   @Input() showHint = true;

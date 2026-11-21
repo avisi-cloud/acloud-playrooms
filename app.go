@@ -6,6 +6,7 @@ import (
 	"context"
 	"runtime"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -24,6 +25,9 @@ type App struct {
 	dock                        desktopDock
 	notificationLock            sync.Mutex
 	notificationPermissionAsked bool
+	menuBar                     desktopMenuBar
+	keepRunningInMenuBar        atomic.Bool
+	showMainWindow              func()
 }
 
 // ServiceStartup connects command events. The standalone app reads acloud state

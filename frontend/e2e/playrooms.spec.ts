@@ -122,6 +122,11 @@ test('requires the matching name before deleting a playroom', async ({ page }) =
   await page.getByRole('menuitem', { name: 'Delete playroom', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Delete api-development', exact: true });
   const deleteButton = dialog.getByRole('button', { name: /\bDelete$/ });
+  const removed = dialog.getByRole('list', { name: 'What deleting removes', exact: true });
+  await expect(removed.getByRole('listitem')).toHaveText([
+    'The home folder /home/playroom (20Gi) and everything in it',
+    'Its persistent storage, which cannot be recovered',
+  ]);
   await expect(deleteButton).toBeDisabled();
   await dialog.getByRole('textbox', { name: 'Confirm name' }).fill('wrong-name');
   await expect(deleteButton).toBeDisabled();
@@ -154,6 +159,40 @@ test('switches playhouse through the chooser', async ({ page }) => {
   ).toBeVisible();
 });
 
+test('offers Easy create as the first step in an empty playhouse', async ({ page }) => {
+  await page.getByRole('button', { name: /\bCreate Playroom$/ }).click();
+  const drawer = page.getByRole('dialog', { name: 'Create playroom', exact: true });
+  await drawer.getByRole('button', { name: 'Show advanced options' }).click();
+  await page.keyboard.press('Escape');
+  await expect(drawer).toBeHidden();
+
+  await page.getByRole('button', { name: /Playhouse playhouse-platform-dev/ }).click();
+  const chooser = page.getByRole('dialog', { name: 'Choose a playhouse', exact: true });
+  await chooser.getByRole('option', { name: /playhouse-platform-infrastructure/ }).click();
+  await chooser.getByRole('button', { name: /\bOpen playhouse$/ }).click();
+  await expect(chooser).toBeHidden();
+  await expect(page.getByRole('heading', { name: 'No playrooms yet', exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: /\bCreate your first playroom$/ }).click();
+  await expect(drawer.getByRole('button', { name: 'Show advanced options' })).toBeVisible();
+});
+
+test('explains an organisation without playhouses and offers a way out', async ({ page }) => {
+  await page.getByRole('button', { name: /Playhouse playhouse-platform-dev/ }).click();
+  const chooser = page.getByRole('dialog', { name: 'Choose a playhouse', exact: true });
+  await chooser.getByRole('option', { name: /New team \(empty\)/ }).click();
+  await expect(page).toHaveURL(/\/playhouse$/);
+  await chooser.getByRole('button', { name: 'Close chooser', exact: true }).click();
+  await expect(chooser).toBeHidden();
+
+  await expect(
+    page.getByRole('heading', { name: 'No playhouses in new-team', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: /\bCreate a playhouse$/ })).toBeVisible();
+  await page.getByRole('button', { name: /\bSwitch organisation$/ }).click();
+  await expect(chooser).toBeVisible();
+});
+
 test('remembers the Appearance theme after a reload', async ({ page }) => {
   await page.getByRole('link', { name: /\bSettings$/ }).click();
   const appearance = page.getByRole('region', { name: 'Appearance', exact: true });
@@ -163,6 +202,16 @@ test('remembers the Appearance theme after a reload', async ({ page }) => {
   await appearance.getByRole('radio', { name: 'Dark', exact: true }).check();
   await page.reload();
   await expect(appearance.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked();
+});
+
+test('remembers keeping the app running in the menu bar after a reload', async ({ page }) => {
+  await page.getByRole('link', { name: /\bSettings$/ }).click();
+  const menuBar = page.getByRole('region', { name: 'Menu bar', exact: true });
+  const keepRunning = menuBar.getByRole('switch', { name: 'Keep running in the menu bar' });
+  await expect(keepRunning).not.toBeChecked();
+  await keepRunning.check();
+  await page.reload();
+  await expect(keepRunning).toBeChecked();
 });
 
 test('offers a session fix on the room error panel', async ({ page }) => {

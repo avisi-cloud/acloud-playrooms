@@ -102,6 +102,8 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   });
 
   showCreate = false;
+  /** Only the empty playhouse's "Create your first playroom" opens Easy regardless of the remembered mode. */
+  createInEasyMode = false;
   private ageTimer: ReturnType<typeof setInterval> | null = null;
   private clockTimer: ReturnType<typeof setInterval> | null = null;
   /** Set when a read arrived mid-flight, to repeat once that one lands. */
@@ -267,8 +269,14 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   // ── Create / connect / update ──────────────────────────────────────────────
 
   openCreate(): void {
+    this.createInEasyMode = false;
     this.showCreate = true;
     this.changeDetector.markForCheck();
+  }
+
+  openCreateInEasyMode(): void {
+    this.openCreate();
+    this.createInEasyMode = true;
   }
 
   /** Cleared once read, so Back or a reload does not open the drawer a second time. */

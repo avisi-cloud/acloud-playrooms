@@ -10,6 +10,7 @@ export type DockBadge = 'failed' | 'running' | 'off';
 export interface CacheState {
   notifications: boolean;
   dockBadge: DockBadge;
+  keepRunningInMenuBar: boolean;
   preferredAction: PreferredAction;
   pinnedRooms: Record<string, string[]>;
   lastPlayhouse: string;

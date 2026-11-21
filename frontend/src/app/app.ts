@@ -1,5 +1,6 @@
 import { CommandPaletteComponent } from './shared/components/command-palette/command-palette';
 import { DesktopNotificationsService } from './core/services/desktop-notifications';
+import { MenuBarService } from './core/services/menu-bar';
 import { DialogModule } from 'primeng/dialog';
 import { ShortcutsService } from './core/services/shortcuts';
 import { CommonModule } from '@angular/common';
@@ -82,6 +83,7 @@ export type CurrentScopeState = 'signed-out' | 'no-playhouse' | 'playhouse-selec
 })
 export class App implements OnInit {
   private readonly desktopNotifications = inject(DesktopNotificationsService);
+  private readonly menuBar = inject(MenuBarService);
   readonly shortcuts = inject(ShortcutsService);
   readonly state = inject(PlayroomStateService);
   readonly console = inject(CliConsoleService);
