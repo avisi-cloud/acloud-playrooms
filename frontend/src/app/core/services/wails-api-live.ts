@@ -79,6 +79,8 @@ export const wailsApi = {
   loginWithTerminal: (terminal: string): Promise<void> => app.LoginWithTerminal(terminal),
   logout: (operationID: string): Promise<void> => app.Logout(operationID),
 
+  exportActivityLog: (content: string): Promise<void> => app.ExportActivityLog(content),
+
   // Operations
   cancelOperation: (operationID: string): Promise<boolean> => app.CancelOperation(operationID),
 

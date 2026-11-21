@@ -151,3 +151,8 @@ export const dummyDefaults: PlayroomDefaultEntry[] = Object.entries({
   privileged: 'false',
   'workspace-namespace': 'false',
 }).map(([key, builtin]) => ({ Key: key, Builtin: builtin, Value: builtin, Source: 'built-in' }));
+
+export const dummyActivityOutput = Array.from(
+  { length: 24 },
+  (_, index) => `Simulated output line ${index + 1} of 24. No external action was taken.`,
+);

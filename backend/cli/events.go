@@ -22,13 +22,16 @@ const (
 // Event is what the UI receives while a command runs. Type decides which
 // fields are set.
 type Event struct {
-	Type        EventType `json:"type"`
-	OperationID string    `json:"operationId"`
-	Command     []string  `json:"command,omitempty"`
-	Stream      Stream    `json:"stream,omitempty"`
-	Line        string    `json:"line,omitempty"`
-	ExitCode    int       `json:"exitCode"`
-	Error       string    `json:"error,omitempty"`
+	Type                 EventType `json:"type"`
+	OperationID          string    `json:"operationId"`
+	StartedAt            string    `json:"startedAt,omitempty"`
+	EndedAt              string    `json:"endedAt,omitempty"`
+	DurationMilliseconds int64     `json:"durationMilliseconds"`
+	Command              []string  `json:"command,omitempty"`
+	Stream               Stream    `json:"stream,omitempty"`
+	Line                 string    `json:"line,omitempty"`
+	ExitCode             int       `json:"exitCode"`
+	Error                string    `json:"error,omitempty"`
 }
 
 // Emitter delivers events to the UI. It stays an injected function so this

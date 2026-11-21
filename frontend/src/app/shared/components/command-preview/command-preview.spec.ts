@@ -47,4 +47,27 @@ describe('CommandPreviewComponent', () => {
 
     expect(fixture.componentInstance.resolvedCommand()).toBe('');
   });
+  it('copies the unchanged command, shows Copied briefly and styles flags', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const fixture = TestBed.createComponent(CommandPreviewComponent);
+    fixture.componentRef.setInput('command', "acloud demo --token '[redacted]' --force=false");
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.command-flag')).toHaveLength(2);
+    expect(fixture.nativeElement.querySelector('.command-text').textContent).toBe(
+      "acloud demo --token '[redacted]' --force=false",
+    );
+    vi.useFakeTimers();
+    try {
+      await fixture.componentInstance.copyCommandToClipboard();
+      fixture.detectChanges();
+      expect(writeText).toHaveBeenCalledWith("acloud demo --token '[redacted]' --force=false");
+      expect(fixture.nativeElement.textContent).toContain('Copied');
+      vi.advanceTimersByTime(1400);
+      expect(fixture.componentInstance.copied()).toBe(false);
+    } finally {
+      fixture.destroy();
+      vi.useRealTimers();
+    }
+  });
 });

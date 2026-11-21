@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { CommandPreview } from './command-preview';
+import { CommandPreview, splitCommandPreview } from './command-preview';
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -108,5 +108,32 @@ describe('CommandPreview', () => {
     await flush();
 
     expect(preview.command()).toBe('');
+  });
+});
+
+describe('splitCommandPreview', () => {
+  it('styles flags separately from values without changing the shell preview', () => {
+    const command =
+      "acloud playroom create 'long name' --image opencode --privileged=false -o json --token '[redacted]'";
+    const parts = splitCommandPreview(command);
+    expect(parts.map((part) => part.text).join('')).toBe(command);
+    expect(parts.filter((part) => part.kind === 'flag').map((part) => part.text)).toEqual([
+      '--image',
+      '--privileged=',
+      '-o',
+      '--token',
+    ]);
+    expect(parts.find((part) => part.text === 'false')?.kind).toBe('value');
+  });
+
+  it('keeps quoted flags, negative numbers and arguments after -- as values', () => {
+    const command = 'acloud demo --count -2 "--quoted" "a b" -- --literal';
+    const parts = splitCommandPreview(command);
+    expect(parts.map((part) => part.text).join('')).toBe(command);
+    expect(parts.filter((part) => part.kind === 'flag').map((part) => part.text)).toEqual([
+      '--count',
+      '--',
+    ]);
+    expect(splitCommandPreview('')).toEqual([]);
   });
 });

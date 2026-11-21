@@ -37,3 +37,30 @@ export class CommandPreview<T> {
     this._command.set('');
   }
 }
+
+export interface CommandPart {
+  text: string;
+  kind: 'flag' | 'value' | 'space';
+}
+
+// Preserve quoting and whitespace from the backend's shell preview.
+export function splitCommandPreview(command: string): CommandPart[] {
+  const tokens = command.match(/(?:'[^']*'|"(?:\\.|[^"\\])*"|\\.|[^\s'"])+|\s+/g) ?? [];
+  let flagsEnded = false;
+  return tokens.flatMap((text): CommandPart[] => {
+    if (/^\s+$/.test(text)) return [{ text, kind: 'space' }];
+    if (flagsEnded) return [{ text, kind: 'value' }];
+    if (text === '--') {
+      flagsEnded = true;
+      return [{ text, kind: 'flag' }];
+    }
+    if (!/^--?[a-zA-Z]/.test(text)) return [{ text, kind: 'value' }];
+    const equal = text.indexOf('=');
+    return equal < 0
+      ? [{ text, kind: 'flag' }]
+      : [
+          { text: text.slice(0, equal + 1), kind: 'flag' },
+          { text: text.slice(equal + 1), kind: 'value' },
+        ];
+  });
+}

@@ -3,11 +3,12 @@ import {
   Component,
   Input,
   OnChanges,
+  OnDestroy,
   SimpleChanges,
   signal,
 } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
-import { CommandPreview, copyToClipboard } from '../../utils';
+import { CommandPreview, copyToClipboard, splitCommandPreview } from '../../utils';
 
 // Input types are generated per command; the value is opaque here and only
 // handed back to the matching backend function.
@@ -26,7 +27,7 @@ export type PreviewFunction = (input: any) => Promise<string[]>;
   // Inputs are immutable snapshots and generated output/copy state are signals.
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CommandPreviewComponent implements OnChanges {
+export class CommandPreviewComponent implements OnChanges, OnDestroy {
   /** A prebuilt command remains supported for static/read-only callers. */
   @Input() command = '';
   /** Backend input used with [previewFn] to build the real command. */
@@ -58,6 +59,12 @@ export class CommandPreviewComponent implements OnChanges {
     if (this.preview && this.input !== null && this.input !== undefined) {
       this.preview.refreshIfInputChanged(this.input);
     }
+  }
+
+  readonly splitCommandPreview = splitCommandPreview;
+
+  ngOnDestroy(): void {
+    if (this.timer) clearTimeout(this.timer);
   }
 
   resolvedCommand(): string {
