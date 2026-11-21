@@ -177,3 +177,44 @@ describe('Create similar card action', () => {
     expect(emitted).toHaveBeenCalledWith(room.name);
   });
 });
+
+describe('Card selection', () => {
+  it('selects on Command-click, Shift-click and keyboard without opening details', async () => {
+    vi.useFakeTimers();
+    try {
+      const fixture = TestBed.createComponent(PlayroomCardComponent);
+      fixture.componentRef.setInput('room', room);
+      fixture.componentRef.setInput('currentUser', 'me');
+      const component = fixture.componentInstance;
+      const select = vi.fn();
+      const open = vi.fn();
+      component.selectRoom.subscribe(select);
+      component.openRoom.subscribe(open);
+      fixture.detectChanges();
+      const card = fixture.nativeElement.querySelector('article');
+      card.dispatchEvent(new MouseEvent('click', { bubbles: true, metaKey: true }));
+      expect(select).toHaveBeenLastCalledWith({ name: 'demo', shiftKey: false });
+      card.dispatchEvent(new MouseEvent('click', { bubbles: true, shiftKey: true }));
+      expect(select).toHaveBeenLastCalledWith({ name: 'demo', shiftKey: true });
+      fixture.componentRef.setInput('selectMode', true);
+      fixture.detectChanges();
+      card.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+      expect(select).toHaveBeenCalledTimes(3);
+      const checkbox = fixture.nativeElement.querySelector(
+        'input[type=checkbox]',
+      ) as HTMLInputElement;
+      checkbox.click();
+      expect(select).toHaveBeenCalledTimes(4);
+      await vi.advanceTimersByTimeAsync(500);
+      expect(open).not.toHaveBeenCalled();
+      fixture.componentRef.setInput('currentUser', 'someone-else');
+      fixture.detectChanges();
+      expect(checkbox.disabled).toBe(true);
+      card.click();
+      expect(select).toHaveBeenCalledTimes(4);
+      fixture.destroy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

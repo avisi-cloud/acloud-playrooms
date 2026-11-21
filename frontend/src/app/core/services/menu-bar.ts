@@ -106,9 +106,11 @@ export class MenuBarService {
       case 'open-in-editor':
         return this.openInEditor(room);
       case 'start':
-        return this.lifecycle.start(room);
+        await this.lifecycle.start(room);
+        return;
       case 'stop':
-        return this.lifecycle.stop(room);
+        await this.lifecycle.stop(room);
+        return;
     }
   }
 

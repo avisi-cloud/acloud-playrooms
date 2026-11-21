@@ -297,6 +297,26 @@ storage override the configured defaults. Everything else keeps its defaults,
 with a **Not copied** hint naming those settings. Privileged mode starts off and
 still requires acknowledgement. Closing saves this form as the new create draft.
 
+### Bulk playroom actions
+
+The overview keeps selection in page signals, outside the cache. Select playrooms
+shows card checkboxes; Command-click (or Control-click) toggles a room and
+Shift-click adds the visible range. Select all mine selects owned rooms matching
+the current filters. Unknown ownership cannot be selected. Changing playhouse or
+scope clears selection and any open bulk delete confirmation.
+
+Start applies to stopped rooms, Stop to Ready or No host rooms, Update outdated
+to outdated persistent rooms, and Delete to rooms outside a transition. Delete
+lists every submitted name and requires typing `delete` once. `runForEach` runs
+commands sequentially because CLI config writes can race (see DECISIONS,
+Concurrency). It rechecks ownership, scope, pending commands and eligibility
+before each command, continues after failures, and publishes each room's progress
+and a final succeeded/failed/skipped summary. Success means the CLI accepted the
+command; Start still settles through normal polling. Each command uses the usual
+lifecycle activity entry. Bulk runs suppress per-room progress and success toasts;
+failures remain in the summary and retain their usual error notification. Dummy
+mode uses the same simulated lifecycle methods.
+
 ## State
 
 State that must outlive a screen lives in a service, because every screen is

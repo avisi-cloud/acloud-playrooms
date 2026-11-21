@@ -45,12 +45,27 @@ export class PlayroomCardComponent implements OnDestroy {
     clearTimeout(this.clickTimer);
   }
 
-  onCardClick(): void {
+  @Input() selectMode = false;
+  @Input() selected = false;
+  @Input() selectionDisabled = false;
+  @Output() selectRoom = new EventEmitter<{ name: string; shiftKey: boolean }>();
+
+  onSelect(event: MouseEvent | KeyboardEvent): void {
+    if (!this.selectionDisabled && this.currentUser && this.room.owner === this.currentUser)
+      this.selectRoom.emit({ name: this.room.name, shiftKey: event.shiftKey });
+  }
+
+  onCardClick(event?: MouseEvent): void {
     clearTimeout(this.clickTimer);
+    if (this.selectMode || event?.metaKey || event?.ctrlKey || event?.shiftKey) {
+      if (event) this.onSelect(event);
+      return;
+    }
     this.clickTimer = setTimeout(() => this.openRoom.emit(this.room.name), 500);
   }
 
   onCardDoubleClick(event: MouseEvent): void {
+    if (this.selectMode || event.metaKey || event.ctrlKey || event.shiftKey) return;
     if ((event.target as HTMLElement).closest('button, p-button, .card-actions, p-menu')) return;
     clearTimeout(this.clickTimer);
     if (this.room.status === 'ready' && !this.pendingOperation)
@@ -125,7 +140,8 @@ export class PlayroomCardComponent implements OnDestroy {
     if (event.target !== event.currentTarget) return;
     if (event.key !== 'Enter' && event.key !== ' ') return;
     event.preventDefault();
-    this.openRoom.emit(this.room.name);
+    if (this.selectMode || event.metaKey || event.ctrlKey || event.shiftKey) this.onSelect(event);
+    else this.openRoom.emit(this.room.name);
   }
 
   /** The overflow menu: everything that is not the card's one primary action. */

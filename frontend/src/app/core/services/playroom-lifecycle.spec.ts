@@ -597,3 +597,166 @@ describe('background refresh of the room list', () => {
     expect(listPlayrooms).not.toHaveBeenCalled();
   });
 });
+
+describe('Bulk playroom commands', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({ providers: [MessageService] });
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('ph');
+    state.setUser('developer@example.test');
+    TestBed.inject(PlayroomLifecycleService);
+    TestBed.tick();
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  function ownedRooms() {
+    return ['alpha', 'beta', 'gamma'].map((name) =>
+      listingToRoom(
+        {
+          Name: name,
+          Owner: 'developer@example.test',
+          Status: 'Stopped',
+        },
+        'ph',
+      ),
+    );
+  }
+
+  it('runs sequentially, records every command, continues after failure and publishes a summary', async () => {
+    const state = TestBed.inject(PlayroomStateService);
+    const actions = TestBed.inject(PlayroomLifecycleService);
+    state.setRooms(ownedRooms());
+    vi.spyOn(wailsApi, 'listPlayrooms').mockResolvedValue(
+      ownedRooms().map((room) => ({ Name: room.name, Owner: room.owner, Status: 'Stopped' })),
+    );
+    let resolveFirst = () => {};
+    const command = vi
+      .spyOn(wailsApi, 'startPlayroom')
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveFirst = resolve;
+          }),
+      )
+      .mockRejectedValueOnce(new Error('Could not start beta'))
+      .mockResolvedValue(undefined);
+    const consoleRun = vi.spyOn(TestBed.inject(CliConsoleService), 'run');
+    const progress = vi.fn();
+    const pending = actions.runForEach(['alpha', 'beta', 'gamma', 'alpha'], 'start', progress);
+    expect(command).toHaveBeenCalledTimes(1);
+    expect(progress.mock.calls.at(-1)?.[0][0].status).toBe('running');
+    resolveFirst();
+    const results = await pending;
+    expect(results.map((result) => result.status)).toEqual(['succeeded', 'failed', 'succeeded']);
+    expect(command).toHaveBeenCalledTimes(3);
+    expect(consoleRun).toHaveBeenCalledTimes(3);
+    expect(progress.mock.calls.at(-1)?.[0]).toEqual(results);
+  });
+
+  it.each(['start', 'stop', 'update', 'delete'] as const)(
+    'suppresses bulk %s progress and success toasts while retaining failures',
+    async (operation) => {
+      const state = TestBed.inject(PlayroomStateService);
+      const actions = TestBed.inject(PlayroomLifecycleService);
+      const rooms = ownedRooms();
+      if (operation === 'stop')
+        rooms.forEach((room) => {
+          room.status = 'ready';
+        });
+      if (operation === 'update')
+        rooms.forEach((room) => {
+          room.outdated = true;
+        });
+      state.setRooms(rooms);
+      vi.spyOn(wailsApi, 'listPlayrooms').mockResolvedValue(
+        rooms.map((room) => ({
+          Name: room.name,
+          Owner: room.owner,
+          Status: operation === 'stop' ? 'Ready' : 'Stopped',
+          Outdated: room.outdated,
+        })),
+      );
+      const command =
+        operation === 'start'
+          ? 'startPlayroom'
+          : operation === 'stop'
+            ? 'stopPlayroom'
+            : operation === 'update'
+              ? 'updatePlayroom'
+              : 'deletePlayroom';
+      vi.spyOn(wailsApi, command)
+        .mockResolvedValueOnce(undefined)
+        .mockRejectedValueOnce(new Error('Command failed'));
+      const notify = TestBed.inject(ToastService);
+      const toast = vi.spyOn(notify, 'toast');
+      const failure = vi.spyOn(notify, 'failure').mockImplementation(() => undefined);
+      const results = await actions.runForEach(['alpha', 'beta'], operation);
+      expect(results.map((result) => result.status)).toEqual(['succeeded', 'failed']);
+      expect(toast).not.toHaveBeenCalled();
+      expect(failure).toHaveBeenCalledOnce();
+    },
+  );
+
+  it('refuses unknown owners, other owners, missing rooms, busy rooms and inapplicable actions', async () => {
+    const state = TestBed.inject(PlayroomStateService);
+    const actions = TestBed.inject(PlayroomLifecycleService);
+    const rooms = ownedRooms();
+    rooms[0].owner = '';
+    rooms[1].owner = 'other@example.test';
+    rooms[2].status = 'ready';
+    state.setRooms(rooms);
+    const start = vi.spyOn(actions, 'start');
+    const results = await actions.runForEach(['alpha', 'beta', 'gamma', 'missing'], 'start');
+    expect(results.every((result) => result.status === 'skipped' && !!result.reason)).toBe(true);
+    expect(start).not.toHaveBeenCalled();
+    state.setRooms(ownedRooms());
+    vi.spyOn(actions, 'pendingOperation').mockReturnValue('Updating');
+    expect((await actions.runForEach(['alpha'], 'delete'))[0].status).toBe('skipped');
+  });
+
+  it('rechecks ownership and stops submitting after the scope changes', async () => {
+    const state = TestBed.inject(PlayroomStateService);
+    const actions = TestBed.inject(PlayroomLifecycleService);
+    state.setRooms(ownedRooms());
+    const start = vi.spyOn(actions, 'start').mockImplementation(async () => {
+      state.setRooms(
+        state
+          .rooms()
+          .map((room) => (room.name === 'beta' ? { ...room, owner: 'other@example.test' } : room)),
+      );
+      return true;
+    });
+    expect(
+      (await actions.runForEach(['alpha', 'beta'], 'start')).map((result) => result.status),
+    ).toEqual(['succeeded', 'skipped']);
+    start.mockImplementation(async () => {
+      state.selectPlayhouse('another');
+      return true;
+    });
+    const results = await actions.runForEach(['alpha', 'gamma'], 'start');
+    expect(results.map((result) => result.status)).toEqual(['succeeded', 'skipped']);
+    expect(results[1].reason).toBe('The selection changed');
+  });
+
+  it('updates only outdated persistent rooms and deletes without force', async () => {
+    const state = TestBed.inject(PlayroomStateService);
+    const actions = TestBed.inject(PlayroomLifecycleService);
+    const rooms = ownedRooms();
+    rooms[0].outdated = true;
+    rooms[1].outdated = true;
+    rooms[1].ephemeral = true;
+    state.setRooms(rooms);
+    const update = vi.spyOn(actions, 'updateOutdated').mockResolvedValue(true);
+    const results = await actions.runForEach(['alpha', 'beta', 'gamma'], 'update');
+    expect(results.map((result) => result.status)).toEqual(['succeeded', 'skipped', 'skipped']);
+    expect(update).toHaveBeenCalledExactlyOnceWith(rooms[0], false, 'bulk');
+    const remove = vi.spyOn(actions, 'delete').mockResolvedValue(true);
+    await actions.runForEach(['alpha'], 'delete');
+    expect(remove).toHaveBeenCalledExactlyOnceWith(rooms[0], false, '5m', false, false, 'bulk');
+    const stop = vi.spyOn(actions, 'stop').mockResolvedValue(true);
+    rooms[0].status = 'ready';
+    await actions.runForEach(['alpha', 'gamma'], 'stop');
+    expect(stop).toHaveBeenCalledExactlyOnceWith(rooms[0], false, 'bulk');
+  });
+});
