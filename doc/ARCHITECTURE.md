@@ -181,6 +181,8 @@ The limited exceptions live in `backend/local` and `backend/tools`:
   the screens were last verified against.
 - Reading presence of requested environment variables, optionally through the login
   shell, and passing resolved values only in the acloud child environment.
+- Checking the public GitHub app release without user data, and Homebrew’s local
+  outdated-cask metadata; daily attempts and results live in a GUI-only cache.
 - Remembering the app theme in a GUI-specific file.
 - Remembering and applying the app's Tailscale executable path.
 - The health check's read-only probes: `~/.ssh/id_*.pub`, app bundles in

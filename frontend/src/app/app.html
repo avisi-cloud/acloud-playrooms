@@ -236,6 +236,7 @@
         @if (session.version()) {
           <span class="sidebar-brand-version">acloud&nbsp;&nbsp;{{ session.version() }}</span>
         }
+        <app-update-notices />
         <!-- Only ever set when the running acloud is too old for these screens,
              or newer than the version they were checked against. -->
         @if (session.compatibility(); as compatibility) {
@@ -457,6 +458,7 @@
        screens render nothing while they wait. -->
   <main id="main-content" tabindex="-1" class="main-panel" [class.is-loading]="shellBusy()">
     <app-schedule-notices />
+    <app-update-notices placement="page" />
     <router-outlet (activate)="focusRoutedContent()" />
   </main>
 </div>

@@ -18,5 +18,6 @@ export {
     ScheduleKind,
     ScheduleRoom,
     ScheduleSettings,
-    ToolStatus
+    ToolStatus,
+    UpdateStatus
 } from "./models.js";

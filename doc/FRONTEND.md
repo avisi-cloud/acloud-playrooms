@@ -903,3 +903,21 @@ closed palettes are ignored and failed playhouse reads are shown inline.
 
 The shared Connect/Open dialog handles Escape from its own controls, including
 when opened by the palette. A select that consumes Escape keeps the dialog open.
+
+## Version notices
+
+`UpdatesService` checks at startup without delaying setup or room loading. App
+updates appear as one compact sidebar entry below the acloud version. It opens
+an **Available updates** popover with release notes, a copyable
+`brew upgrade --cask acloud-playrooms`, and Dismiss for each update. acloud updates
+are labelled **according to Homebrew**. **What's new** is the only page-level
+update notice: it floats at the top right without shifting the header or page,
+and waits while an evening-stop reminder is visible.
+Settings → Updates → **Check for app updates** defaults to on and saves locally;
+turning it off hides app update notices and prevents GitHub checks. Homebrew
+checks remain local and read-only. `CacheState.lastSeenAppVersion` records the
+running app version: a change after the first launch shows **What's new** once,
+even when app update checks are off. Release links use the fixed public repository.
+
+Dummy mode uses `?updates=available` for both available versions. Seed
+`lastSeenAppVersion` in the dummy cache with a different version to show What's new.

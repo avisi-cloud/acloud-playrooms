@@ -620,6 +620,44 @@ export class ToolStatus {
     }
 }
 
+/**
+ * UpdateStatus contains only versions reported as newer by their release source.
+ */
+export class UpdateStatus {
+    /**
+     * Creates a new UpdateStatus instance.
+     * @param {Partial<UpdateStatus>} [$$source = {}] - The source object to create the UpdateStatus.
+     */
+    constructor($$source = {}) {
+        if (!("AppVersion" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["AppVersion"] = "";
+        }
+        if (!("AcloudVersion" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["AcloudVersion"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new UpdateStatus instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {UpdateStatus}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new UpdateStatus(/** @type {Partial<UpdateStatus>} */($$parsedSource));
+    }
+}
+
 // Private type creation functions
 const $$createType0 = ScheduleRoom.createFrom;
 const $$createType1 = $Create.Array($$createType0);
