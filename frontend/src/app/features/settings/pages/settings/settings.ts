@@ -1,3 +1,5 @@
+import { DesktopNotificationsService } from '../../../../core/services/desktop-notifications';
+import { DockBadge } from '../../../../shared/models';
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -30,6 +32,12 @@ export class SettingsPageComponent {
     { label: 'Connect', value: 'connect' },
     { label: 'Open in editor', value: 'open' },
     { label: 'Nothing', value: 'nothing' },
+  ];
+  readonly desktop = inject(DesktopNotificationsService);
+  readonly dockBadgeOptions: { label: string; value: DockBadge }[] = [
+    { label: 'Failed rooms', value: 'failed' },
+    { label: 'Running rooms', value: 'running' },
+    { label: 'Off', value: 'off' },
   ];
   readonly state = inject(PlayroomStateService);
   readonly themeOptions: { label: string; value: ThemePreference; icon: string }[] = [

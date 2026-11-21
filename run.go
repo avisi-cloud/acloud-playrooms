@@ -6,6 +6,8 @@ import (
 	"embed"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/services/dock"
+	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 
 	"github.com/avisi-cloud/acloud-playrooms/backend/local"
 )
@@ -15,11 +17,15 @@ var assets embed.FS
 
 // RunDesktopApplication blocks until the app exits and must run on the main goroutine.
 func RunDesktopApplication(appVersion string) error {
+	notificationService := notifications.New()
+	dockService := dock.New()
 	app := application.New(application.Options{
 		Name:        "Acloud Playrooms",
 		Description: "Acloud Playrooms",
 		Services: []application.Service{
-			application.NewService(&App{appVersion: appVersion}),
+			application.NewService(notificationService),
+			application.NewService(dockService),
+			application.NewService(&App{appVersion: appVersion, notifications: notificationService, dock: dockService}),
 		},
 		Assets: application.AssetOptions{
 			Handler: serveAppIndexForAngularRoutes(application.BundledAssetFileServer(assets)),
@@ -33,7 +39,7 @@ func RunDesktopApplication(appVersion string) error {
 		app.Event.EmitEvent(&application.CustomEvent{Name: "menu:action", Data: string(action)})
 	}))
 
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
+	window := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:            "Acloud Playrooms",
 		Width:            1280,
 		Height:           800,
@@ -49,6 +55,18 @@ func RunDesktopApplication(appVersion string) error {
 			},
 		},
 		URL: "/",
+	})
+
+	notificationService.OnNotificationResponse(func(result notifications.NotificationResult) {
+		if result.Error != nil || result.Response.ActionIdentifier != notifications.DefaultActionIdentifier {
+			return
+		}
+		if window != nil {
+			window.Show()
+			window.Restore()
+			window.Focus()
+		}
+		app.Event.EmitEvent(&application.CustomEvent{Name: "notification:clicked", Data: result.Response.ID})
 	})
 
 	return app.Run()
