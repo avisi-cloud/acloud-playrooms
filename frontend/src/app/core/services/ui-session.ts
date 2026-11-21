@@ -1,4 +1,5 @@
 import { Injectable, effect, inject, signal } from '@angular/core';
+import { StatusKey } from '../../shared/models';
 import { PlayroomStateService } from './playroom-state';
 
 /** Navigation and unfinished forms survive screen destruction, never an app restart.
@@ -10,8 +11,8 @@ export class UiSessionService {
   private nextDraftRevision = 0;
   readonly query = signal('');
   readonly mineOnly = signal(false);
-  readonly status = signal('');
-  readonly sort = signal('name');
+  readonly status = signal<StatusKey | ''>('');
+  readonly sort = signal<'name' | 'age' | 'status'>('name');
   scrollTop = 0;
 
   constructor() {

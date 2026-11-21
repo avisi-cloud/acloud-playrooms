@@ -70,6 +70,8 @@ export class PlayroomCardComponent implements OnDestroy {
     return this.roomSignal();
   }
 
+  @Input() pinned = false;
+  @Output() pinRoom = new EventEmitter<string>();
   @Input() currentUser = '';
   @Input() pendingOperation = '';
 

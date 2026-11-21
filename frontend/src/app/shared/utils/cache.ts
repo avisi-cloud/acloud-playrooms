@@ -9,6 +9,7 @@ export const defaultCache: CacheState = {
   preferredAction: 'nothing',
   notifications: true,
   dockBadge: 'failed',
+  pinnedRooms: {},
   lastPlayhouse: runtimeMode.dummy ? 'playhouse-platform-dev' : '',
   lastPlayroom: '',
   lastEditor: 'vscode',

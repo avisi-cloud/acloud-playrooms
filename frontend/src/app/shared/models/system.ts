@@ -11,6 +11,7 @@ export interface CacheState {
   notifications: boolean;
   dockBadge: DockBadge;
   preferredAction: PreferredAction;
+  pinnedRooms: Record<string, string[]>;
   lastPlayhouse: string;
   lastPlayroom: string;
   lastEditor: string;
