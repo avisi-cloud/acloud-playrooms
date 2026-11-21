@@ -197,6 +197,18 @@ in the local cache. Option names and their one-line explanations live in
 `shared/data/playroom-options.ts`, keyed by CLI flag, so the create, update and
 Defaults screens use the same words.
 
+The name field checks the loaded rooms in the selected playhouse while typing and
+shows **Already used in this playhouse**. Invalid names offer a **Use …** button
+that lowercases, replaces spaces and underscores with dashes, drops invalid
+characters and trims edge dashes. The CLI still validates the submitted name.
+
+**Create similar** in a card's menu or the room details menu starts Advanced on
+Basics with an empty name, replacing the restored draft. Reported image, CPU,
+memory, storage size, ports, known capability profile, additions and ephemeral
+storage override the configured defaults. Everything else keeps its defaults,
+with a **Not copied** hint naming those settings. Privileged mode starts off and
+still requires acknowledgement. Closing saves this form as the new create draft.
+
 ## State
 
 State that must outlive a screen lives in a service, because every screen is

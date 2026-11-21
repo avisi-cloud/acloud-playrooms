@@ -225,6 +225,14 @@ export class RoomDetailPageComponent implements OnDestroy {
   /** Everything that is not one of the row's primary actions. */
   readonly moreMenuItems = computed<MenuItem[]>(() => [
     {
+      label: 'Create similar',
+      icon: 'pi pi-plus',
+      command: () => {
+        const room = this.room();
+        if (room) this.roomActions?.openCreateSimilar(room);
+      },
+    },
+    {
       label: 'Delete playroom',
       icon: 'pi pi-trash',
       styleClass: 'menu-item-danger',

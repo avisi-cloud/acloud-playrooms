@@ -1,3 +1,10 @@
+<app-create-playroom-drawer
+  [(visible)]="showCreateSimilar"
+  [playhouse]="room?.playhouse ?? ''"
+  [initialForm]="initialForm"
+  [notCopiedHint]="notCopiedHint"
+/>
+
 <app-playroom-connect-dialog [(visible)]="showConnect" [room]="room" [tab]="connectTab" />
 
 <app-playroom-update-drawer [(visible)]="showUpdate" [room]="room" />

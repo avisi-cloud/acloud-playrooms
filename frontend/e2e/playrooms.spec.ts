@@ -165,6 +165,51 @@ test('remembers the Appearance theme after a reload', async ({ page }) => {
   await expect(appearance.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked();
 });
 
+test('checks taken names and applies a cleaned name while typing', async ({ page }) => {
+  await page.getByRole('button', { name: /\bCreate Playroom$/ }).click();
+  const drawer = page.getByRole('dialog', { name: 'Create playroom', exact: true });
+  const name = drawer.getByRole('textbox', { name: 'Name', exact: true });
+  await name.fill('api-development');
+  await expect(drawer.getByText('Already used in this playhouse', { exact: true })).toBeVisible();
+  await expect(drawer.getByRole('button', { name: /\bCreate$/ })).toBeDisabled();
+  await name.fill('My_API Room!');
+  await drawer.getByRole('button', { name: 'Use my-api-room', exact: true }).click();
+  await expect(name).toHaveValue('my-api-room');
+  await expect(drawer.getByRole('button', { name: /\bCreate$/ })).toBeEnabled();
+});
+
+for (const entry of ['card', 'details'] as const) {
+  test(`creates a similar playroom from ${entry} with reported settings`, async ({ page }) => {
+    if (entry === 'details') await openRoom(page, 'api-development');
+    await page.getByLabel('More actions for playroom api-development', { exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Create similar', exact: true }).click();
+    const drawer = page.getByRole('dialog', { name: 'Create playroom', exact: true });
+    await expect(drawer.getByRole('navigation', { name: 'Wizard steps' })).toBeVisible();
+    await expect(drawer.getByRole('textbox', { name: 'Name', exact: true })).toHaveValue('');
+    await expect(drawer.getByText(/Not copied:/)).toBeVisible();
+    await expect(
+      drawer.getByRole('textbox', { name: 'Select or type an image', exact: true }),
+    ).toHaveValue('opencode');
+    await drawer.getByRole('textbox', { name: 'Name', exact: true }).fill(`similar-${entry}`);
+    await drawer.getByRole('button', { name: /\bNext$/ }).click();
+    await expect(drawer.getByRole('textbox', { name: /Guaranteed CPU/ })).toHaveValue('500m');
+    await expect(drawer.getByRole('textbox', { name: 'Storage', exact: true })).toHaveValue('20Gi');
+    await drawer.getByRole('button', { name: /\bNext$/ }).click();
+    await expect(drawer.getByRole('textbox', { name: 'port 1', exact: true })).toHaveValue('3000');
+    await expect(drawer.getByRole('textbox', { name: 'port 2', exact: true })).toHaveValue(
+      '8080:80',
+    );
+    await drawer.getByRole('button', { name: /\bNext$/ }).click();
+    await drawer.getByRole('button', { name: /\bNext$/ }).click();
+    await drawer.getByRole('button', { name: /\bCreate$/ }).click();
+    await expect(drawer).toBeHidden();
+    if (entry === 'details') await page.getByRole('button', { name: /\bPlayrooms$/ }).click();
+    const room = page.getByRole('link', { name: `Open playroom similar-${entry}`, exact: true });
+    await expect(room).toBeVisible();
+    await expect(room).toContainText('opencode');
+  });
+}
+
 test('pins a room from its card and unpins it from details', async ({ page }) => {
   const rooms = page.getByRole('region', { name: 'Playrooms', exact: true });
   await page.getByRole('button', { name: 'Pin playroom review-payments', exact: true }).click();

@@ -9,7 +9,12 @@ import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { UiSessionService } from '../../../../core/services/ui-session';
 import { ToastService } from '../../../../core/services/toast';
 import { wailsApi } from '../../../../core/services/wails-api';
-import { blankCreateForm, readCache } from '../../../../shared/utils';
+import {
+  blankCreateForm,
+  createFormFromRoom,
+  listingToRoom,
+  readCache,
+} from '../../../../shared/utils';
 import { CreatePlayroomDrawerComponent } from './create-playroom-drawer';
 
 function drawer() {
@@ -77,6 +82,102 @@ describe('Create playroom drawer', () => {
     component.goToPrivilegedModeOnOptionsStep();
     expect(component.stepKey()).toBe('basics');
     expect(component.touched).toBe(true);
+  });
+
+  describe('name checks while typing', () => {
+    it('shows taken names before blur and blocks both Next and Create', () => {
+      const component = drawer();
+      component.form.playhouse = 'playhouse-demo';
+      component.form.name = 'demo';
+      const state = TestBed.inject(PlayroomStateService);
+      state.setRooms([listingToRoom({ Name: 'demo' }, 'playhouse-demo')]);
+      expect(component.touched).toBe(false);
+      expect(component.nameError()).toBe('Already used in this playhouse');
+      expect(component.canCreate()).toBe(false);
+      component.switchToAdvancedMode();
+      component.next();
+      expect(component.step).toBe(0);
+      component.form.name = 'another';
+      expect(component.nameError()).toBe('');
+      expect(component.canCreate()).toBe(true);
+    });
+
+    it('only matches the same playhouse and reacts to room-list changes', () => {
+      const component = drawer();
+      component.form.playhouse = 'playhouse-demo';
+      component.form.name = 'demo';
+      const state = TestBed.inject(PlayroomStateService);
+      state.setRooms([listingToRoom({ Name: 'demo' }, 'other')]);
+      expect(component.nameError()).toBe('');
+      state.setRooms([listingToRoom({ Name: 'demo' }, 'playhouse-demo')]);
+      expect(component.nameError()).toBe('Already used in this playhouse');
+      state.setRooms([]);
+      expect(component.nameError()).toBe('');
+    });
+
+    it('offers and applies a cleaned name, then checks whether it is taken', () => {
+      const component = drawer();
+      component.form.name = 'My_API Room!';
+      component.form.playhouse = 'ph';
+      TestBed.inject(PlayroomStateService).setRooms([listingToRoom({ Name: 'my-api-room' }, 'ph')]);
+      expect(component.nameError()).toContain('lowercase');
+      expect(component.nameSuggestion()).toBe('my-api-room');
+      component.useNameSuggestion();
+      expect(component.form.name).toBe('my-api-room');
+      expect(component.nameError()).toBe('Already used in this playhouse');
+      expect(component.nameSuggestion()).toBe('');
+    });
+
+    it('offers no invalid suggestion and waits until blur for an empty name', () => {
+      const component = drawer();
+      expect(component.nameError()).toBe('');
+      component.touched = true;
+      expect(component.nameError()).toBe('name is required');
+      for (const name of ['!!!', 'a'.repeat(51)]) {
+        component.form.name = name;
+        expect(component.nameSuggestion()).toBe('');
+        expect(component.canCreate()).toBe(false);
+      }
+    });
+  });
+
+  it('opens a supplied form in Advanced instead of a draft, preserving copied values after defaults load', async () => {
+    const defaults = await configureDefaults({
+      image: 'default-image',
+      storage: '50Gi',
+      'ssh-key': '~/.ssh/demo',
+      'read-only': 'false',
+    });
+    vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('ph');
+    TestBed.tick();
+    const session = TestBed.inject(UiSessionService);
+    session.remember('create', { form: { ...blankCreateForm('ph'), name: 'old-draft' }, step: 3 });
+    const initialForm = createFormFromRoom(
+      listingToRoom({ Name: 'source', Image: 'copied-image', CPURequest: '2' }, 'ph'),
+    );
+    const fixture = TestBed.createComponent(CreatePlayroomDrawerComponent);
+    fixture.componentRef.setInput('playhouse', 'ph');
+    fixture.componentRef.setInput('initialForm', initialForm);
+    fixture.componentRef.setInput('notCopiedHint', 'Not copied: SSH key');
+    fixture.componentRef.setInput('visible', true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const component = fixture.componentInstance;
+    expect(component.mode).toBe('advanced');
+    expect(component.step).toBe(0);
+    expect(component.form).toMatchObject({ ...blankCreateForm('ph', defaults), ...initialForm });
+    expect(document.body.textContent).toContain('Not copied: SSH key');
+    expect(component.form.acknowledgePrivileged).toBe(false);
+    component.form.name = 'new-draft';
+    component.close();
+    expect(session.recall('create')).toMatchObject({
+      form: { name: 'new-draft' },
+      notCopiedHint: 'Not copied: SSH key',
+    });
+    expect(initialForm.name).toBe('');
+    fixture.destroy();
   });
 
   describe('Easy and Advanced', () => {
@@ -156,6 +257,34 @@ describe('Create playroom drawer', () => {
 
       expect(component.toInput()).toEqual(inputInEasyMode);
     });
+  });
+
+  it('seeds unreported values from late defaults without replacing copied values', async () => {
+    let finishDefaults = (_entries: Awaited<ReturnType<typeof wailsApi.getPlayroomDefaults>>) => {};
+    vi.spyOn(wailsApi, 'getPlayroomDefaults').mockReturnValue(
+      new Promise((resolve) => {
+        finishDefaults = resolve;
+      }),
+    );
+    vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+    const fixture = TestBed.createComponent(CreatePlayroomDrawerComponent);
+    fixture.componentRef.setInput('playhouse', 'ph');
+    fixture.componentRef.setInput('initialForm', { name: '', image: 'copied-image', cpuReq: '2' });
+    fixture.componentRef.setInput('visible', true);
+    fixture.detectChanges();
+    finishDefaults([
+      { Key: 'image', Value: 'default-image', Builtin: '', Source: 'config' },
+      { Key: 'storage', Value: '50Gi', Builtin: '', Source: 'config' },
+    ]);
+    await TestBed.inject(PlayroomDefaultsService).loadConfiguredDefaultsOnce();
+    await fixture.whenStable();
+    expect(fixture.componentInstance.form).toMatchObject({
+      name: '',
+      image: 'copied-image',
+      cpuReq: '2',
+      storage: '50Gi',
+    });
+    fixture.destroy();
   });
 
   describe('Size', () => {

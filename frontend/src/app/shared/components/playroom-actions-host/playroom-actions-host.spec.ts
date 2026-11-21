@@ -60,6 +60,25 @@ describe('PlayroomActionsHostComponent', () => {
     expect(host.showUpdate).toBe(true);
   });
 
+  it('opens Create similar from reported settings and closes it with the other overlays', () => {
+    const host = create();
+    host.openUpdate(room);
+    host.openCreateSimilar(room);
+    expect(host.showUpdate).toBe(false);
+    expect(host.showCreateSimilar).toBe(true);
+    expect(host.isOpen()).toBe(true);
+    expect(host.initialForm).toMatchObject({
+      name: '',
+      playhouse: room.playhouse,
+      image: room.image,
+      privileged: false,
+      acknowledgePrivileged: false,
+    });
+    expect(host.notCopiedHint).toContain('Not copied:');
+    host.close();
+    expect(host.isOpen()).toBe(false);
+  });
+
   it('resets and maps every delete option on open', () => {
     const host = create();
     host.deleteNoWait = true;

@@ -267,6 +267,11 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
     if (room) this.roomActions?.openConnect(room, tab);
   }
 
+  openCreateSimilar(name: string): void {
+    const room = this.findRoomByName(name);
+    if (room) this.roomActions?.openCreateSimilar(room);
+  }
+
   openUpdate(name: string): void {
     if (this.actions.pendingOperation(name)) return;
     const room = this.findRoomByName(name);

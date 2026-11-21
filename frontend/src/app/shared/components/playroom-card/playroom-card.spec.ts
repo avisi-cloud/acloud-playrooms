@@ -162,3 +162,18 @@ describe('PlayroomCardComponent', () => {
     ).toBe('true');
   });
 });
+
+describe('Create similar card action', () => {
+  it('emits the source room name from the overflow menu', () => {
+    const fixture = TestBed.createComponent(PlayroomCardComponent);
+    fixture.componentRef.setInput('room', room);
+    const component = fixture.componentInstance;
+    const emitted = vi.fn();
+    component.createSimilarRoom.subscribe(emitted);
+    component
+      .menuItems()
+      .find((item) => item.label === 'Create similar')
+      ?.command?.({});
+    expect(emitted).toHaveBeenCalledWith(room.name);
+  });
+});
