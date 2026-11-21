@@ -6,6 +6,8 @@ export const CACHE_KEY = runtimeMode.dummy
   : 'acloud-playroom-gui-cache';
 
 export const defaultCache: CacheState = {
+  playroomView: 'grid',
+  groupByOwner: false,
   preferredAction: 'nothing',
   readVariablesFromLoginShell: false,
   notifications: true,
