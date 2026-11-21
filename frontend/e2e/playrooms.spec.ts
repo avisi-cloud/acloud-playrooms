@@ -288,3 +288,20 @@ test('pins a room from its card and unpins it from details', async ({ page }) =>
     'Open playroom api-development',
   );
 });
+
+test('reads the list again by itself and says when it was last read', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('/rooms');
+  const header = page.locator('header.page-header');
+  const updated = header.getByText(/^Updated /);
+  await expect(updated).toHaveText('Updated just now');
+  await page.clock.runFor(7_000);
+  await expect(updated).toHaveText(/^Updated [5-8]s ago$/);
+  // integration-tests is still creating, so the list reads itself within ten seconds.
+  await page.clock.runFor(4_000);
+  await expect(updated).toHaveText('Updated just now');
+  await page.clock.runFor(7_000);
+  await expect(updated).toHaveText(/^Updated [5-8]s ago$/);
+  await header.getByRole('button', { name: /Refresh$/ }).click();
+  await expect(updated).toHaveText('Updated just now');
+});
