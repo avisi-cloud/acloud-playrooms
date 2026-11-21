@@ -78,6 +78,25 @@
           <p class="field-hint">Shows the animated robot in the sidebar.</p>
         </div>
       </section>
+      <section class="room-card-settings" aria-labelledby="room-cards-title">
+        <h2 class="settings-section-title" id="room-cards-title">Room cards</h2>
+        <p class="settings-section-description">What a double-click on a room card does.</p>
+        <div class="field-group">
+          <label class="field-label" for="preferred-action">Preferred action</label>
+          <p-select
+            inputId="preferred-action"
+            [options]="preferredActionOptions"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="state.preferredAction()"
+            (ngModelChange)="state.setPreferredAction($event)"
+            aria-describedby="preferred-action-hint"
+          />
+          <p class="field-hint" id="preferred-action-hint">
+            Double-click a ready room card to run this action. Single click opens details.
+          </p>
+        </div>
+      </section>
       <h2 class="settings-section-title">Tool paths</h2>
       <p class="settings-section-description">
         Detected automatically. Set a path when you want to use a specific installation.

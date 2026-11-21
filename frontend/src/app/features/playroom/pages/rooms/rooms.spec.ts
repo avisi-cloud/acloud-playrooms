@@ -158,4 +158,28 @@ describe('RoomsPageComponent', () => {
 
     expect(playhousesRead()).toEqual(['playhouse-a']);
   });
+  it('routes each preferred action through the existing connect and editor handlers', async () => {
+    const fixture = TestBed.createComponent(RoomsPageComponent);
+    const component = fixture.componentInstance;
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('ph');
+    await fixture.whenStable();
+    const { listingToRoom } = await import('../../../../shared/utils');
+    state.setRooms([listingToRoom({ Name: 'demo', Status: 'Ready' }, 'ph')]);
+    const openConnect = vi.spyOn(component, 'openConnect').mockImplementation(() => {});
+    state.setPreferredAction('connect');
+    component.runPreferredAction('demo');
+    expect(openConnect).toHaveBeenLastCalledWith('demo', 'connect');
+    state.setPreferredAction('open');
+    component.runPreferredAction('demo');
+    expect(openConnect).toHaveBeenLastCalledWith('demo', 'open');
+    openConnect.mockClear();
+    state.setPreferredAction('nothing');
+    component.runPreferredAction('demo');
+    state.setPreferredAction('connect');
+    state.setRooms([listingToRoom({ Name: 'demo', Status: 'Stopped' }, 'ph')]);
+    component.runPreferredAction('demo');
+    component.runPreferredAction('missing');
+    expect(openConnect).not.toHaveBeenCalled();
+  });
 });

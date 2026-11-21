@@ -171,6 +171,15 @@
             }
           }
 
+          <p-button
+            [label]="detailsCopied() ? 'Copied' : 'Copy details'"
+            icon="pi pi-copy"
+            size="small"
+            severity="secondary"
+            [outlined]="true"
+            (click)="copyDetails()"
+          />
+
           <!-- Delete lives behind the overflow, not as a bare icon at the far
                end of a full-width bar next to routine actions. -->
           <div class="actions-end">
@@ -216,14 +225,60 @@
                 }
               </div>
             </div>
+            <div class="connection-command">
+              <div class="connection-command-head">
+                <span>SSH command</span>
+                <p-button
+                  [label]="sshCopied() ? 'Copied' : 'Copy'"
+                  icon="pi pi-copy"
+                  severity="secondary"
+                  [text]="true"
+                  size="small"
+                  ariaLabel="Copy SSH command"
+                  (click)="copySshCommand()"
+                />
+              </div>
+              <code class="connection-command-text ssh-command-text"
+                >ssh {{ sshAlias(roomName()) }}</code
+              >
+              <p class="section-note">Works after the first Connect or Open.</p>
+            </div>
             @if (room()!.portForwards; as forwards) {
+              @if (forwards.length) {
+                <p class="ports-label">Forwarded ports</p>
+              }
               @for (forward of forwards; track $index) {
                 <div class="list-row port-row">
-                  <span>Port {{ forward.Port }}</span
-                  ><strong>→ Container port {{ forward.TargetPort }}</strong>
+                  <div class="port-description">
+                    @if (forwardedPortUrl(room()!, forward.Port); as url) {
+                      <a
+                        [href]="url"
+                        (click)="openPort($event, forward.Port)"
+                        [attr.aria-label]="'Open port ' + forward.Port + ' in browser'"
+                        >Port {{ forward.Port }} → container port {{ forward.TargetPort }}
+                        <i class="pi pi-external-link" aria-hidden="true"></i
+                      ></a>
+                    } @else {
+                      <span>Port {{ forward.Port }} → container port {{ forward.TargetPort }}</span>
+                    }
+                  </div>
+                  <p-button
+                    [label]="copiedPort() === forward.Port ? 'Copied' : 'Copy'"
+                    icon="pi pi-copy"
+                    severity="secondary"
+                    [text]="true"
+                    size="small"
+                    [ariaLabel]="'Copy port ' + forward.Port"
+                    (click)="copyPort(forward.Port)"
+                  />
                 </div>
               } @empty {
                 <div class="list-row"><span>Forwarded ports</span><strong>None</strong></div>
+              }
+              @if (forwards.length && !hasTailnetHost(room()!)) {
+                <p class="section-note section-note--padded ports-hint">
+                  Reachable on the tailnet only.
+                </p>
               }
             } @else {
               <div class="list-row">

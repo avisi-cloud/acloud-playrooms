@@ -86,6 +86,7 @@ const binaryStatus = {
 
 // An exhaustive adapter: dummy mode never imports a live backend implementation at runtime.
 const simulatedApi: typeof liveApi = {
+  getAppVersion: () => read('0.29.1+dummy'),
   exportActivityLog: async (content: string): Promise<void> => {
     const url = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));
     const link = document.createElement('a');

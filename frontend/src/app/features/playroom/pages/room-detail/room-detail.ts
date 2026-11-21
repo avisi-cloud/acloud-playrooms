@@ -18,6 +18,7 @@ import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
 import { TagModule } from 'primeng/tag';
+import { AcloudSessionService } from '../../../../core/services/acloud-session';
 import { ToastService } from '../../../../core/services/toast';
 import { PlayroomLifecycleService } from '../../../../core/services/playroom-lifecycle';
 import { PageLoadingService } from '../../../../core/services/page-loading';
@@ -29,6 +30,10 @@ import { STATUS } from '../../../../shared/data';
 import { ConnectTab, Playroom } from '../../../../shared/models';
 import {
   Severity,
+  sshAlias,
+  forwardedPortUrl,
+  hasTailnetHost,
+  describeRoomAsText,
   describeOutdated,
   renderCapabilities,
   formatAge,
@@ -58,6 +63,53 @@ export class RoomDetailPageComponent implements OnDestroy {
   private readonly console = inject(CliConsoleService);
   readonly state = inject(PlayroomStateService);
   @ViewChild('roomActions') private roomActions?: PlayroomActionsHostComponent;
+
+  private readonly session = inject(AcloudSessionService);
+  readonly sshAlias = sshAlias;
+  readonly forwardedPortUrl = forwardedPortUrl;
+  readonly hasTailnetHost = hasTailnetHost;
+  readonly sshCopied = signal(false);
+  readonly detailsCopied = signal(false);
+  readonly copiedPort = signal<number | null>(null);
+
+  async copySshCommand(): Promise<void> {
+    const room = this.room();
+    if (!room) return;
+    await copyToClipboard(`ssh ${sshAlias(room.name)}`);
+    this.sshCopied.set(true);
+  }
+
+  async copyDetails(): Promise<void> {
+    const room = this.room();
+    if (!room) return;
+    try {
+      const app = await wailsApi.getAppVersion();
+      await copyToClipboard(describeRoomAsText(room, { app, acloud: this.session.version() }));
+      this.detailsCopied.set(true);
+    } catch (error) {
+      this.notify.failure('Could not copy room details', error);
+    }
+  }
+
+  async copyPort(port: number): Promise<void> {
+    const room = this.room();
+    if (!room) return;
+    await copyToClipboard(forwardedPortUrl(room, port) || String(port));
+    this.copiedPort.set(port);
+  }
+
+  async openPort(event: MouseEvent, port: number): Promise<void> {
+    event.preventDefault();
+    const room = this.room();
+    if (!room) return;
+    const url = forwardedPortUrl(room, port);
+    if (!url) return;
+    try {
+      await wailsApi.openUrlInDefaultBrowser(url);
+    } catch (error) {
+      this.notify.failure('Could not open forwarded port', error);
+    }
+  }
 
   readonly roomName = signal('');
   readonly describeOutdated = describeOutdated;
@@ -122,6 +174,9 @@ export class RoomDetailPageComponent implements OnDestroy {
       this.connectionCommand.set('');
       this.connectionCommandFailure.set('');
       this.commandCopied.set(false);
+      this.sshCopied.set(false);
+      this.detailsCopied.set(false);
+      this.copiedPort.set(null);
       if (!target.name || !target.playhouse) return;
       let active = true;
       onCleanup(() => {

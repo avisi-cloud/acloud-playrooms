@@ -187,6 +187,13 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
       .find((room) => room.name === name && room.playhouse === this.state.playhouse());
   }
 
+  runPreferredAction(name: string): void {
+    const room = this.findRoomByName(name);
+    if (!room || room.status !== 'ready' || this.actions.pendingOperation(name)) return;
+    const preferredAction = this.state.preferredAction();
+    if (preferredAction !== 'nothing') this.openConnect(name, preferredAction);
+  }
+
   openRoom(name: string): void {
     void this.router.navigate(['/rooms', name]);
   }

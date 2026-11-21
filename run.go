@@ -14,12 +14,12 @@ import (
 var assets embed.FS
 
 // RunDesktopApplication blocks until the app exits and must run on the main goroutine.
-func RunDesktopApplication() error {
+func RunDesktopApplication(appVersion string) error {
 	app := application.New(application.Options{
 		Name:        "Acloud Playrooms",
 		Description: "Acloud Playrooms",
 		Services: []application.Service{
-			application.NewService(&App{}),
+			application.NewService(&App{appVersion: appVersion}),
 		},
 		Assets: application.AssetOptions{
 			Handler: serveAppIndexForAngularRoutes(application.BundledAssetFileServer(assets)),

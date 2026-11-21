@@ -1,6 +1,15 @@
-import { expect, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
 // Icon glyphs are included in accessible names, so match action text at the end.
+
+// Click the room name: the middle of a card can hold one of its action buttons.
+async function openRoom(page: Page, name: string) {
+  await page
+    .getByRole('link', { name: `Open playroom ${name}`, exact: true })
+    .locator('.card-name')
+    .click();
+  await expect(page).toHaveURL(new RegExp(`/rooms/.+`));
+}
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/rooms');
@@ -43,7 +52,7 @@ test('shows fixture statuses and narrows playrooms by search and status', async 
 });
 
 test('opens a room and returns to the overview', async ({ page }) => {
-  await page.getByRole('link', { name: 'Open playroom api-development', exact: true }).click();
+  await openRoom(page, 'api-development');
   await expect(page).toHaveURL('/rooms/api-development');
   await expect(page.getByRole('heading', { level: 1, name: 'api-development.' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Connection', exact: true })).toBeVisible();
@@ -69,14 +78,14 @@ test('creates a simulated playroom in Easy mode', async ({ page }) => {
 });
 
 test('stops and starts a playroom', async ({ page }) => {
-  await page.getByRole('link', { name: 'Open playroom api-development', exact: true }).click();
+  await openRoom(page, 'api-development');
   await page.getByRole('button', { name: /\bStop$/ }).click();
   await expect(page.getByRole('button', { name: /\bStart$/ })).toBeVisible();
   await page.getByRole('button', { name: /\bPlayrooms$/ }).click();
   await expect(
     page.getByRole('link', { name: 'Open playroom api-development', exact: true }),
   ).toContainText('Stopped');
-  await page.getByRole('link', { name: 'Open playroom api-development', exact: true }).click();
+  await openRoom(page, 'api-development');
   await page.getByRole('button', { name: /\bStart$/ }).click();
   await expect(page.getByRole('button', { name: /\bStop$/ })).toBeVisible();
   await page.getByRole('button', { name: /\bPlayrooms$/ }).click();
@@ -86,7 +95,7 @@ test('stops and starts a playroom', async ({ page }) => {
 });
 
 test('requires the matching name before deleting a playroom', async ({ page }) => {
-  await page.getByRole('link', { name: 'Open playroom api-development', exact: true }).click();
+  await openRoom(page, 'api-development');
   await page.getByLabel('More actions for playroom api-development', { exact: true }).click();
   await page.getByRole('menuitem', { name: 'Delete playroom', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: 'Delete api-development', exact: true });

@@ -193,4 +193,26 @@ describe('Settings page', () => {
     fixture.componentInstance.runSetupAgain();
     expect(navigate).toHaveBeenCalledWith(['/setup']);
   });
+  it('saves and restores the preferred action next to tool settings', async () => {
+    updateCache({ preferredAction: 'open' });
+    const fixture = TestBed.createComponent(SettingsPageComponent);
+    await fixture.whenStable();
+    expect(fixture.nativeElement.querySelector('.room-card-settings h2').textContent).toBe(
+      'Room cards',
+    );
+    expect(
+      fixture.nativeElement.querySelector('.room-card-settings .settings-section-description')
+        .textContent,
+    ).toBe('What a double-click on a room card does.');
+    expect(fixture.componentInstance.state.preferredAction()).toBe('open');
+    const select = fixture.nativeElement.querySelector('#preferred-action') as HTMLElement;
+    expect(select).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('label[for="preferred-action"]').textContent).toBe(
+      'Preferred action',
+    );
+    for (const action of ['connect', 'open', 'nothing'] as const) {
+      fixture.componentInstance.state.setPreferredAction(action);
+      expect(readCache().preferredAction).toBe(action);
+    }
+  });
 });

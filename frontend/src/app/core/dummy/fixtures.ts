@@ -78,7 +78,7 @@ function room(name: string, extra: Partial<ListingDto> = {}): ListingDto {
 
 export const dummyRooms: Record<string, ListingDto[]> = {
   'development/platform/playhouse-platform-dev': [
-    room('api-development'),
+    room('api-development', { SSHHost: 'api-development.example.ts.net' }),
     room('frontend-redesign', { Image: 'claude-code', DiskSize: '40Gi', Outdated: true }),
     room('review-payments', {
       Owner: 'sam@example.test',

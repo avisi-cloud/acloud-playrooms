@@ -18,6 +18,7 @@ import (
 // App exposes backend operations to the frontend through Wails bindings.
 type App struct {
 	applicationContext context.Context
+	appVersion         string
 }
 
 // ServiceStartup connects command events. The standalone app reads acloud state
@@ -46,6 +47,10 @@ func (app *App) commandContext() context.Context {
 		return context.Background()
 	}
 	return app.applicationContext
+}
+
+func (app *App) GetAppVersion() string {
+	return app.appVersion
 }
 
 func (app *App) GetAcloudVersion() string {

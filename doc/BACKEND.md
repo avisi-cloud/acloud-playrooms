@@ -476,3 +476,7 @@ Adding a _flag_ to an existing command is shorter; that checklist is in
 Step 5 is the one that is easy to skip and impossible for the tests to catch.
 The Play dialog wired every field it had, passed everything, and shipped with no
 button that opened it.
+
+`App.GetAppVersion` returns the version supplied at desktop launch. Release builds
+use the injected version; local launches log their use of the existing configured
+development version. Room details use this metadata in Copy details.

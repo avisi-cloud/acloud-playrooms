@@ -3,7 +3,10 @@ export type ThemePreference = Theme | 'system';
 /** Easy is one screen with name, image and size; Advanced is the full step-by-step wizard. */
 export type CreatePlayroomMode = 'easy' | 'advanced';
 
+export type PreferredAction = 'connect' | 'open' | 'nothing';
+
 export interface CacheState {
+  preferredAction: PreferredAction;
   lastPlayhouse: string;
   lastPlayroom: string;
   lastEditor: string;

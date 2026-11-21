@@ -9,9 +9,7 @@ import (
 	playrooms "github.com/avisi-cloud/acloud-playrooms"
 )
 
-// Release builds inject this metadata. The standalone app currently uses
-// build/config.yml for its own version and reads the installed acloud version
-// from `acloud version`.
+// Release builds inject metadata; local launches use the configured development version.
 var (
 	version = ""
 	commit  = "unknown"
@@ -20,7 +18,11 @@ var (
 )
 
 func main() {
-	if err := playrooms.RunDesktopApplication(); err != nil {
+	if version == "" {
+		version = playrooms.DevelopmentVersion()
+		log.Printf("App version not injected; using development version %s", version)
+	}
+	if err := playrooms.RunDesktopApplication(version); err != nil {
 		log.Println("Error:", err.Error())
 		os.Exit(1)
 	}

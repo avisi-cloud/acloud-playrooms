@@ -78,6 +78,11 @@ describe('Playroom details', () => {
     expect(
       [...root.querySelectorAll('.section-title')].map((heading) => heading.textContent?.trim()),
     ).toEqual(['Connection', 'Resources', 'Storage & security', 'Metadata']);
+    expect(
+      [...root.querySelectorAll('.actions-row p-button')]
+        .slice(0, 5)
+        .map((button) => button.textContent?.trim()),
+    ).toEqual(['Connect', 'Open in editor', 'Stop', 'Edit', 'Copy details']);
     expect(root.querySelectorAll('.port-row')).toHaveLength(2);
     expect(root.querySelector('.port-row')?.textContent).toContain('8080');
     expect(root.querySelector('time')?.getAttribute('datetime')).toBe('2026-10-23T09:00:00.000Z');
@@ -85,9 +90,9 @@ describe('Playroom details', () => {
       'wiped whenever this playroom restarts',
     );
     expect(root.textContent).toContain('not live usage');
-    expect(root.querySelector('.connection-command-text')?.textContent).toContain(
-      '--forward-agent=false',
-    );
+    expect(
+      root.querySelector('.connection-command-text:not(.ssh-command-text)')?.textContent,
+    ).toContain('--forward-agent=false');
   });
 
   it('shows a reported failure without pretending it is still provisioning', async () => {
@@ -147,5 +152,70 @@ describe('Playroom details', () => {
     await fixture.whenStable();
     expect(currentCommand).not.toBe('');
     expect(fixture.componentInstance.connectionCommand()).toBe(currentCommand);
+  });
+  it('opens and copies the exposed tailnet port, never the container port', async () => {
+    const open = vi.spyOn(wailsApi, 'openUrlInDefaultBrowser').mockResolvedValue();
+    const copy = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { userAgent: navigator.userAgent, clipboard: { writeText: copy } });
+    try {
+      const fixture = await render({ SSHHost: 'demo.example.ts.net' });
+      const link = fixture.nativeElement.querySelector('.port-row a') as HTMLAnchorElement;
+      expect(link.getAttribute('href')).toBe('http://demo.example.ts.net:80');
+      expect(link.textContent).toContain('Port 80 → container port 8080');
+      expect(fixture.nativeElement.querySelector('.ports-hint')).toBeNull();
+      expect(fixture.nativeElement.querySelectorAll('.ports-label')).toHaveLength(1);
+      link.click();
+      await fixture.whenStable();
+      expect(open).toHaveBeenCalledWith('http://demo.example.ts.net:80');
+      await fixture.componentInstance.copyPort(80);
+      expect(copy).toHaveBeenCalledWith('http://demo.example.ts.net:80');
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.port-row').textContent).toContain('Copied');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('keeps ports without a reported tailnet host unlinked and copies their number', async () => {
+    const copy = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { userAgent: navigator.userAgent, clipboard: { writeText: copy } });
+    try {
+      const fixture = await render();
+      expect(fixture.nativeElement.querySelector('.port-row a')).toBeNull();
+      const root = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector('.port-row')?.textContent).toContain(
+        'Port 80 → container port 8080',
+      );
+      expect(root.querySelector('.port-row .section-note')).toBeNull();
+      expect(root.querySelectorAll('.ports-hint')).toHaveLength(1);
+      expect(root.querySelector('.ports-hint')?.textContent?.trim()).toBe(
+        'Reachable on the tailnet only.',
+      );
+      await fixture.componentInstance.copyPort(80);
+      expect(copy).toHaveBeenCalledWith('80');
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('copies the SSH alias and details with launch metadata and the sidebar acloud version', async () => {
+    vi.spyOn(wailsApi, 'getAppVersion').mockResolvedValue('0.29.1');
+    const { AcloudSessionService } = await import('../../../../core/services/acloud-session');
+    vi.spyOn(TestBed.inject(AcloudSessionService), 'version').mockReturnValue('0.40.0');
+    const copy = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { userAgent: navigator.userAgent, clipboard: { writeText: copy } });
+    try {
+      const fixture = await render();
+      await fixture.componentInstance.copySshCommand();
+      expect(copy).toHaveBeenLastCalledWith('ssh playroom-demo');
+      await fixture.componentInstance.copyDetails();
+      expect(copy).toHaveBeenLastCalledWith(
+        expect.stringContaining('App version: 0.29.1\nAcloud version: 0.40.0'),
+      );
+      expect(fixture.componentInstance.sshCopied()).toBe(true);
+      expect(fixture.componentInstance.detailsCopied()).toBe(true);
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 });

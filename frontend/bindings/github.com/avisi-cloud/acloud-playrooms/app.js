@@ -175,6 +175,13 @@ export function GetAcloudVersion() {
 /**
  * @returns {$CancellablePromise<string>}
  */
+export function GetAppVersion() {
+    return $Call.ByID(1725904756);
+}
+
+/**
+ * @returns {$CancellablePromise<string>}
+ */
 export function GetCachedPlayhouse() {
     return $Call.ByID(2861882043);
 }

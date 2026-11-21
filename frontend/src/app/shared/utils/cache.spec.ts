@@ -39,3 +39,18 @@ describe('AME Robot preference', () => {
     expect(readCache().ameRobot).toBe(false);
   });
 });
+
+describe('preferred action', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+  it('defaults to Nothing for new and old caches', () => {
+    expect(readCache().preferredAction).toBe('nothing');
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ lastTheme: 'light' }));
+    expect(readCache().preferredAction).toBe('nothing');
+  });
+  it('retains the preferred action when another setting changes', () => {
+    updateCache({ preferredAction: 'open' });
+    updateCache({ lastTheme: 'system' });
+    expect(readCache().preferredAction).toBe('open');
+  });
+});

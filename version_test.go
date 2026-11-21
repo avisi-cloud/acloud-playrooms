@@ -22,3 +22,12 @@ func TestDevelopmentVersionFromConfiguration(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAppVersionUsesLaunchMetadata(t *testing.T) {
+	for _, version := range []string{"0.29.1", "0.28.0+dev", ""} {
+		app := &App{appVersion: version}
+		if actual := app.GetAppVersion(); actual != version {
+			t.Fatalf("version = %q, want %q", actual, version)
+		}
+	}
+}
