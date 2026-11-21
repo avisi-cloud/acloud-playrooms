@@ -1,4 +1,5 @@
-import { ListingDto, Playroom, PortForwardDto, StatusKey } from '../models/playroom';
+import { CAPABILITIES } from '../data/images';
+import { CreateForm, ListingDto, Playroom, PortForwardDto, StatusKey } from '../models/playroom';
 
 const FAILED_STATES = new Set([
   'CrashLoopBackOff',
@@ -80,4 +81,47 @@ export function renderPortForwards(ports: PortForwardDto[] | null | undefined): 
         : `${forward.Port} → ${forward.TargetPort}`,
     )
     .join(', ');
+}
+
+/** Only reported settings override the new room's configured defaults. */
+export function createFormFromRoom(room: Playroom): Partial<CreateForm> {
+  const form: Partial<CreateForm> = {
+    name: '',
+    playhouse: room.playhouse,
+    privileged: false,
+    acknowledgePrivileged: false,
+  };
+  if (room.image) form.image = room.image;
+  if (room.disk) form.storage = room.disk;
+  if (room.cpuReq) form.cpuReq = room.cpuReq;
+  if (room.cpuLim) form.cpuLim = room.cpuLim;
+  if (room.memReq) form.memReq = room.memReq;
+  if (room.memLim) form.memLim = room.memLim;
+  if (room.portForwards !== undefined) {
+    form.ports = room.portForwards.map((forward) =>
+      forward.Port === forward.TargetPort
+        ? `${forward.Port}`
+        : `${forward.Port}:${forward.TargetPort}`,
+    );
+    if (!form.ports.length) form.ports = [''];
+  }
+  const profile = CAPABILITIES.find((profile) => profile.id === room.capabilityProfile);
+  if (profile) form.capabilities = profile.id;
+  if (room.capabilityAdditions.length) form.capAdd = [...room.capabilityAdditions];
+  if (room.diskType === 'ephemeral' || room.diskType === 'persistent') {
+    form.ephemeral = room.diskType === 'ephemeral';
+  }
+  return form;
+}
+
+export function settingsNotCopiedFromRoom(room: Playroom): string {
+  const form = createFormFromRoom(room);
+  const missing: string[] = [];
+  if (!form.image) missing.push('image');
+  if (!form.storage) missing.push('storage size');
+  if (!form.cpuReq || !form.cpuLim || !form.memReq || !form.memLim)
+    missing.push('unreported resources');
+  if (!form.ports) missing.push('ports');
+  if (!form.capabilities) missing.push('capability profile');
+  return `Not copied: ${[...missing, 'SSH key', 'environment', 'Git', 'copies', 'connectivity', 'system options', 'run options'].join(', ')}. These use defaults; privileged mode requires acknowledgement.`;
 }

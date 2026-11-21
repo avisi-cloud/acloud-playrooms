@@ -137,4 +137,43 @@ describe('PlayroomCardComponent', () => {
       vi.unstubAllGlobals();
     }
   });
+  it('emits pin changes without opening the card and exposes its pressed state', async () => {
+    vi.useFakeTimers();
+    const fixture = TestBed.createComponent(PlayroomCardComponent);
+    fixture.componentInstance.room = { ...room, status: 'stopped' };
+    const pin = vi.fn();
+    const open = vi.fn();
+    fixture.componentInstance.pinRoom.subscribe(pin);
+    fixture.componentInstance.openRoom.subscribe(open);
+    fixture.detectChanges();
+    (
+      fixture.nativeElement.querySelector('[aria-label="Pin playroom demo"]') as HTMLButtonElement
+    ).click();
+    await vi.advanceTimersByTimeAsync(500);
+    expect(pin).toHaveBeenCalledExactlyOnceWith('demo');
+    expect(open).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('article.stopped')).not.toBeNull();
+    fixture.componentRef.setInput('pinned', true);
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement
+        .querySelector('[aria-label="Unpin playroom demo"]')
+        .getAttribute('aria-pressed'),
+    ).toBe('true');
+  });
+});
+
+describe('Create similar card action', () => {
+  it('emits the source room name from the overflow menu', () => {
+    const fixture = TestBed.createComponent(PlayroomCardComponent);
+    fixture.componentRef.setInput('room', room);
+    const component = fixture.componentInstance;
+    const emitted = vi.fn();
+    component.createSimilarRoom.subscribe(emitted);
+    component
+      .menuItems()
+      .find((item) => item.label === 'Create similar')
+      ?.command?.({});
+    expect(emitted).toHaveBeenCalledWith(room.name);
+  });
 });

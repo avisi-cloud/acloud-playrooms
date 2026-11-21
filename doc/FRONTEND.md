@@ -168,6 +168,29 @@ Each simulates one failure per page load; fixes and allowlist updates stay simul
 `describeError()` is the same reading collapsed to one line, for the inline
 error states that have room for one.
 
+### Desktop notifications and Dock badge
+
+Settings → Notifications saves two device preferences: **Desktop notifications**
+(on by default) and **Dock badge** (Failed rooms by default, Running rooms, or Off).
+Room create, start, stop and delete, plus playhouse setup and update, notify on
+success or failure only while the window is unfocused. macOS permission is asked
+when the first notification would be sent; denial is not repeatedly prompted.
+Native failures are logged without changing command results or in-app history.
+
+Commands that wait notify when they return. Room start and no-wait create/delete
+wait for the room list to report Ready, Failed, or deletion. Each submitted task
+notifies once; unrelated polled transitions do not notify. A scope or playhouse
+change stops watching pending no-wait tasks, and a new task replaces the previous
+watch for that room. Notifications already delivered retain their original selection.
+Clicking brings the app forward and opens the room only if that selection is
+still current. Otherwise, including a previous app session or a playhouse task,
+it opens the Playrooms overview without switching scope.
+
+The Dock badge counts reported Failed rooms, or Ready and No host rooms for
+Running rooms, in the loaded current playhouse. Zero and Off remove it. Updates
+are debounced by 150 ms; selection changes clear the previous badge immediately.
+Dummy mode logs notification requests and badge counts instead of using macOS.
+
 Before this, every call site passed `String(error)` — which prefixes a thrown
 error with its class name, so the JSON a rejected binding call carries stopped
 looking like JSON, and the whole blob
@@ -215,6 +238,18 @@ differ from your defaults instead of hiding them. The chosen mode is remembered
 in the local cache. Option names and their one-line explanations live in
 `shared/data/playroom-options.ts`, keyed by CLI flag, so the create, update and
 Defaults screens use the same words.
+
+The name field checks the loaded rooms in the selected playhouse while typing and
+shows **Already used in this playhouse**. Invalid names offer a **Use …** button
+that lowercases, replaces spaces and underscores with dashes, drops invalid
+characters and trims edge dashes. The CLI still validates the submitted name.
+
+**Create similar** in a card's menu or the room details menu starts Advanced on
+Basics with an empty name, replacing the restored draft. Reported image, CPU,
+memory, storage size, ports, known capability profile, additions and ephemeral
+storage override the configured defaults. Everything else keeps its defaults,
+with a **Not copied** hint naming those settings. Privileged mode starts off and
+still requires acknowledgement. Closing saves this form as the new create draft.
 
 ## State
 
@@ -307,7 +342,7 @@ existed (no `setupCompleted` key) with a playhouse counts as completed, so
 upgrades skip it.
 
 `shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal,
-theme, background grain, AME Robot, create-playroom mode and `setupCompleted` to localStorage
+theme, background grain, AME Robot, create-playroom mode, pinned rooms and `setupCompleted` to localStorage
 under `acloud-playroom-gui-cache`. Background grain defaults to on; Settings →
 Appearance applies changes immediately to the outer background and content panel.
 The theme setting offers horizontal radio tiles for Light, Dark and System. System follows live changes to
@@ -346,7 +381,21 @@ hierarchy behave unlike the two above it.
 
 Switching writes to `~/.acloud.yaml`, so it moves the user's terminal too.
 
+The overview uses one active status chip, with counts after Search and Mine but
+before the status filter. Only matching statuses appear, plus an active zero-count
+status so the current filter remains visible. Search matches name, owner, image
+and both forwarded port numbers. Stars on cards and details pin rooms per
+playhouse; pins come first within every sort and persist across launches. A
+successful list load drops pins for rooms no longer reported, while failed or
+pending reads leave them intact. Old caches start with no pins. Stopped cards
+use quieter theme surfaces and neutral text and actions without reduced opacity.
+
 ## Playroom status
+
+The Playrooms and room detail headers share an organisation → playhouse breadcrumb;
+details add the room name. It reads `ScopeService` and `PlayroomStateService` directly.
+The playhouse button opens the same chooser as the sidebar. Names truncate within
+the header, with full names in tooltips available on hover and keyboard focus.
 
 `mapStatus()` in `shared/utils/playroom-mappers.ts` folds backend status strings
 into the GUI's status keys, and `shared/data/status.ts` holds their labels,

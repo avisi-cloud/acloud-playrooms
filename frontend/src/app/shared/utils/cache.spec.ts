@@ -54,3 +54,18 @@ describe('preferred action', () => {
     expect(readCache().preferredAction).toBe('open');
   });
 });
+
+describe('pinned rooms cache', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+  it('defaults to no pins for new and old caches', () => {
+    expect(readCache().pinnedRooms).toEqual({});
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ lastTheme: 'light' }));
+    expect(readCache().pinnedRooms).toEqual({});
+  });
+  it('keeps pins when other preferences change', () => {
+    updateCache({ pinnedRooms: { 'playhouse-platform-dev': ['demo'] } });
+    updateCache({ lastTheme: 'system' });
+    expect(readCache().pinnedRooms).toEqual({ 'playhouse-platform-dev': ['demo'] });
+  });
+});

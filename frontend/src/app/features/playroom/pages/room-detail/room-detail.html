@@ -8,6 +8,7 @@
       <div class="page-header-divider"></div>
       <div class="page-header-stack">
         <h1 class="page-header-title">{{ roomName() }}<span class="punt">.</span></h1>
+        <app-playroom-breadcrumb [roomName]="roomName()" />
         @if (room(); as room) {
           <p class="page-header-sub">
             {{ ownerLabel() }} · {{ room.playhouse }} · {{ ageLabel() }}
@@ -27,6 +28,21 @@
         (click)="refreshRooms()"
       />
       @if (room(); as current) {
+        <p-button
+          [label]="state.isPinned(current.playhouse, current.name) ? 'Unpin' : 'Pin'"
+          [icon]="
+            state.isPinned(current.playhouse, current.name) ? 'pi pi-star-fill' : 'pi pi-star'
+          "
+          [ariaLabel]="
+            (state.isPinned(current.playhouse, current.name) ? 'Unpin' : 'Pin') +
+            ' playroom ' +
+            current.name
+          "
+          severity="secondary"
+          [outlined]="true"
+          size="small"
+          (click)="state.togglePinned(current.playhouse, current.name)"
+        />
         @if (describeOutdated(current); as badge) {
           @if (badge.opensUpdate) {
             <p-button

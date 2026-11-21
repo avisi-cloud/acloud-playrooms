@@ -3,7 +3,19 @@
     <div class="page-header-left">
       <div class="page-header-stack">
         <h1 class="page-header-title">Playrooms<span class="punt">.</span></h1>
-        <p class="page-header-sub">{{ filteredRooms().length }} rooms · {{ mineCount() }} mine</p>
+        <app-playroom-breadcrumb />
+        <div class="status-chips" role="group" aria-label="Filter by status">
+          @for (chip of statusChips(); track chip.status) {
+            <button
+              type="button"
+              class="status-chip"
+              [attr.aria-pressed]="statusFilter() === chip.status"
+              (click)="statusFilter.set(chip.status)"
+            >
+              {{ chip.label }} {{ chip.count }}
+            </button>
+          }
+        </div>
       </div>
     </div>
     <div class="page-header-actions">
@@ -53,22 +65,6 @@
       <span>Mine</span>
     </label>
 
-    <select
-      class="filter-select"
-      aria-label="Filter by status"
-      [ngModel]="statusFilter()"
-      (ngModelChange)="statusFilter.set($event)"
-    >
-      <option value="">All statuses</option>
-      <option value="ready">Ready</option>
-      <option value="stopped">Stopped</option>
-      <option value="starting">Starting</option>
-      <option value="creating">Creating</option>
-      <option value="failed">Failed</option>
-      <option value="unknown">Unknown</option>
-      <option value="no-host">No host</option>
-      <option value="deleting">Deleting</option>
-    </select>
     <select
       class="filter-select"
       aria-label="Sort playrooms"
@@ -147,6 +143,8 @@
           <app-playroom-card
             [room]="room"
             [currentUser]="state.user()"
+            [pinned]="state.isPinned(room.playhouse, room.name)"
+            (pinRoom)="state.togglePinned(room.playhouse, $event)"
             [pendingOperation]="actions.pendingOperation(room.name)"
             (openRoom)="openRoom($event)"
             (doubleClickRoom)="runPreferredAction($event)"
@@ -154,6 +152,7 @@
             (openInEditor)="openConnect($event, 'open')"
             (startRoom)="startRoom($event)"
             (stopRoom)="stopRoom($event)"
+            (createSimilarRoom)="openCreateSimilar($event)"
             (editRoom)="openUpdate($event)"
             (deleteRoom)="askDelete($event)"
           />

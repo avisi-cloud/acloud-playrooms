@@ -6,6 +6,7 @@ export * from './playroom-mappers';
 export * from './playroom-display';
 export * from './command-preview';
 export * from './forms';
+export * from './playroom-name';
 export * from './playroom-size';
 export * from './playhouse-layout';
 export * from './playroom-outdated';

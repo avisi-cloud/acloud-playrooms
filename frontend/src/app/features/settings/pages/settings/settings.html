@@ -78,6 +78,43 @@
           <p class="field-hint">Shows the animated robot in the sidebar.</p>
         </div>
       </section>
+      <section class="notification-settings" aria-labelledby="notifications-title">
+        <h2 class="settings-section-title" id="notifications-title">Notifications</h2>
+        <p class="settings-section-description">Know when background tasks finish.</p>
+        <div class="field-group">
+          <label class="field-label" for="desktop-notifications">Desktop notifications</label>
+          <div class="appearance-toggle">
+            <p-toggleswitch
+              inputId="desktop-notifications"
+              [ngModel]="desktop.notifications()"
+              (ngModelChange)="desktop.setNotifications($event)"
+              aria-describedby="desktop-notifications-hint"
+            />
+            <span>{{ desktop.notifications() ? 'On' : 'Off' }}</span>
+          </div>
+          <p class="field-hint" id="desktop-notifications-hint">
+            Notifies when room tasks or playhouse setup and updates finish while you use another
+            app. macOS asks permission with the first notification.
+          </p>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="dock-badge">Dock badge</label>
+          <p-select
+            inputId="dock-badge"
+            ariaLabel="Dock badge"
+            [options]="dockBadgeOptions"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="desktop.dockBadge()"
+            (ngModelChange)="desktop.setDockBadge($event)"
+            aria-describedby="dock-badge-hint"
+          />
+          <p class="field-hint" id="dock-badge-hint">
+            Counts rooms in the current playhouse. Running rooms includes rooms waiting for an SSH
+            address.
+          </p>
+        </div>
+      </section>
       <section class="room-card-settings" aria-labelledby="room-cards-title">
         <h2 class="settings-section-title" id="room-cards-title">Room cards</h2>
         <p class="settings-section-description">What a double-click on a room card does.</p>

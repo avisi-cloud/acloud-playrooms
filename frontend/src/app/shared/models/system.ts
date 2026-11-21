@@ -5,8 +5,13 @@ export type CreatePlayroomMode = 'easy' | 'advanced';
 
 export type PreferredAction = 'connect' | 'open' | 'nothing';
 
+export type DockBadge = 'failed' | 'running' | 'off';
+
 export interface CacheState {
+  notifications: boolean;
+  dockBadge: DockBadge;
   preferredAction: PreferredAction;
+  pinnedRooms: Record<string, string[]>;
   lastPlayhouse: string;
   lastPlayroom: string;
   lastEditor: string;

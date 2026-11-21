@@ -4,9 +4,10 @@ import { InputTextModule } from 'primeng/inputtext';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { PlayroomLifecycleService } from '../../../core/services/playroom-lifecycle';
 import { PlayroomDeleteInput, wailsApi } from '../../../core/services/wails-api';
+import { CreatePlayroomDrawerComponent } from '../../../features/playroom/components/create-playroom-drawer/create-playroom-drawer';
 import { DEFAULTS, PLAYROOM_OPTION_TEXTS } from '../../data';
-import { ConnectTab, Playroom } from '../../models';
-import { readCache, updateCache } from '../../utils';
+import { ConnectTab, CreateForm, Playroom } from '../../models';
+import { createFormFromRoom, settingsNotCopiedFromRoom, readCache, updateCache } from '../../utils';
 import { ConfirmDeleteDialog } from '../confirm-delete-dialog/confirm-delete-dialog';
 import { PlayroomConnectDialogComponent } from '../playroom-connect-dialog/playroom-connect-dialog';
 import { PlayroomUpdateDrawerComponent } from '../playroom-update-drawer/playroom-update-drawer';
@@ -19,6 +20,7 @@ import { PlayroomUpdateDrawerComponent } from '../playroom-update-drawer/playroo
   selector: 'app-playroom-actions-host',
   imports: [
     FormsModule,
+    CreatePlayroomDrawerComponent,
     InputTextModule,
     ToggleSwitchModule,
     PlayroomConnectDialogComponent,
@@ -35,6 +37,9 @@ export class PlayroomActionsHostComponent {
 
   room: Playroom | null = null;
   connectTab: ConnectTab = 'connect';
+  showCreateSimilar = false;
+  initialForm: Partial<CreateForm> | null = null;
+  notCopiedHint = '';
   showConnect = false;
   showUpdate = false;
   showDelete = false;
@@ -45,6 +50,15 @@ export class PlayroomActionsHostComponent {
 
   readonly previewDelete = wailsApi.previewDeletePlayroom;
   readonly optionTexts = PLAYROOM_OPTION_TEXTS;
+
+  openCreateSimilar(room: Playroom): void {
+    this.close();
+    this.room = room;
+    this.initialForm = createFormFromRoom(room);
+    this.notCopiedHint = settingsNotCopiedFromRoom(room);
+    this.showCreateSimilar = true;
+    this.cdr.markForCheck();
+  }
 
   openConnect(room: Playroom, tab: ConnectTab): void {
     this.close();
@@ -72,10 +86,11 @@ export class PlayroomActionsHostComponent {
   }
 
   isOpen(): boolean {
-    return this.showConnect || this.showUpdate || this.showDelete;
+    return this.showCreateSimilar || this.showConnect || this.showUpdate || this.showDelete;
   }
 
   close(): void {
+    this.showCreateSimilar = false;
     this.showConnect = false;
     this.showUpdate = false;
     this.showDelete = false;

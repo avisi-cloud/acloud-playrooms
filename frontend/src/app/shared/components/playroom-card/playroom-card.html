@@ -3,6 +3,7 @@
      text link would draw. -->
 <article
   class="playroom-card"
+  [class.stopped]="room.status === 'stopped'"
   [attr.aria-busy]="!!pendingOperation"
   [ngClass]="statusMap[room.status]?.tone"
   role="link"
@@ -15,6 +16,15 @@
   <!-- ── Dark navy header ── -->
   <div class="card-head" [attr.data-initial]="initial">
     <div class="card-head-top">
+      <button
+        type="button"
+        class="card-pin"
+        [attr.aria-label]="(pinned ? 'Unpin' : 'Pin') + ' playroom ' + room.name"
+        [attr.aria-pressed]="pinned"
+        (click)="$event.stopPropagation(); pinRoom.emit(room.name)"
+      >
+        <i [class]="pinned ? 'pi pi-star-fill' : 'pi pi-star'" aria-hidden="true"></i>
+      </button>
       <div class="card-name">{{ room.name }}<span class="punt">.</span></div>
       <span class="card-flavor" [title]="flavorTitle()">{{ flavorLabel() }}</span>
     </div>

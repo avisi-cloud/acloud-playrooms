@@ -21,6 +21,7 @@
   font-size: 12.5px;
   line-height: 1.5;
 }
+.notification-settings,
 .appearance-settings,
 .room-card-settings {
   margin-bottom: 28px;
@@ -34,6 +35,7 @@
   color: var(--tx-2);
   font-size: 12.5px;
 }
+.notification-settings .field-group:last-child,
 .appearance-settings .field-group:last-child,
 .room-card-settings .field-group:last-child {
   margin-bottom: 0;

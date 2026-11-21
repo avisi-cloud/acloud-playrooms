@@ -72,6 +72,14 @@ describe('Playroom details', () => {
     return fixture;
   }
 
+  it('shows the selected playhouse and room in the page header breadcrumb', async () => {
+    const fixture = await render();
+    const breadcrumb = fixture.nativeElement.querySelector('header nav[aria-label="Breadcrumb"]');
+    expect(breadcrumb?.textContent).toContain('ph');
+    expect(breadcrumb?.querySelector('[aria-current="page"]')?.textContent).toBe('demo');
+    fixture.destroy();
+  });
+
   it('shows four sections, distinct port mappings, the real date and the disposable-storage warning', async () => {
     const fixture = await render();
     const root = fixture.nativeElement as HTMLElement;
@@ -93,6 +101,23 @@ describe('Playroom details', () => {
     expect(
       root.querySelector('.connection-command-text:not(.ssh-command-text)')?.textContent,
     ).toContain('--forward-agent=false');
+  });
+
+  it('opens Create similar from the detail menu with the source settings', async () => {
+    vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+    vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([]);
+    const fixture = await render();
+    fixture.componentInstance
+      .moreMenuItems()
+      .find((item) => item.label === 'Create similar')
+      ?.command?.({});
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const name = document.body.querySelector('#create-name') as HTMLInputElement;
+    expect(name.value).toBe('');
+    expect(document.body.querySelector('app-wizard-stepper')).not.toBeNull();
+    expect(document.body.textContent).toContain('Not copied:');
+    fixture.destroy();
   });
 
   it('shows a reported failure without pretending it is still provisioning', async () => {
@@ -217,5 +242,22 @@ describe('Playroom details', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+  it('pins and unpins the room from details', async () => {
+    const fixture = await render();
+    const state = TestBed.inject(PlayroomStateService);
+    (
+      fixture.nativeElement.querySelector(
+        'button[aria-label="Pin playroom demo"]',
+      ) as HTMLButtonElement
+    ).click();
+    expect(state.isPinned('ph', 'demo')).toBe(true);
+    fixture.detectChanges();
+    (
+      fixture.nativeElement.querySelector(
+        'button[aria-label="Unpin playroom demo"]',
+      ) as HTMLButtonElement
+    ).click();
+    expect(state.isPinned('ph', 'demo')).toBe(false);
   });
 });

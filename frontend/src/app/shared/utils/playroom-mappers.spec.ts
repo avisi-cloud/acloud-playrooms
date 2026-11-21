@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { ListingDto } from '../models/playroom';
-import { listingToRoom, mapStatus, renderPortForwards } from './playroom-mappers';
+import {
+  createFormFromRoom,
+  settingsNotCopiedFromRoom,
+  listingToRoom,
+  mapStatus,
+  renderPortForwards,
+} from './playroom-mappers';
 import { parseRenderedPorts } from './forms';
 import { isTransitional } from './playroom-display';
 
@@ -138,5 +144,102 @@ describe('listingToRoom', () => {
     expect(room.name).toBe('bare');
     expect(room.owner).toBe('');
     expect(room.host).toBe('');
+  });
+});
+
+describe('createFormFromRoom', () => {
+  const listing: ListingDto = {
+    Name: 'source',
+    Image: 'registry.example.test/workspace:v2',
+    DiskSize: '30Gi',
+    CPURequest: '500m',
+    CPULimit: '3',
+    MemRequest: '2Gi',
+    MemLimit: '6Gi',
+    DiskType: 'ephemeral',
+    CapabilityProfile: 'standard',
+    CapabilityAdditions: ['NET_RAW'],
+    Ports: [
+      { Port: 80, TargetPort: 8080 },
+      { Port: 3000, TargetPort: 3000 },
+    ],
+  };
+
+  it.each([
+    ['name', ''],
+    ['playhouse', 'playhouse-demo'],
+    ['image', 'registry.example.test/workspace:v2'],
+    ['storage', '30Gi'],
+    ['cpuReq', '500m'],
+    ['cpuLim', '3'],
+    ['memReq', '2Gi'],
+    ['memLim', '6Gi'],
+    ['ports', ['80:8080', '3000']],
+    ['capabilities', 'standard'],
+    ['capAdd', ['NET_RAW']],
+    ['ephemeral', true],
+    ['privileged', false],
+    ['acknowledgePrivileged', false],
+  ] as const)('maps %s', (field, expected) => {
+    expect(createFormFromRoom(listingToRoom(listing, 'playhouse-demo'))[field]).toEqual(expected);
+  });
+
+  it('only overrides reported settings, leaving unreported settings to configured defaults', () => {
+    const form = createFormFromRoom(listingToRoom({ Name: 'bare' }, 'ph'));
+    expect(form.image).toBeUndefined();
+    expect(form.storage).toBeUndefined();
+    expect(form.cpuReq).toBeUndefined();
+    expect(form.cpuLim).toBeUndefined();
+    expect(form.memReq).toBeUndefined();
+    expect(form.memLim).toBeUndefined();
+    expect(form.ports).toBeUndefined();
+    expect(form.capabilities).toBeUndefined();
+    expect(form.sshKey).toBeUndefined();
+    expect(form.env).toBeUndefined();
+    expect(form.git).toBeUndefined();
+    expect(form.copy).toBeUndefined();
+    expect(form.exposure).toBeUndefined();
+    expect(form.readOnly).toBeUndefined();
+    expect(form.workspaceNamespace).toBeUndefined();
+    expect(form.noWait).toBeUndefined();
+  });
+
+  it('copies persistent storage and explicitly empty ports', () => {
+    const form = createFormFromRoom(
+      listingToRoom({ ...listing, DiskType: 'persistent', Ports: [] }, 'ph'),
+    );
+    expect(form.ephemeral).toBe(false);
+    expect(form.ports).toEqual(['']);
+  });
+
+  it('leaves an unknown capability profile at its default and names it in the hint', () => {
+    const room = listingToRoom({ ...listing, CapabilityProfile: 'future-profile' }, 'ph');
+    expect(createFormFromRoom(room).capabilities).toBeUndefined();
+    expect(settingsNotCopiedFromRoom(room)).toContain('capability profile');
+  });
+
+  it('does not borrow the source arrays', () => {
+    const room = listingToRoom(listing, 'ph');
+    const form = createFormFromRoom(room);
+    form.capAdd?.push('SYS_PTRACE');
+    form.ports?.push('9000');
+    expect(room.capabilityAdditions).toEqual(['NET_RAW']);
+    expect(room.portForwards).toHaveLength(2);
+  });
+
+  it('names settings that cannot be copied', () => {
+    const hint = settingsNotCopiedFromRoom(listingToRoom(listing, 'ph'));
+    for (const text of [
+      'Not copied:',
+      'SSH key',
+      'environment',
+      'Git',
+      'copies',
+      'connectivity',
+      'system options',
+      'run options',
+    ]) {
+      expect(hint).toContain(text);
+    }
   });
 });
