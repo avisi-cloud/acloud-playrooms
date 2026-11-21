@@ -1,0 +1,37 @@
+.palette-search {
+  width: 100%;
+}
+.palette-results {
+  max-height: min(24rem, 50vh);
+  overflow-y: auto;
+  margin-top: 0.75rem;
+}
+.palette-option {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  border-radius: var(--r-sm);
+  color: var(--tx);
+  cursor: pointer;
+}
+.palette-option[aria-selected='true'],
+.palette-option:hover {
+  background: var(--surf-3);
+  box-shadow: inset 3px 0 var(--cyan);
+}
+.palette-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+small,
+.palette-hint {
+  color: var(--tx-2);
+  font-size: 0.75rem;
+}
+.palette-hint {
+  margin: 0.75rem 0 0;
+}

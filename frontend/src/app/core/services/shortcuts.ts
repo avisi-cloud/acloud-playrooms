@@ -3,14 +3,46 @@ import { Router } from '@angular/router';
 import { PlayroomStateService } from './playroom-state';
 import { wailsApi } from './wails-api';
 
+export const APP_ACTIONS = {
+  'command-palette': 'Command palette',
+  'new-playroom': 'New Playroom',
+  refresh: 'Refresh current list',
+  settings: 'Settings',
+  playrooms: 'Playrooms',
+  playhouses: 'Playhouses',
+  defaults: 'Defaults',
+  setup: 'Setup',
+  search: 'Focus search',
+  overview: 'Keyboard shortcuts',
+  'theme-light': 'Theme: Light',
+  'theme-dark': 'Theme: Dark',
+  'theme-system': 'Theme: System',
+  documentation: 'Documentation',
+  'report-issue': 'Report issue',
+} as const;
+export type MenuAction = keyof typeof APP_ACTIONS;
+
 export const SHORTCUTS = [
-  { action: 'new-playroom', label: 'New Playroom', key: 'n', command: true, keys: '⌘N' },
-  { action: 'refresh', label: 'Refresh current list', key: 'r', command: true, keys: '⌘R' },
-  { action: 'settings', label: 'Settings', key: ',', command: true, keys: '⌘,' },
-  { action: 'playrooms', label: 'Playrooms', key: '1', command: true, keys: '⌘1' },
-  { action: 'playhouses', label: 'Playhouses', key: '2', command: true, keys: '⌘2' },
-  { action: 'search', label: 'Focus search', key: 'f', command: true, keys: '⌘F' },
-  { action: 'overview', label: 'Keyboard shortcuts', key: '?', command: false, keys: '?' },
+  {
+    action: 'command-palette',
+    label: APP_ACTIONS['command-palette'],
+    key: 'k',
+    command: true,
+    keys: '⌘K',
+  },
+  {
+    action: 'new-playroom',
+    label: APP_ACTIONS['new-playroom'],
+    key: 'n',
+    command: true,
+    keys: '⌘N',
+  },
+  { action: 'refresh', label: APP_ACTIONS['refresh'], key: 'r', command: true, keys: '⌘R' },
+  { action: 'settings', label: APP_ACTIONS['settings'], key: ',', command: true, keys: '⌘,' },
+  { action: 'playrooms', label: APP_ACTIONS['playrooms'], key: '1', command: true, keys: '⌘1' },
+  { action: 'playhouses', label: APP_ACTIONS['playhouses'], key: '2', command: true, keys: '⌘2' },
+  { action: 'search', label: APP_ACTIONS['search'], key: 'f', command: true, keys: '⌘F' },
+  { action: 'overview', label: APP_ACTIONS['overview'], key: '?', command: false, keys: '?' },
   {
     action: 'new-playroom',
     label: 'New Playroom (on Playrooms)',
@@ -21,15 +53,6 @@ export const SHORTCUTS = [
   { action: 'search', label: 'Focus search (on Playrooms)', key: '/', command: false, keys: '/' },
 ] as const;
 export type ShortcutAction = (typeof SHORTCUTS)[number]['action'];
-export type MenuAction =
-  | ShortcutAction
-  | 'defaults'
-  | 'theme-light'
-  | 'theme-dark'
-  | 'theme-system'
-  | 'documentation'
-  | 'report-issue';
-
 interface PageActions {
   refresh: () => void;
   overlayOpen?: () => boolean;
@@ -41,6 +64,7 @@ export class ShortcutsService {
   private readonly router = inject(Router);
   private readonly state = inject(PlayroomStateService);
   readonly overviewOpen = signal(false);
+  readonly paletteOpen = signal(false);
   readonly shortcuts = SHORTCUTS;
   private pageActions?: PageActions;
 
@@ -65,6 +89,7 @@ export class ShortcutsService {
   private shortcutsBlocked(target: EventTarget | null): boolean {
     return (
       this.overviewOpen() ||
+      this.paletteOpen() ||
       !!this.pageActions?.overlayOpen?.() ||
       !!document.querySelector(
         '[role="dialog"], .p-drawer, .p-select-overlay, .p-popover, .p-menu-overlay',
@@ -98,7 +123,17 @@ export class ShortcutsService {
 
   dispatch(action: string): void {
     if (this.shortcutsBlocked(document.activeElement)) return;
-    switch (action as MenuAction) {
+    this.runAction(action as MenuAction);
+  }
+
+  runAction(action: MenuAction): void {
+    switch (action) {
+      case 'command-palette':
+        this.paletteOpen.set(true);
+        break;
+      case 'setup':
+        void this.router.navigateByUrl('/setup');
+        break;
       case 'new-playroom':
         if (this.onPlayrooms() && this.pageActions?.create) this.pageActions.create();
         else void this.router.navigate(['/rooms'], { queryParams: { create: true } });
