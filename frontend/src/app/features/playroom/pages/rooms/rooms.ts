@@ -21,6 +21,7 @@ import { ButtonModule } from 'primeng/button';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { InputTextModule } from 'primeng/inputtext';
+import { PopoverModule } from 'primeng/popover';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ToastService } from '../../../../core/services/toast';
 import {
@@ -41,6 +42,12 @@ import {
 import { CREATE_PLAYROOM_QUERY_PARAM } from '../../../../shared/data';
 import { STATUS } from '../../../../shared/data/status';
 import { groupPlayroomsByOwner, sortPlayrooms } from '../../../../shared/utils/playroom-overview';
+import {
+  totalRequestedResources,
+  describeRequestedResourceParts,
+  describeRequestedResources,
+  describeUnknownRequests,
+} from '../../../../shared/utils/requested-resources';
 import { buildSearchableRoomText } from '../../../../shared/utils/playroom-search';
 import { ConnectTab, Playroom, StatusKey } from '../../../../shared/models';
 import { describeError, formatTimeSince } from '../../../../shared/utils';
@@ -63,6 +70,7 @@ import { PlayroomBreadcrumbComponent } from '../../components/playroom-breadcrum
     IconFieldModule,
     InputIconModule,
     ToggleSwitchModule,
+    PopoverModule,
     PlayroomCardComponent,
     PlayroomRowComponent,
     PlayroomActionsHostComponent,
@@ -90,6 +98,23 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   readonly playroomView = this.session.playroomView;
   readonly groupByOwner = this.session.groupByOwner;
   readonly collapsedOwners = signal<string[]>([]);
+  readonly requestedResources = computed(() => {
+    const all = totalRequestedResources(this.state.rooms());
+    const user = this.state.user();
+    const yours = totalRequestedResources(
+      this.state.rooms().filter((room) => !!user && room.owner === user),
+    );
+    const summaryParts = describeRequestedResourceParts(all, 'compact');
+    return {
+      summary: summaryParts.join(' · '),
+      // At the 900px window minimum only CPU and memory fit under the title.
+      narrowSummary: summaryParts.slice(0, 2).join(' · '),
+      all: describeRequestedResources(all),
+      yours: user ? describeRequestedResources(yours) : 'Not reported',
+      unknown: describeUnknownRequests(all),
+      yourUnknown: user ? describeUnknownRequests(yours) : [],
+    };
+  });
   readonly roomGroups = computed(() =>
     this.groupByOwner()
       ? groupPlayroomsByOwner(this.filteredRooms(), this.state.user())
