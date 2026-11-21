@@ -2,6 +2,8 @@ import { PlayroomStateService } from '../../../core/services/playroom-state';
 import { CliConsoleService } from '../../../core/services/cli-console';
 import { ToastService } from '../../../core/services/toast';
 import { wailsApi } from '../../../core/services/wails-api';
+import { By } from '@angular/platform-browser';
+import { Dialog } from 'primeng/dialog';
 import { SimpleChange } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
@@ -32,6 +34,55 @@ describe('Playroom connect dialog', () => {
   });
 
   afterEach(() => vi.restoreAllMocks());
+
+  function escapeDialog() {
+    const fixture = TestBed.createComponent(PlayroomConnectDialogComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    const primeDialog = fixture.debugElement.query(By.directive(Dialog))
+      .componentInstance as Dialog;
+    const panel = document.createElement('div');
+    const control = document.createElement('button');
+    panel.append(control);
+    document.body.append(panel);
+    vi.spyOn(primeDialog, 'container').mockReturnValue(panel);
+    component.visible = true;
+    const changed = vi.fn();
+    component.visibleChange.subscribe(changed);
+    return { component, control, panel, changed };
+  }
+
+  it('closes the custom-header dialog on Escape from a focused control', () => {
+    const { component, control, panel, changed } = escapeDialog();
+    control.focus();
+    control.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+    );
+    expect(component.visible).toBe(false);
+    expect(changed).toHaveBeenCalledExactlyOnceWith(false);
+    panel.remove();
+  });
+
+  it('leaves Escape consumed by a child control to that control', () => {
+    const { component, control, panel, changed } = escapeDialog();
+    control.addEventListener('keydown', (event) => event.preventDefault());
+    control.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+    );
+    expect(component.visible).toBe(true);
+    expect(changed).not.toHaveBeenCalled();
+    panel.remove();
+  });
+
+  it('ignores Escape from outside its panel or while closed', () => {
+    const { component, control, panel, changed } = escapeDialog();
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(component.visible).toBe(true);
+    component.visible = false;
+    control.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(changed).not.toHaveBeenCalled();
+    panel.remove();
+  });
 
   // Blank leaves --via off, so acloud reaches the room the way it is exposed.
   it('leaves the connection path to the room by default', () => {

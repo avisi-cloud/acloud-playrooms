@@ -761,8 +761,8 @@ a screen, add the way in at the same time.
 
 ## Keyboard shortcuts and native menus
 
-`ShortcutsService` owns one shortcut registry, the keyboard listener and the
-`menu:action` listener. The `?` overview renders that registry in the shell.
+`ShortcutsService` owns the shared `APP_ACTIONS` action labels, shortcut registry,
+the keyboard listener and the `menu:action` listener. The `?` overview renders that registry in the shell.
 Page callbacks that change plain fields must notify Angular with `markForCheck()`;
 service listeners do not mark the page like a template event does.
 Shortcuts are ignored while typing, composing text, repeating a key, using other
@@ -771,6 +771,7 @@ guarded, so ⌘R never falls through to a webview reload.
 
 | Keys    | Action                                                       |
 | ------- | ------------------------------------------------------------ |
+| ⌘K      | Command palette                                              |
 | ⌘N      | New Playroom                                                 |
 | ⌘R      | Refresh the current room list, room detail or playhouse list |
 | ⌘,      | Settings                                                     |
@@ -792,3 +793,24 @@ native title through `wailsApi`: `demo — Playrooms` for a room,
 `Playrooms — demo` for a selected playhouse's list, and the screen name elsewhere.
 It also updates the list title when the playhouse changes without navigation.
 The dummy API sets `document.title` and opens Help links in a browser tab.
+
+### Command palette
+
+⌘K opens `shared/components/command-palette/`. It searches screen and action
+labels, rooms in the current playhouse, and a fresh playhouse list. It loads
+the room list through the lifecycle service if the selection has not loaded yet.
+Case-insensitive subsequences match; recently used matches come first, then
+contiguous matches before scattered letters. Recent items stay in memory for the
+session (up to twenty); scope and playhouse are part of room identities.
+
+Arrow keys wrap the selection, Enter runs it, and Escape dismisses the palette.
+The search combobox exposes its active listbox option to assistive technology.
+Actions wait until the palette has closed and restored focus. Screen, create,
+refresh and theme actions use the shortcut/menu dispatcher; room actions use the
+same connect/open dialog and lifecycle service as room cards, with the same
+status and pending-operation guards. Direct playhouse choices select and navigate
+like the chooser; Switch playhouse opens that existing chooser. Responses from
+closed palettes are ignored and failed playhouse reads are shown inline.
+
+The shared Connect/Open dialog handles Escape from its own controls, including
+when opened by the palette. A select that consumes Escape keeps the dialog open.

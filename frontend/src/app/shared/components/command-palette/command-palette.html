@@ -1,0 +1,69 @@
+<p-dialog
+  header="Command palette"
+  [visible]="shortcuts.paletteOpen()"
+  (visibleChange)="shortcuts.paletteOpen.set($event)"
+  (onHide)="runPendingCommand()"
+  [modal]="true"
+  [dismissableMask]="true"
+  [style]="{ width: 'var(--overlay-md)', maxWidth: 'calc(100vw - 2rem)' }"
+  styleClass="av-dialog command-palette"
+  appOverlayFocus="Command palette"
+  [appOverlayVisible]="shortcuts.paletteOpen()"
+>
+  <input
+    pInputText
+    type="search"
+    class="palette-search"
+    aria-label="Search playrooms, playhouses and actions"
+    placeholder="Search playrooms, playhouses and actions"
+    role="combobox"
+    aria-autocomplete="list"
+    aria-controls="palette-results"
+    [attr.aria-expanded]="true"
+    [attr.aria-activedescendant]="results().length ? 'palette-option-' + activeIndex() : null"
+    [ngModel]="query()"
+    (ngModelChange)="changeQuery($event)"
+    (keydown)="handleKeydown($event)"
+  />
+  @if (loading()) {
+    <p role="status">Loading playhouses…</p>
+  }
+  @if (failure()) {
+    <p role="alert">Could not load playhouses: {{ failure() }}</p>
+  }
+  @if (loadingRooms()) {
+    <p role="status">Loading playrooms…</p>
+  }
+  @if (roomFailure()) {
+    <p role="alert">Could not load playrooms: {{ roomFailure() }}</p>
+  }
+  <div id="palette-results" role="listbox" aria-label="Commands" class="palette-results">
+    @for (command of results(); track command.id; let index = $index) {
+      <div
+        role="option"
+        [id]="'palette-option-' + index"
+        [attr.aria-selected]="index === activeIndex()"
+        class="palette-option"
+        (click)="chooseCommand(command)"
+        (keydown.enter)="chooseCommand(command)"
+        tabindex="-1"
+      >
+        <span class="palette-label" [title]="command.label">{{ command.label }}</span>
+        <small>{{ command.category }}</small>
+      </div>
+    }
+  </div>
+  @if (!results().length) {
+    <p role="status">No matching commands.</p>
+  }
+  <p class="palette-hint">↑ ↓ to choose · Enter to run · Esc to close</p>
+</p-dialog>
+@defer (when connectRequest()) {
+  <app-playroom-connect-dialog
+    [visible]="!!connectRequest()"
+    (visibleChange)="!$event && connectRequest.set(null)"
+    [room]="connectRequest()?.room ?? null"
+    [tab]="connectRequest()?.tab ?? 'connect'"
+  />
+}
+<app-playhouse-chooser [visible]="chooserOpen()" (visibleChange)="chooserOpen.set($event)" />

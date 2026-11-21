@@ -108,6 +108,10 @@ body:has(.p-dialog-mask) .app-shell {
   z-index: 1;
   border-radius: var(--r-lg) var(--r-lg) 0 0;
 }
+.av-dialog.command-palette .p-dialog-header {
+  flex-direction: row;
+  justify-content: space-between;
+}
 .av-dialog .p-dialog-header .dialog-title {
   color: #ffffff;
 }
