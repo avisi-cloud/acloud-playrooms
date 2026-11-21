@@ -30,6 +30,10 @@ import * as playroom$0 from "./backend/playroom/models.js";
 // @ts-ignore: Unused imports
 import * as tools$0 from "./backend/tools/models.js";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as $models from "./models.js";
+
 /**
  * BrowseForAcloudBinary opens a native file picker and returns the chosen path,
  * or "" when the user cancelled. Typing an absolute path into a text field is a
@@ -473,6 +477,24 @@ export function SetDockBadge(count) {
 }
 
 /**
+ * SetKeepRunningInMenuBar is pushed by the frontend, which saves the setting.
+ * @param {boolean} keepRunning
+ * @returns {$CancellablePromise<void>}
+ */
+export function SetKeepRunningInMenuBar(keepRunning) {
+    return $Call.ByID(1611150140, keepRunning);
+}
+
+/**
+ * SetMenuBarRooms shows the frontend's room list, so Go never reads the list a second time.
+ * @param {$models.MenuBarRooms} rooms
+ * @returns {$CancellablePromise<void>}
+ */
+export function SetMenuBarRooms(rooms) {
+    return $Call.ByID(2050825181, rooms);
+}
+
+/**
  * @param {string} operationID
  * @param {string} key
  * @param {string} value
@@ -505,6 +527,14 @@ export function SetTailscaleBinary(path) {
  */
 export function SetWindowTheme(theme) {
     return $Call.ByID(1314355354, theme);
+}
+
+/**
+ * ShowMainWindow brings the window back when a menu bar action needs the user's attention.
+ * @returns {$CancellablePromise<void>}
+ */
+export function ShowMainWindow() {
+    return $Call.ByID(3881468931);
 }
 
 /**

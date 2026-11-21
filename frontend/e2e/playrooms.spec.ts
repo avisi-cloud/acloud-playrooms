@@ -204,6 +204,16 @@ test('remembers the Appearance theme after a reload', async ({ page }) => {
   await expect(appearance.getByRole('radio', { name: 'Dark', exact: true })).toBeChecked();
 });
 
+test('remembers keeping the app running in the menu bar after a reload', async ({ page }) => {
+  await page.getByRole('link', { name: /\bSettings$/ }).click();
+  const menuBar = page.getByRole('region', { name: 'Menu bar', exact: true });
+  const keepRunning = menuBar.getByRole('switch', { name: 'Keep running in the menu bar' });
+  await expect(keepRunning).not.toBeChecked();
+  await keepRunning.check();
+  await page.reload();
+  await expect(keepRunning).toBeChecked();
+});
+
 test('offers a session fix on the room error panel', async ({ page }) => {
   await page.goto('/rooms?failure=session');
   const failure = page.locator('.read-failure');
@@ -326,6 +336,49 @@ test('pins a room from its card and unpins it from details', async ({ page }) =>
     'aria-label',
     'Open playroom api-development',
   );
+});
+
+test('splits pasted git repositories, explains them, and suggests used ones', async ({ page }) => {
+  await page.getByRole('button', { name: /\bCreate Playroom$/ }).click();
+  const drawer = page.getByRole('dialog', { name: 'Create playroom', exact: true });
+  await drawer.getByRole('button', { name: 'Show advanced options' }).click();
+  await drawer.getByRole('textbox', { name: 'Name', exact: true }).fill('git-paste-room');
+  await drawer.getByRole('button', { name: /\bNext$/ }).click();
+  await drawer.getByRole('button', { name: /\bNext$/ }).click();
+  await drawer.getByRole('textbox', { name: 'git repository 1', exact: true }).evaluate((input) => {
+    const clipboardData = new DataTransfer();
+    clipboardData.setData(
+      'text/plain',
+      'https://gitlab.example.com/team/api.git@main\ngit@github.com:team/web.git\n',
+    );
+    input.dispatchEvent(
+      new ClipboardEvent('paste', { clipboardData, bubbles: true, cancelable: true }),
+    );
+  });
+  await expect(drawer.getByRole('textbox', { name: 'git repository 1', exact: true })).toHaveValue(
+    'https://gitlab.example.com/team/api.git@main',
+  );
+  await expect(drawer.getByText(/acloud skips SSH remotes/)).toBeVisible();
+  await expect(drawer.getByText(/forward GITLAB_TOKEN under Environment variables/)).toBeVisible();
+  await drawer.getByLabel('Remove git repository 2', { exact: true }).click();
+  await expect(drawer.getByText(/acloud skips SSH remotes/)).toBeHidden();
+  await drawer.getByRole('button', { name: /\bNext$/ }).click();
+  await drawer.getByRole('button', { name: /\bNext$/ }).click();
+  await drawer.getByRole('button', { name: /\bCreate$/ }).click();
+  await expect(drawer).toBeHidden();
+  await expect(
+    page.getByRole('link', { name: 'Open playroom git-paste-room', exact: true }),
+  ).toContainText('Ready');
+
+  await page.getByRole('button', { name: /\bCreate Playroom$/ }).click();
+  await drawer.getByRole('textbox', { name: 'Name', exact: true }).fill('git-suggest-room');
+  await drawer.getByRole('button', { name: /\bNext$/ }).click();
+  await drawer.getByRole('button', { name: /\bNext$/ }).click();
+  // A row with suggestions is a combobox: the list attribute links it to its datalist.
+  const repository = drawer.getByRole('combobox', { name: 'git repository 1', exact: true });
+  const suggestions = drawer.locator(`datalist#${await repository.getAttribute('list')} option`);
+  await expect(suggestions).toHaveCount(1);
+  await expect(suggestions).toHaveAttribute('value', 'https://gitlab.example.com/team/api.git');
 });
 
 test('reads the list again by itself and says when it was last read', async ({ page }) => {

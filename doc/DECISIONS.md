@@ -17,6 +17,9 @@ it, update the entry.
 
 **Open — revisit these**
 
+- [The menu bar shows the frontend's room list](#the-menu-bar-shows-the-frontends-room-list)
+- [Git repositories are checked before creation](#git-repositories-are-checked-before-creation)
+
 - [Forwarded variables can come from the login shell](#forwarded-variables-can-come-from-the-login-shell)
 
 - [Port links require a reported tailnet hostname](#port-links-require-a-reported-tailnet-hostname)
@@ -56,6 +59,41 @@ it, update the entry.
 ---
 
 ## Open — revisit these
+
+### The menu bar shows the frontend's room list
+
+The menu bar icon lists the rooms the frontend already holds; Go does not run
+`playroom list` a second time. With Keep running in the menu bar on, closing the
+window hides it rather than destroying it, so the webview, its polling and the
+room list keep running. That a hidden WKWebView keeps its timers and events
+running has not been verified in the desktop build yet. The list is as fresh as
+the frontend's last read; nothing polls just for the menu bar. Connect runs
+without the dialog, using the choices the dialog would open on. The icon is
+always shown; only closing behaviour has a switch.
+
+Revisit if a hidden window stops updating the list, if the list needs to refresh
+on its own while nothing is changing, or if people ask to hide the icon.
+
+### Git repositories are checked before creation
+
+Each `--git` entry is split as acloud splits `URL[@REF]`: the last `@` after
+`://` starts the ref. acloud forbids credentials in the URL, so
+`https://user@host/repo` would be cloned from `https://user`. The create drawer
+explains such an entry, an SSH remote (acloud skips it with a warning), a
+non-HTTPS URL and a URL without a repository path inline, and blocks Create
+until it is fixed, so the room does not start without its clone.
+
+The token hint is a hint, not a block, because a public repository needs no
+token. It shows for GitLab hosts (a host containing `gitlab`) without
+`GITLAB_TOKEN`, and for `github.com` without `GITHUB_TOKEN` or `GH_TOKEN`. acloud
+clones every repository with the first of `GITLAB_TOKEN`, `GITHUB_TOKEN`,
+`GH_TOKEN` that is forwarded, so the hint also names a forwarded token that is
+the wrong one for the host. Other hosts get no hint: their token is unknown.
+
+The last ten repositories of successful creates are kept in the cache without
+ref or credentials, and offered through a native `datalist` rather than a new
+picker. Revisit if the hint proves noisy for public repositories, or if acloud
+starts reporting which token a host needs.
 
 ### Forwarded variables can come from the login shell
 

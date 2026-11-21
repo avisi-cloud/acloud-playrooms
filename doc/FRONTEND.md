@@ -191,6 +191,23 @@ Running rooms, in the loaded current playhouse. Zero and Off remove it. Updates
 are debounced by 150 ms; selection changes clear the previous badge immediately.
 Dummy mode logs notification requests and badge counts instead of using macOS.
 
+### Menu bar
+
+`core/services/menu-bar.ts` pushes the current playhouse's room list to the
+native menu bar whenever the list, its loaded state or a room's running task
+changes; age ticks alone do not rebuild it. Go never reads the list itself. Rooms
+are sorted by name and carry the room card's status label. A room chosen there
+comes back as a `menu-bar:action` event and runs through the room card's paths:
+start and stop through `PlayroomLifecycleService`, connect and open through
+`PlayroomConnectService`. Connect skips the dialog and uses what it would open
+on: the configured user and agent forwarding, and the last terminal. Open uses the
+last editor. A request for a room that is gone, in another playhouse, in another
+status or busy runs nothing; it shows the window with a warning. Connect and open
+failures also show the window, with the same fixes as the connect dialog.
+
+Settings → Menu bar saves **Keep running in the menu bar** (off by default) and
+sends it to Go at startup and on change. Dummy mode logs both pushes.
+
 Before this, every call site passed `String(error)` — which prefixes a thrown
 error with its class name, so the JSON a rejected binding call carries stopped
 looking like JSON, and the whole blob
@@ -338,7 +355,11 @@ overlays to `PlayroomActionsHostComponent`. It owns the selected room, delete
 options and preview, and emits after a successful deletion. This keeps the same
 irreversible action identical from both entry points. Repeating string flag
 controls (`--env`, `--git`, `--copy`, `--port`) use one shared list editor that
-also guarantees the form retains an editable blank row.
+also guarantees the form retains an editable blank row. Pasting several lines
+into a row fills one row per line. `--git` wraps it in `GitRepositoryEditorComponent`,
+which explains entries acloud would not clone, hints at a missing clone token from
+the form's environment variables, and suggests recent repositories
+(`shared/utils/git-repository.ts`; see DECISIONS).
 
 `core/services/setup.ts` reads each setup step's status from the services above
 and keeps `setupCompleted`. Setup opens at launch only: a fresh install through
@@ -348,7 +369,8 @@ existed (no `setupCompleted` key) with a playhouse counts as completed, so
 upgrades skip it.
 
 `shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal,
-theme, background grain, AME Robot, create-playroom mode, pinned rooms and `setupCompleted` to localStorage
+theme, background grain, AME Robot, create-playroom mode, pinned rooms, the last ten git repositories of
+successful creates (URLs without ref or credentials) and `setupCompleted` to localStorage
 under `acloud-playroom-gui-cache`. Background grain defaults to on; Settings →
 Appearance applies changes immediately to the outer background and content panel.
 The theme setting offers horizontal radio tiles for Light, Dark and System. System follows live changes to

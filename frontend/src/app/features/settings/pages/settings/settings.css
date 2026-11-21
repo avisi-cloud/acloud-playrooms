@@ -23,6 +23,7 @@
 }
 .notification-settings,
 .appearance-settings,
+.menu-bar-settings,
 .room-card-settings {
   margin-bottom: 28px;
   padding-bottom: 24px;
@@ -37,6 +38,7 @@
 }
 .notification-settings .field-group:last-child,
 .appearance-settings .field-group:last-child,
+.menu-bar-settings .field-group:last-child,
 .room-card-settings .field-group:last-child {
   margin-bottom: 0;
 }

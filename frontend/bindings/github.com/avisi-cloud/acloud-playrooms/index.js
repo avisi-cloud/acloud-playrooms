@@ -6,3 +6,9 @@ import * as App from "./app.js";
 export {
     App
 };
+
+export {
+    MenuBarRoom,
+    MenuBarRoomStatus,
+    MenuBarRooms
+} from "./models.js";

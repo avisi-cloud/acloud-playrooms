@@ -13,6 +13,9 @@
         class="flex-1"
         [ngModel]="value"
         (ngModelChange)="replaceValueAt($index, $event)"
+        (paste)="pasteLinesAt($index, $event)"
+        [attr.aria-invalid]="itemErrors[$index] ? true : null"
+        [attr.list]="suggestions.length ? suggestionListId : null"
         [placeholder]="placeholder"
       />
       <p-button
@@ -24,9 +27,18 @@
         (click)="removeValueAt($index)"
       />
     </div>
-    @if (itemHints[$index]) {
-      <small class="field-hint" aria-live="polite">{{ itemHints[$index] }}</small>
+    @if (itemErrors[$index] || itemHints[$index]; as text) {
+      <small class="field-hint" [class.error]="itemErrors[$index]" aria-live="polite">{{
+        text
+      }}</small>
     }
+  }
+  @if (suggestions.length) {
+    <datalist [id]="suggestionListId">
+      @for (suggestion of suggestions; track suggestion) {
+        <option [value]="suggestion"></option>
+      }
+    </datalist>
   }
   <p-button
     [label]="'+ ' + addLabel"

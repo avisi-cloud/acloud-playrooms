@@ -85,6 +85,17 @@ describe('Create playroom drawer', () => {
     expect(component.touched).toBe(true);
   });
 
+  it('blocks Create on a git repository acloud would not clone, but not on a missing token', () => {
+    const component = drawer();
+    component.form.name = 'demo';
+    component.form.git = ['git@github.com:org/tool.git'];
+    expect(component.canCreate()).toBe(false);
+    expect(component.blockingError()).toBe('Fix the git repositories under Forwarding.');
+    component.form.git = ['https://github.com/org/tool.git', ''];
+    expect(component.canCreate()).toBe(true);
+    expect(component.blockingError()).toBe('');
+  });
+
   describe('name checks while typing', () => {
     it('shows taken names before blur and blocks both Next and Create', () => {
       const component = drawer();

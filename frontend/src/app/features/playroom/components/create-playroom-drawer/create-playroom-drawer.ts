@@ -1,6 +1,7 @@
 import { DialogModule } from 'primeng/dialog';
 import { EnvironmentService } from '../../../../core/services/environment';
 import { EnvironmentEditorComponent } from '../../../../shared/components/environment-editor/environment-editor';
+import { GitRepositoryEditorComponent } from '../../../../shared/components/git-repository-editor/git-repository-editor';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -54,6 +55,7 @@ import {
   blankCreateForm,
   describeResourcesInPlainWords,
   findImageEntry,
+  gitRepositoryProblem,
   readCache,
   resourcesOfSize,
   sizeMatchingResources,
@@ -80,6 +82,7 @@ const INPUT_FIELDS_SHOWN_IN_EASY_MODE: (keyof PlayroomCreateInput)[] = [
     CommonModule,
     DialogModule,
     EnvironmentEditorComponent,
+    GitRepositoryEditorComponent,
     FormsModule,
     DrawerModule,
     ButtonModule,
@@ -387,11 +390,23 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
    *  instead of leaving a disabled button with its reason on another step. */
   blockingError(): string {
     if (this.nameInvalid()) return this.nameError() || 'A name is required.';
-    return this.privilegedError() || this.imageError();
+    return this.privilegedError() || this.imageError() || this.gitRepositoryError();
   }
 
   canCreate(): boolean {
-    return !this.nameInvalid() && !this.privilegedError() && !this.imageError();
+    return (
+      !this.nameInvalid() &&
+      !this.privilegedError() &&
+      !this.imageError() &&
+      !this.gitRepositoryError()
+    );
+  }
+
+  /** acloud skips SSH remotes and refuses credentials in the URL, so a wrong entry is fixed before the room runs without it. */
+  gitRepositoryError(): string {
+    return this.form.git.some(gitRepositoryProblem)
+      ? 'Fix the git repositories under Forwarding.'
+      : '';
   }
 
   selectedImage(): ImageEntry | undefined {

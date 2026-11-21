@@ -1,5 +1,6 @@
 import { EnvironmentService } from '../../../../core/services/environment';
 import { DesktopNotificationsService } from '../../../../core/services/desktop-notifications';
+import { MenuBarService } from '../../../../core/services/menu-bar';
 import { DockBadge } from '../../../../shared/models';
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
@@ -36,6 +37,7 @@ export class SettingsPageComponent {
     { label: 'Nothing', value: 'nothing' },
   ];
   readonly desktop = inject(DesktopNotificationsService);
+  readonly menuBar = inject(MenuBarService);
   readonly dockBadgeOptions: { label: string; value: DockBadge }[] = [
     { label: 'Failed rooms', value: 'failed' },
     { label: 'Running rooms', value: 'running' },
