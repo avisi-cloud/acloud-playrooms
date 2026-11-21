@@ -95,6 +95,23 @@ describe('Playroom details', () => {
     ).toContain('--forward-agent=false');
   });
 
+  it('opens Create similar from the detail menu with the source settings', async () => {
+    vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+    vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([]);
+    const fixture = await render();
+    fixture.componentInstance
+      .moreMenuItems()
+      .find((item) => item.label === 'Create similar')
+      ?.command?.({});
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const name = document.body.querySelector('#create-name') as HTMLInputElement;
+    expect(name.value).toBe('');
+    expect(document.body.querySelector('app-wizard-stepper')).not.toBeNull();
+    expect(document.body.textContent).toContain('Not copied:');
+    fixture.destroy();
+  });
+
   it('shows a reported failure without pretending it is still provisioning', async () => {
     const fixture = await render({ Status: 'ImagePullBackOff' });
     const banner = fixture.nativeElement.querySelector('.status-banner') as HTMLElement;

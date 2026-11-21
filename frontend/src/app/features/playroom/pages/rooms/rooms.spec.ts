@@ -43,6 +43,28 @@ describe('RoomsPageComponent', () => {
       (call: unknown[]) => (call[0] as { Playhouse?: string }).Playhouse,
     );
 
+  it('opens Create similar when a card emits the action', async () => {
+    vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+    vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([]);
+    TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-a');
+    const fixture = TestBed.createComponent(RoomsPageComponent);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    fixture.debugElement
+      .query(By.css('app-playroom-card'))
+      .triggerEventHandler('createSimilarRoom', 'playhouse-a-room');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const drawers = fixture.debugElement.queryAll(By.directive(CreatePlayroomDrawerComponent));
+    const opened = drawers
+      .map((drawer) => drawer.componentInstance as CreatePlayroomDrawerComponent)
+      .find((drawer) => drawer.visible);
+    expect(opened?.form.name).toBe('');
+    expect(opened?.form.playhouse).toBe('playhouse-a');
+    expect(opened?.mode).toBe('advanced');
+    fixture.destroy();
+  });
+
   it('reads the rooms once when the screen opens', async () => {
     TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-a');
 

@@ -24,12 +24,12 @@ import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { ImageCatalogService } from '../../../../core/services/image-catalog';
 import { UiSessionService } from '../../../../core/services/ui-session';
 import { PlayroomCreateInput, wailsApi } from '../../../../core/services/wails-api';
+import { CommandPreviewComponent } from '../../../../shared/components/command-preview/command-preview';
+import { StringListEditorComponent } from '../../../../shared/components/string-list-editor/string-list-editor';
 import {
-  CommandPreviewComponent,
-  StringListEditorComponent,
   WizardStep,
   WizardStepper,
-} from '../../../../shared/components';
+} from '../../../../shared/components/wizard-stepper/wizard-stepper';
 import { OverlayFocusDirective } from '../../../../shared/directives';
 import {
   CAPABILITIES,
@@ -45,6 +45,7 @@ import {
 } from '../../../../shared/models';
 import {
   NAME_RE,
+  suggestPlayroomName,
   blankCreateForm,
   describeResourcesInPlainWords,
   findImageEntry,
@@ -116,6 +117,8 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   @Input() visible = false;
   @Output() visibleChange = new EventEmitter<boolean>();
   @Input() playhouse = '';
+  @Input() initialForm: Partial<CreateForm> | null = null;
+  @Input() notCopiedHint = '';
 
   form: CreateForm = blankCreateForm('');
   touched = false;
@@ -129,8 +132,15 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['visible'] && this.visible) {
-      const draft = this.session.recall<{ form: CreateForm; step: number }>('create');
-      this.form = draft?.form ?? blankCreateForm(this.playhouse);
+      const draft = this.initialForm
+        ? undefined
+        : this.session.recall<{ form: CreateForm; step: number; notCopiedHint?: string }>('create');
+      this.form = draft?.form ?? {
+        ...blankCreateForm(this.playhouse, this.defaults),
+        ...structuredClone(this.initialForm ?? {}),
+      };
+      this.notCopiedHint = this.initialForm ? this.notCopiedHint : (draft?.notCopiedHint ?? '');
+      if (this.initialForm) this.switchToAdvancedMode();
       this.touched = false;
       this.submitFailure = '';
       this.step = draft?.step ?? 0;
@@ -146,6 +156,7 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
    */
   private async seedFromDefaults(): Promise<void> {
     const opened = this.playhouse;
+    const initialForm = structuredClone(this.initialForm ?? {});
     const pristine = JSON.stringify(this.form);
     try {
       await this.defaults.loadConfiguredDefaultsOnce();
@@ -154,7 +165,7 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
     }
     if (!this.visible || this.playhouse !== opened) return;
     if (JSON.stringify(this.form) !== pristine) return;
-    this.form = blankCreateForm(opened, this.defaults);
+    this.form = { ...blankCreateForm(opened, this.defaults), ...initialForm };
   }
 
   /**
@@ -181,7 +192,11 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
 
   private rememberDraft(): void {
     if (this.form.playhouse === this.state.playhouse())
-      this.session.remember('create', { form: this.form, step: this.step });
+      this.session.remember('create', {
+        form: this.form,
+        step: this.step,
+        notCopiedHint: this.notCopiedHint,
+      });
   }
 
   ngOnDestroy(): void {
@@ -191,6 +206,7 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   discardDraft(): void {
     if (this.submitting) return;
     this.session.forget('create');
+    this.notCopiedHint = '';
     this.form = blankCreateForm(this.playhouse, this.defaults);
     this.step = 0;
     this.touched = false;
@@ -384,13 +400,30 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   ];
 
   private nameInvalid(): boolean {
-    return !this.form.name || !NAME_RE.test(this.form.name);
+    return !this.form.name || !NAME_RE.test(this.form.name) || this.nameTaken();
+  }
+
+  private nameTaken(): boolean {
+    return this.state
+      .rooms()
+      .some((room) => room.playhouse === this.form.playhouse && room.name === this.form.name);
+  }
+
+  nameSuggestion(): string {
+    if (!this.form.name || NAME_RE.test(this.form.name)) return '';
+    const suggestion = suggestPlayroomName(this.form.name);
+    return NAME_RE.test(suggestion) ? suggestion : '';
+  }
+
+  useNameSuggestion(): void {
+    this.form.name = this.nameSuggestion();
+    this.focusName();
   }
 
   nameError(): string {
-    if (!this.touched) return '';
-    if (!this.form.name) return 'name is required';
+    if (!this.form.name) return this.touched ? 'name is required' : '';
     if (!NAME_RE.test(this.form.name)) return 'lowercase letters, digits, dashes (DNS-1123)';
+    if (this.nameTaken()) return 'Already used in this playhouse';
     return '';
   }
 

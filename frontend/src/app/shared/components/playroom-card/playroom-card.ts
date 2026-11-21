@@ -78,6 +78,7 @@ export class PlayroomCardComponent implements OnDestroy {
   @Output() openInEditor = new EventEmitter<string>();
   @Output() startRoom = new EventEmitter<string>();
   @Output() stopRoom = new EventEmitter<string>();
+  @Output() createSimilarRoom = new EventEmitter<string>();
   @Output() editRoom = new EventEmitter<string>();
   @Output() deleteRoom = new EventEmitter<string>();
 
@@ -151,6 +152,11 @@ export class PlayroomCardComponent implements OnDestroy {
       });
     }
 
+    items.push({
+      label: 'Create similar',
+      icon: 'pi pi-plus',
+      command: () => this.createSimilarRoom.emit(room.name),
+    });
     items.push({ separator: true });
     items.push({
       label: 'Delete',

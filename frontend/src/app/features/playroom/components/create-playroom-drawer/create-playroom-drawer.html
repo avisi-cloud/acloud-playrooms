@@ -44,6 +44,15 @@
         aria-live="polite"
         >{{ nameError() || 'Required. Lowercase letters, digits, dashes (DNS-1123).' }}</small
       >
+      @if (nameSuggestion(); as suggestion) {
+        <p-button
+          [label]="'Use ' + suggestion"
+          severity="secondary"
+          [text]="true"
+          size="small"
+          (click)="useNameSuggestion()"
+        />
+      }
     </div>
     <div class="field-group">
       <label class="field-label" for="create-image">{{ optionTexts.image.label }}</label>
@@ -112,6 +121,10 @@
       <small class="field-hint">{{ describeSize(selectedSize()) }}</small>
     </div>
   </ng-template>
+
+  @if (notCopiedHint) {
+    <p class="field-hint">{{ notCopiedHint }}</p>
+  }
 
   @if (mode === 'advanced') {
     <div class="wizard-shell">
