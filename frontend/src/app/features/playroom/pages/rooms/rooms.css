@@ -144,3 +144,29 @@
     min-width: 0;
   }
 }
+
+.status-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.status-chip {
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: var(--surf-2);
+  color: var(--tx-2);
+  font: inherit;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.status-chip:hover {
+  background: var(--surf-3);
+}
+.status-chip[aria-pressed='true'] {
+  border-color: var(--link);
+  color: var(--link);
+  font-weight: 600;
+}

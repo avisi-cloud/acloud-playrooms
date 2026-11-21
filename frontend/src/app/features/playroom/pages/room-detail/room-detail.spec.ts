@@ -218,4 +218,21 @@ describe('Playroom details', () => {
       vi.unstubAllGlobals();
     }
   });
+  it('pins and unpins the room from details', async () => {
+    const fixture = await render();
+    const state = TestBed.inject(PlayroomStateService);
+    (
+      fixture.nativeElement.querySelector(
+        'button[aria-label="Pin playroom demo"]',
+      ) as HTMLButtonElement
+    ).click();
+    expect(state.isPinned('ph', 'demo')).toBe(true);
+    fixture.detectChanges();
+    (
+      fixture.nativeElement.querySelector(
+        'button[aria-label="Unpin playroom demo"]',
+      ) as HTMLButtonElement
+    ).click();
+    expect(state.isPinned('ph', 'demo')).toBe(false);
+  });
 });

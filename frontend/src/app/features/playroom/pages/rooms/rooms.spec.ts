@@ -9,6 +9,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { MessageService } from 'primeng/api';
 import { RoomsPageComponent } from './rooms';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
+import { listingToRoom } from '../../../../shared/utils';
 import { ListingDto } from '../../../../shared/models';
 import { wailsApi } from '../../../../core/services/wails-api';
 
@@ -24,6 +25,7 @@ describe('RoomsPageComponent', () => {
   ];
 
   beforeEach(async () => {
+    localStorage.clear();
     vi.spyOn(wailsApi, 'getCurrentUserEmail').mockResolvedValue('sem@avisi.nl');
     listPlayrooms = vi
       .spyOn(wailsApi, 'listPlayrooms')
@@ -182,4 +184,91 @@ describe('RoomsPageComponent', () => {
     component.runPreferredAction('missing');
     expect(openConnect).not.toHaveBeenCalled();
   });
+  it('counts after Search and Mine, independently of the selected status', async () => {
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('playhouse-platform-dev');
+    const fixture = TestBed.createComponent(RoomsPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    state.setUser('developer@example.test');
+    state.setRooms([
+      listingToRoom(
+        { Name: 'api', Owner: 'developer@example.test', Status: 'Ready', Image: 'ubuntu' },
+        'playhouse-platform-dev',
+      ),
+      listingToRoom(
+        { Name: 'review', Owner: 'developer@example.test', Status: 'Stopped', Image: 'ubuntu' },
+        'playhouse-platform-dev',
+      ),
+      listingToRoom(
+        { Name: 'other', Owner: 'other@example.test', Status: 'Failed', Image: 'ubuntu' },
+        'playhouse-platform-dev',
+      ),
+      listingToRoom(
+        { Name: 'elsewhere', Status: 'Ready', Image: 'ubuntu' },
+        'playhouse-platform-shared',
+      ),
+    ]);
+    page.query.set(' UBUNTU ');
+    page.mineOnly.set(true);
+    page.statusFilter.set('ready');
+    expect(page.statusChips()).toEqual([
+      { status: '', label: 'All', count: 2 },
+      { status: 'ready', label: 'Ready', count: 1 },
+      { status: 'stopped', label: 'Stopped', count: 1 },
+    ]);
+    expect(page.filteredRooms().map((room) => room.name)).toEqual(['api']);
+    page.query.set('review');
+    expect(page.statusChips()).toContainEqual({ status: 'ready', label: 'Ready', count: 0 });
+    expect(page.filteredRooms()).toEqual([]);
+    fixture.detectChanges();
+    const active = fixture.nativeElement.querySelectorAll('.status-chip[aria-pressed="true"]');
+    expect(active.length).toBe(1);
+    expect(active[0].textContent).toContain('Ready 0');
+    (fixture.nativeElement.querySelector('.status-chip') as HTMLButtonElement).click();
+    expect(page.filteredRooms().map((room) => room.name)).toEqual(['review']);
+    page.mineOnly.set(false);
+    page.query.set('');
+    expect(page.statusChips()[0].count).toBe(3);
+  });
+
+  for (const sort of ['name', 'age', 'status'] as const) {
+    it(`keeps pins first while preserving ${sort} ordering in each group`, async () => {
+      const state = TestBed.inject(PlayroomStateService);
+      state.selectPlayhouse('playhouse-platform-dev');
+      const fixture = TestBed.createComponent(RoomsPageComponent);
+      await fixture.whenStable();
+      const page = fixture.componentInstance;
+      state.setRooms([
+        {
+          ...listingToRoom({ Name: 'alpha', Status: 'Stopped' }, 'playhouse-platform-dev'),
+          ageMin: 1,
+        },
+        {
+          ...listingToRoom({ Name: 'beta', Status: 'Ready' }, 'playhouse-platform-dev'),
+          ageMin: 3,
+        },
+        {
+          ...listingToRoom({ Name: 'gamma', Status: 'Failed' }, 'playhouse-platform-dev'),
+          ageMin: 4,
+        },
+        {
+          ...listingToRoom({ Name: 'zeta', Status: 'Stopped' }, 'playhouse-platform-dev'),
+          ageMin: 2,
+        },
+      ]);
+      state.togglePinned('playhouse-platform-dev', 'gamma');
+      state.togglePinned('playhouse-platform-dev', 'zeta');
+      page.sort.set(sort);
+      const expected =
+        sort === 'name'
+          ? ['gamma', 'zeta', 'alpha', 'beta']
+          : sort === 'age'
+            ? ['zeta', 'gamma', 'alpha', 'beta']
+            : ['gamma', 'zeta', 'beta', 'alpha'];
+      expect(page.filteredRooms().map((room) => room.name)).toEqual(expected);
+      state.togglePinned('playhouse-platform-dev', 'gamma');
+      expect(page.filteredRooms()[0].name).toBe('zeta');
+    });
+  }
 });

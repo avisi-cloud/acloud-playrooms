@@ -306,3 +306,66 @@ button.card-outdated:focus-visible {
   line-height: 1.5;
   color: var(--tx-2);
 }
+
+.card-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--idle-on-dark);
+  cursor: pointer;
+}
+.card-pin:hover {
+  background: var(--border-2);
+}
+.card-pin:focus-visible {
+  outline-color: var(--busy-on-dark);
+}
+.card-name {
+  flex: 1;
+}
+
+/* Stopped rooms use theme surfaces without lowering text opacity. */
+.stopped .card-head {
+  background: var(--surf-3);
+}
+.stopped .card-head::before {
+  display: none;
+}
+.stopped .card-name {
+  color: var(--tx);
+}
+.stopped
+  :is(
+    .card-sub,
+    .card-flavor,
+    .card-status-lbl,
+    .card-host,
+    .card-raw-status,
+    .card-pin,
+    .card-outdated,
+    .punt
+  ) {
+  color: var(--tx-2);
+}
+.stopped :is(.card-flavor, .card-outdated) {
+  background: transparent;
+  border-color: var(--border-2);
+}
+.stopped .card-dot {
+  background: var(--tx-2);
+}
+:host ::ng-deep .stopped .card-primary-btn.p-button {
+  background: var(--surf-3);
+  border-color: var(--border-2);
+  color: var(--tx);
+}
+:host ::ng-deep .stopped .card-primary-btn.p-button:hover {
+  background: var(--surf-2);
+}

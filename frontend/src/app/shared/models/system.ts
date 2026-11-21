@@ -7,6 +7,7 @@ export type PreferredAction = 'connect' | 'open' | 'nothing';
 
 export interface CacheState {
   preferredAction: PreferredAction;
+  pinnedRooms: Record<string, string[]>;
   lastPlayhouse: string;
   lastPlayroom: string;
   lastEditor: string;
