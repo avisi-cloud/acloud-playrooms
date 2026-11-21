@@ -430,6 +430,16 @@ export function PreviewUpdatePlayroom(input) {
 }
 
 /**
+ * SendDesktopNotification asks permission only when a background task needs to notify.
+ * @param {string} title
+ * @param {string} target
+ * @returns {$CancellablePromise<void>}
+ */
+export function SendDesktopNotification(title, target) {
+    return $Call.ByID(3899132272, title, target);
+}
+
+/**
  * SetAcloudBinary remembers a path for this and later launches, returning the
  * resulting status so the caller can render the outcome without a second call.
  * A path that does not run is rejected rather than saved.
@@ -440,6 +450,15 @@ export function SetAcloudBinary(path) {
     return $Call.ByID(1998400028, path).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType0($result);
     }));
+}
+
+/**
+ * SetDockBadge clears the native badge when no rooms match the chosen count.
+ * @param {number} count
+ * @returns {$CancellablePromise<void>}
+ */
+export function SetDockBadge(count) {
+    return $Call.ByID(2098280497, count);
 }
 
 /**

@@ -1,3 +1,4 @@
+import { DesktopNotificationsService } from '../../../../core/services/desktop-notifications';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
@@ -56,6 +57,26 @@ describe('Settings page', () => {
   afterEach(() => {
     localStorage.clear();
     vi.restoreAllMocks();
+  });
+
+  it('offers notification and Dock badge preferences and saves them', async () => {
+    const fixture = TestBed.createComponent(SettingsPageComponent);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const toggle = root.querySelector<HTMLInputElement>('#desktop-notifications')!;
+    expect(toggle.checked).toBe(true);
+    toggle.click();
+    await fixture.whenStable();
+    expect(readCache().notifications).toBe(false);
+    expect(root.querySelector('label[for="dock-badge"]')?.textContent).toBe('Dock badge');
+    expect(root.querySelector('#dock-badge')?.getAttribute('aria-label')).toBe('Dock badge');
+    expect(fixture.componentInstance.dockBadgeOptions.map((option) => option.label)).toEqual([
+      'Failed rooms',
+      'Running rooms',
+      'Off',
+    ]);
+    TestBed.inject(DesktopNotificationsService).setDockBadge('off');
+    expect(readCache().dockBadge).toBe('off');
   });
 
   it('offers three theme tiles and saves a single selection when a tile is clicked', async () => {

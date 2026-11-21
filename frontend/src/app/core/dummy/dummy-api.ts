@@ -166,6 +166,13 @@ const simulatedApi: typeof liveApi = {
   setWindowTitle: async (title) => {
     document.title = title;
   },
+  sendDesktopNotification: async (title, target) => {
+    console.info('Dummy desktop notification', title, target);
+  },
+  setDockBadge: async (count) => {
+    console.info('Dummy Dock badge', count);
+  },
+  onDesktopNotificationClick: () => () => undefined,
   onMenuAction: () => () => undefined,
   setWindowTheme: () => Promise.resolve(),
   openUrlInDefaultBrowser: async (url) => {

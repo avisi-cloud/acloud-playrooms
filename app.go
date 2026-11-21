@@ -5,6 +5,7 @@ package gui
 import (
 	"context"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
@@ -17,8 +18,12 @@ import (
 
 // App exposes backend operations to the frontend through Wails bindings.
 type App struct {
-	applicationContext context.Context
-	appVersion         string
+	applicationContext          context.Context
+	appVersion                  string
+	notifications               desktopNotifier
+	dock                        desktopDock
+	notificationLock            sync.Mutex
+	notificationPermissionAsked bool
 }
 
 // ServiceStartup connects command events. The standalone app reads acloud state
