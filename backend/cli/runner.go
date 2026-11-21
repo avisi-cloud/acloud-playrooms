@@ -132,10 +132,11 @@ func (runner *Runner) Run(ctx context.Context, arguments []string, options Optio
 		return Result{}, fmt.Errorf("capture stderr of %s: %w", PreviewString(arguments), err)
 	}
 
+	startedAt := time.Now()
 	if err := cmd.Start(); err != nil {
 		return Result{}, fmt.Errorf("start %s: %w", PreviewString(arguments), err)
 	}
-	runner.emit(Event{Type: EventStarted, OperationID: options.OperationID, Command: ShellPreview(arguments)})
+	runner.emit(Event{Type: EventStarted, OperationID: options.OperationID, Command: ShellPreview(arguments), StartedAt: startedAt.UTC().Format(time.RFC3339Nano)})
 
 	// Extracted once: every streamed line is checked against these.
 	secrets := sensitiveValues(arguments)
@@ -158,7 +159,12 @@ func (runner *Runner) Run(ctx context.Context, arguments []string, options Optio
 	result := Result{Stdout: stdoutCapture.String(), Stderr: stderrCapture.String(), ExitCode: exitCode(waitErr)}
 
 	runErr := runner.outcomeOf(ctx, arguments, result, waitErr)
-	runner.emit(doneEvent(options.OperationID, result.ExitCode, runErr))
+	endedAt := time.Now()
+	event := doneEvent(options.OperationID, result.ExitCode, runErr)
+	event.StartedAt = startedAt.UTC().Format(time.RFC3339Nano)
+	event.EndedAt = endedAt.UTC().Format(time.RFC3339Nano)
+	event.DurationMilliseconds = endedAt.Sub(startedAt).Milliseconds()
+	runner.emit(event)
 	return result, runErr
 }
 

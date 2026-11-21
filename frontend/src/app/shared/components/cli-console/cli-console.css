@@ -37,6 +37,7 @@
 }
 
 .cli-log__head {
+  flex-wrap: wrap;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -68,6 +69,8 @@
 }
 
 .cli-log__actions {
+  flex-wrap: wrap;
+  max-width: 100%;
   display: flex;
   flex: none;
   align-items: center;
@@ -118,4 +121,66 @@
 
 .cli-log__spacer {
   height: 12px;
+}
+
+.cli-log__filters,
+.cli-log__metadata,
+.cli-log__entry-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cli-log__filters {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.cli-log__filters input {
+  flex: 1;
+  min-width: 8rem;
+  width: 10rem;
+}
+.cli-log__filters select {
+  background: var(--surf-2);
+  color: var(--tx);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 6px;
+}
+.cli-log__entry + .cli-log__entry {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.cli-log__metadata {
+  color: var(--tx-2);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 8px;
+}
+.cli-log__entry-actions {
+  margin: 4px 0;
+}
+.cli-log__toggle {
+  background: transparent;
+  border: 0;
+  color: var(--tx-2);
+  cursor: pointer;
+  font: inherit;
+  padding: 6px;
+}
+.cli-log__toggle:hover {
+  color: var(--tx);
+}
+.cli-log__toggle:focus-visible,
+.cli-log__filters select:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
+}
+.cli-log__error {
+  color: var(--bad);
+  margin: 8px 14px;
+  font-size: 12px;
 }

@@ -346,3 +346,42 @@ func TestRunRejectsArgumentsTheGUIMustNeverExecute(t *testing.T) {
 		})
 	}
 }
+
+func TestRunReportsTimingAndExitCode(t *testing.T) {
+	for _, script := range []string{"ok", "fail"} {
+		t.Run(script, func(t *testing.T) {
+			events := &eventRecorder{}
+			runner := fakeRunner(t, script, WithEmitter(events.emit))
+			before := time.Now()
+			_, _ = runner.Run(context.Background(), []string{"playroom", "create", "demo"}, Options{OperationID: "timed"})
+			after := time.Now()
+			var started, done Event
+			for _, event := range events.snapshot() {
+				if event.Type == EventStarted {
+					started = event
+				}
+				if event.Type == EventDone {
+					done = event
+				}
+			}
+			start, startErr := time.Parse(time.RFC3339Nano, started.StartedAt)
+			end, endErr := time.Parse(time.RFC3339Nano, done.EndedAt)
+			if startErr != nil || endErr != nil {
+				t.Fatalf("invalid times: %v, %v", startErr, endErr)
+			}
+			if start.Before(before) || end.After(after) || end.Before(start) || done.StartedAt != started.StartedAt {
+				t.Fatalf("invalid interval: %+v, %+v", started, done)
+			}
+			if done.DurationMilliseconds != end.Sub(start).Milliseconds() {
+				t.Fatalf("duration = %d, want %d", done.DurationMilliseconds, end.Sub(start).Milliseconds())
+			}
+			wantExitCode := 0
+			if script == "fail" {
+				wantExitCode = 3
+			}
+			if done.ExitCode != wantExitCode {
+				t.Fatalf("exit code = %d, want %d", done.ExitCode, wantExitCode)
+			}
+		})
+	}
+}

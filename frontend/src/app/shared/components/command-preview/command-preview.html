@@ -21,7 +21,11 @@
   >
     <span class="command-prompt">❯</span>
     @if (resolvedCommand(); as resolved) {
-      <span class="command-text">{{ resolved }}</span>
+      <span class="command-text">
+        @for (part of splitCommandPreview(resolved); track $index) {
+          <span [class.command-flag]="part.kind === 'flag'">{{ part.text }}</span>
+        }
+      </span>
     } @else {
       <!-- Waiting on the backend. Without this the block is a bare black bar
            with a prompt glyph, which is what you look at while typing a name on

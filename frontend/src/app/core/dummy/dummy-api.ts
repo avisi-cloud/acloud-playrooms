@@ -1,3 +1,4 @@
+import { simulateActivity } from './activity-events';
 import type { ListingDto } from '../../shared/models';
 import type {
   wailsApi as liveApi,
@@ -84,7 +85,15 @@ const binaryStatus = {
 };
 
 // An exhaustive adapter: dummy mode never imports a live backend implementation at runtime.
-export const dummyApi: typeof liveApi = {
+const simulatedApi: typeof liveApi = {
+  exportActivityLog: async (content: string): Promise<void> => {
+    const url = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'activity-log.txt';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
   getAcloudVersion: () => read('0.39.0'),
   isLoggedIn: () => read(signedIn),
   getCachedPlayhouse: () => read(playhouses[scopeKey()]?.[0]?.Slug ?? ''),
@@ -316,4 +325,44 @@ export const dummyApi: typeof liveApi = {
   previewCreatePlayhouse: (input) => preview('playhouse create', input),
   previewDeletePlayhouse: (input) => preview('playhouse delete', input),
   previewUpdatePlayhouse: (input) => preview('playhouse update', input),
+};
+
+export const dummyApi: typeof liveApi = {
+  ...simulatedApi,
+  createPlayroom: (operationId, input) =>
+    simulateActivity(operationId, ['playroom', 'create', input.Name ?? ''], () =>
+      simulatedApi.createPlayroom(operationId, input),
+    ),
+  updatePlayroom: (operationId, input) =>
+    simulateActivity(operationId, ['playroom', 'update', input.Name ?? ''], () =>
+      simulatedApi.updatePlayroom(operationId, input),
+    ),
+  deletePlayroom: (operationId, input) =>
+    simulateActivity(operationId, ['playroom', 'delete', input.Name ?? ''], () =>
+      simulatedApi.deletePlayroom(operationId, input),
+    ),
+  startPlayroom: (operationId, input) =>
+    simulateActivity(operationId, ['playroom', 'start', input.Name ?? ''], () =>
+      simulatedApi.startPlayroom(operationId, input),
+    ),
+  stopPlayroom: (operationId, input) =>
+    simulateActivity(operationId, ['playroom', 'stop', input.Name ?? ''], () =>
+      simulatedApi.stopPlayroom(operationId, input),
+    ),
+  openPlayroomInEditor: (operationId, input) =>
+    simulateActivity(operationId, ['playroom', 'open', input.Name ?? ''], () =>
+      simulatedApi.openPlayroomInEditor(operationId, input),
+    ),
+  createPlayhouse: (operationId, input) =>
+    simulateActivity(operationId, ['playhouse', 'create', input.Name ?? ''], () =>
+      simulatedApi.createPlayhouse(operationId, input),
+    ),
+  deletePlayhouse: (operationId, input) =>
+    simulateActivity(operationId, ['playhouse', 'delete', input.Name ?? ''], () =>
+      simulatedApi.deletePlayhouse(operationId, input),
+    ),
+  updatePlayhouse: (operationId, input) =>
+    simulateActivity(operationId, ['playhouse', 'update', input.Name ?? ''], () =>
+      simulatedApi.updatePlayhouse(operationId, input),
+    ),
 };

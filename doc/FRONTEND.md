@@ -95,8 +95,20 @@ this.notify.toast(`Created "${name}"`, 'ok', runId);
 
 The log stays **closed** by default. The toast and the room's own state are what
 a user sees; the log opens from the Activity button in the sidebar footer, from
-clicking a toast, or by itself when a command fails. It is one continuous
-scrollback for the whole session, held in memory.
+clicking a toast, or by itself when a command fails. Each command has its own
+entry with a start time, reported duration, exit code
+and status (OK, Failed or Running). Cancelled commands and terminal handoffs
+are labeled separately; missing timing or exit codes say **Not reported**.
+Entries remain in memory for the session, bounded to the latest 5,000 lines.
+
+Output folds per entry. More than 20 lines or 2,000 characters starts folded;
+Show output reveals it. **All / Failures only** and **Search output** combine to
+filter entries. Opening a command from a notification or room resets filters so
+that command is visible. Copy command and Copy output copy that entry's retained
+text. Copy whole log and **Export log…** include all retained entries, regardless
+of filters or folding, with their timing and status. Export uses a native save
+dialog (cancellation saves nothing); dummy mode downloads `activity-log.txt`.
+Both use only the already redacted text, never a second source of CLI output.
 
 Pass the operation id to `toast()` and the toast becomes a link into the log at
 that command. The banner itself is the link, with Enter and Space support;
@@ -149,7 +161,10 @@ backend preview function and the result of its `toInput()` method; the component
 fingerprints that input, ignores stale responses, and disables requests while
 its overlay is closed. The same `toInput()` result is submitted, so the preview
 and the action cannot describe different commands. The frontend never assembles
-command lines.
+command lines. Copy shows **Copied** briefly; flag names have a separate theme
+color from values, with quotes and spacing preserved by `splitCommandPreview`.
+The dummy preview labels its commands `dummy-preview` and emits simulated
+activity for room and playhouse actions without running acloud.
 
 ### Easy and Advanced create
 
