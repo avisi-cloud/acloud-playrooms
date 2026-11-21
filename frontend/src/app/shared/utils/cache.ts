@@ -20,6 +20,7 @@ export const defaultCache: CacheState = {
   backgroundGrain: true,
   ameRobot: true,
   createPlayroomMode: 'easy',
+  recentGitRepositories: [],
   setupCompleted: runtimeMode.dummy,
 };
 

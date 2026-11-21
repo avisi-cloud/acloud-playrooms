@@ -19,12 +19,16 @@
       </div>
     </div>
     <div class="page-header-actions">
+      @if (updatedAgo(); as updatedAgo) {
+        <span class="refreshed-at">Updated {{ updatedAgo }}</span>
+      }
       <p-button
         label="Refresh"
         icon="pi pi-refresh"
         severity="secondary"
         [outlined]="true"
         size="small"
+        [title]="updatedAgo() ? 'Updated ' + updatedAgo() : ''"
         [disabled]="refreshing()"
         [loading]="refreshing()"
         (click)="refreshRooms()"

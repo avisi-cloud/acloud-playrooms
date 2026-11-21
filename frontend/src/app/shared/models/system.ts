@@ -22,6 +22,8 @@ export interface CacheState {
   ameRobot: boolean;
   readVariablesFromLoginShell: boolean;
   createPlayroomMode: CreatePlayroomMode;
+  /** Newest first, URLs only: offered as suggestions in the create drawer's git repositories. */
+  recentGitRepositories: string[];
   /** Set once setup is finished; leaving it with "Set up later" does not set it. */
   setupCompleted: boolean;
 }

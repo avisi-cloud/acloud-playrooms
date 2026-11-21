@@ -32,7 +32,7 @@ import { CREATE_PLAYROOM_QUERY_PARAM } from '../../../../shared/data';
 import { STATUS } from '../../../../shared/data/status';
 import { buildSearchableRoomText } from '../../../../shared/utils/playroom-search';
 import { ConnectTab, Playroom, StatusKey } from '../../../../shared/models';
-import { describeError } from '../../../../shared/utils';
+import { describeError, formatTimeSince } from '../../../../shared/utils';
 import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-drawer/create-playroom-drawer';
 import { PlayroomBreadcrumbComponent } from '../../components/playroom-breadcrumb/playroom-breadcrumb';
 
@@ -93,8 +93,17 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
    */
   readonly loaded = computed(() => this.state.roomsLoadedFor() === this.state.playhouse());
 
+  private readonly now = signal(Date.now());
+  /** "just now", "8s ago": how old the list on screen is, empty until it has loaded. */
+  readonly updatedAgo = computed(() => {
+    const refreshedAt = this.state.lastRefreshedAt();
+    if (!refreshedAt || !this.loaded()) return '';
+    return formatTimeSince(Math.max(0, this.now() - refreshedAt.getTime()) / 1000);
+  });
+
   showCreate = false;
   private ageTimer: ReturnType<typeof setInterval> | null = null;
+  private clockTimer: ReturnType<typeof setInterval> | null = null;
   /** Set when a read arrived mid-flight, to repeat once that one lands. */
   private rereadWhenTheCurrentReadLands = false;
 
@@ -124,6 +133,7 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     this.openCreateWhenTheUrlAsksForIt();
     this.ageTimer = setInterval(() => this.incrementAges(), 60000);
+    this.clockTimer = setInterval(() => this.now.set(Date.now()), 1000);
     try {
       this.state.setUser(await wailsApi.getCurrentUserEmail());
     } catch {
@@ -133,6 +143,7 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.ageTimer) clearInterval(this.ageTimer);
+    if (this.clockTimer) clearInterval(this.clockTimer);
   }
 
   private anyOverlayOpen(): boolean {

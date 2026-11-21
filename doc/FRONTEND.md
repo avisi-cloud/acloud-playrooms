@@ -115,8 +115,8 @@ that command. The banner itself is the link, with Enter and Space support;
 recognised failures also offer a separate fix button beside the Activity link. Dismissal only closes the toast.
 
 Polled reads deliberately skip all of this — they run without an operation id,
-so they emit nothing. A room list refreshing every ten seconds would bury
-everything worth reading.
+so they emit nothing. A room list refreshing itself every minute, or every ten
+seconds while a room changes, would bury everything worth reading.
 
 ### When a command fails
 
@@ -355,7 +355,11 @@ overlays to `PlayroomActionsHostComponent`. It owns the selected room, delete
 options and preview, and emits after a successful deletion. This keeps the same
 irreversible action identical from both entry points. Repeating string flag
 controls (`--env`, `--git`, `--copy`, `--port`) use one shared list editor that
-also guarantees the form retains an editable blank row.
+also guarantees the form retains an editable blank row. Pasting several lines
+into a row fills one row per line. `--git` wraps it in `GitRepositoryEditorComponent`,
+which explains entries acloud would not clone, hints at a missing clone token from
+the form's environment variables, and suggests recent repositories
+(`shared/utils/git-repository.ts`; see DECISIONS).
 
 `core/services/setup.ts` reads each setup step's status from the services above
 and keeps `setupCompleted`. Setup opens at launch only: a fresh install through
@@ -365,7 +369,8 @@ existed (no `setupCompleted` key) with a playhouse counts as completed, so
 upgrades skip it.
 
 `shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal,
-theme, background grain, AME Robot, create-playroom mode, pinned rooms and `setupCompleted` to localStorage
+theme, background grain, AME Robot, create-playroom mode, pinned rooms, the last ten git repositories of
+successful creates (URLs without ref or credentials) and `setupCompleted` to localStorage
 under `acloud-playroom-gui-cache`. Background grain defaults to on; Settings →
 Appearance applies changes immediately to the outer background and content panel.
 The theme setting offers horizontal radio tiles for Light, Dark and System. System follows live changes to
@@ -445,9 +450,26 @@ not live measurements. Room Activity jumps to the latest retained command for
 that room, playhouse and scope revision in this app session; it is not a durable
 history. Switching scope never reassigns an in-flight command's association.
 
-Rooms reload every 10 seconds while any room is in a transitional state. A tick
-that arrives while the previous read is still running is dropped rather than
-queued, so a slow list cannot stack subprocesses behind itself. A read the
+The room list refreshes itself in the background. `nextRefreshDelay()` in
+`core/services/playroom-lifecycle.ts` decides when, and is the one place to
+change it:
+
+- every 10 seconds while a room is in a transitional state, every 60 seconds
+  otherwise;
+- paused while the window is hidden or minimised (`document.visibilitychange`),
+  with one read straight away when it is shown again;
+- after failed reads in a row it waits 60 seconds, 2 minutes, then 5 minutes
+  until a read succeeds. Only the first failed poll in a row raises a
+  notification; a failure the user's own Refresh already reported raises none.
+
+Polling starts with the first read a screen makes for the current playhouse,
+so nothing polls before setup or a playhouse choice. Editing rooms locally
+(ages, optimistic patches) does not push the next read back. The Playrooms
+header says when the list was last read ("Updated 8s ago",
+`state.lastRefreshedAt`) next to its Refresh button.
+
+A tick that arrives while the previous read is still running is dropped rather
+than queued, so a slow list cannot stack subprocesses behind itself. A read the
 _user_ caused is repeated instead of dropped: it may be for a different
 playhouse than the one being fetched, and dropping it left the new playhouse
 showing nothing at all.
@@ -492,11 +514,12 @@ dot in a corner of a panel that stays closed: a twenty-minute playhouse create
 was invisible from every other screen. It is the same rule as the log's, so the
 two always agree.
 
-What is excluded is everything nobody asked for. The ten-second room poll and
-the fifteen-second playhouse poll pass `background`, and commands only reach the
-log when they carry an operation id, which polled reads do not. A poll that
-pulsed the mark would blink it every ten seconds for as long as a room was
-starting up — the state where the indicator most needs to mean something.
+What is excluded is everything nobody asked for. The background room poll never
+reaches `PageLoadingService`, the fifteen-second playhouse poll passes
+`background`, and commands only reach the log when they carry an operation id,
+which polled reads do not. A poll that pulsed the mark would blink it every ten
+seconds for as long as a room was starting up — the state where the indicator
+most needs to mean something.
 
 There is no separate global Working message: room state, notification banners
 and the Activity indicator provide progress alongside the breathing mark.
@@ -507,7 +530,7 @@ content area to announce a wait usually under a second, and put a card-shaped
 placeholder where cards were about to appear.
 
 `runAndShowIndicatorIf(showIndicator, work)` takes the decision explicitly, because only a read with
-nothing behind it counts: the ten-second room poll, the fifteen-second
+nothing behind it counts: the background room poll, the fifteen-second
 playhouse poll and the Refresh buttons all run behind content that is already
 on screen, and Refresh has its own spinner. A screen that renders nothing still
 owes a screen reader the word — hence the `.sr-only` status line in each
