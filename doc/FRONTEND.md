@@ -60,6 +60,28 @@ after that.
 `core/guards/playhouse-guard.ts` sends the user to `/playhouse` when no
 playhouse is selected and the backend has no cached one.
 
+### Deep links
+
+The desktop bundle registers `acloud-playrooms://`. Links use the current context
+and organisation; the app checks a fresh playhouse list and refuses unavailable
+playhouses or a selection changed during validation. It never switches context
+or organisation. A validated link may select a playhouse inside that scope.
+
+- `acloud-playrooms://rooms/<playhouse>/<room>` opens room details.
+- `acloud-playrooms://connect/<playhouse>/<room>` opens the Connect dialog.
+- `acloud-playrooms://create?playhouse=<playhouse>` opens the create drawer.
+
+Names are percent encoded. Unknown paths, extra parameters and malformed names
+are refused. Links only open screens: Connect and Create still require the user
+to submit the existing dialog or drawer. **Copy link** in room details copies the
+room URL. Links intentionally carry no credentials, context or organisation.
+
+`DeepLinksService` starts after shell initialization. Native URL events wait for
+its listener before delivery, including on a cold launch. The router's one-use
+`connect` and `create` parameters open the existing surfaces and are then cleared.
+Dummy mode accepts a `dummy:deep-link` window CustomEvent with the URL as its
+string detail, for browser tests without registering an operating system scheme.
+
 ## Talking to the backend
 
 Everything goes through `core/services/wails-api.ts`, the one file that touches

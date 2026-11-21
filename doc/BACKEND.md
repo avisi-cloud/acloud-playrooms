@@ -537,3 +537,11 @@ New Playroom through the existing `menu:action` event, and emits room actions as
 on, a `WindowClosing` hook hides the window instead of closing it, so the app and
 its Angular state keep running; ⌘Q and Quit still end the app.
 `App.ShowMainWindow` lets the frontend bring the window back for a failure.
+
+## Deep links
+
+`build/darwin/Info.plist` registers the `acloud-playrooms` URL scheme. `run.go`
+receives Wails `ApplicationLaunchedWithUrl` events, brings the window forward and
+forwards their URL as `deep-link:open`. `deepLinkDelivery` queues launch URLs
+until Angular emits `deep-link:ready`, then delivers each once in order. Parsing,
+scope checks and routing live in the frontend; receiving a URL runs no command.

@@ -117,6 +117,7 @@ To update, quit the app, download the latest DMG, and drag the new app into
 | The app cannot find Acloud            | Open **Defaults** and set the path under **Acloud command**; `which acloud` in a terminal prints it. An app opened from Finder does not inherit your shell's `PATH`. |
 | You are not signed in                 | Run `acloud auth login`, then return to the app.                                                                                                                     |
 | No playhouses appear                  | Check the selected context and organisation, and your access to them.                                                                                                |
+| A room link is refused                | Check the current context and organisation; links never switch them. Install the app in Applications if macOS does not recognise `acloud-playrooms://` links.        |
 | A command fails                       | Open the activity log for the CLI's output and error details.                                                                                                        |
 | A direct download is blocked by macOS | Check the release source, then follow [Apple's instructions](https://support.apple.com/en-us/102445).                                                                |
 

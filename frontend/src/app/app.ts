@@ -1,3 +1,4 @@
+import { DeepLinksService } from './core/services/deep-links';
 import { DesktopNotificationsService } from './core/services/desktop-notifications';
 import { MenuBarService } from './core/services/menu-bar';
 import { DialogModule } from 'primeng/dialog';
@@ -80,6 +81,7 @@ export type CurrentScopeState = 'signed-out' | 'no-playhouse' | 'playhouse-selec
   styleUrls: ['./app.css', './app-sidebar.css', './app-toast.css', './app-main-panel.css'],
 })
 export class App implements OnInit {
+  private readonly deepLinks = inject(DeepLinksService);
   private readonly desktopNotifications = inject(DesktopNotificationsService);
   private readonly menuBar = inject(MenuBarService);
   readonly shortcuts = inject(ShortcutsService);
@@ -187,9 +189,10 @@ export class App implements OnInit {
     // Only here, at launch: a sign-out later in the session keeps its own behaviour.
     const brokenStep = this.setup.requiredStepThatBrokeSinceSetup();
     if (brokenStep)
-      void this.router.navigate(['/setup'], {
+      await this.router.navigate(['/setup'], {
         queryParams: { [SETUP_STEP_QUERY_PARAM]: brokenStep },
       });
+    this.deepLinks.start();
   }
 
   /**

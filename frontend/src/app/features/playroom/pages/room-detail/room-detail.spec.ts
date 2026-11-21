@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { PlayroomActionsHostComponent } from '../../../../shared/components';
 import { CliConsoleService } from '../../../../core/services/cli-console';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { wailsApi } from '../../../../core/services/wails-api';
@@ -50,7 +52,10 @@ describe('Playroom details', () => {
         provideRouter([]),
         {
           provide: ActivatedRoute,
-          useValue: { paramMap: of(convertToParamMap({ name: 'demo' })) },
+          useValue: {
+            paramMap: of(convertToParamMap({ name: 'demo' })),
+            queryParamMap: of(convertToParamMap({})),
+          },
         },
       ],
     }).compileComponents();
@@ -71,6 +76,75 @@ describe('Playroom details', () => {
     fixture.detectChanges();
     return fixture;
   }
+
+  it('copies a link and updates its button after the clipboard resolves', async () => {
+    const copy = vi.fn().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { userAgent: navigator.userAgent, clipboard: { writeText: copy } });
+    try {
+      const fixture = await render();
+      await fixture.componentInstance.copyLink();
+      await fixture.whenStable();
+      expect(copy).toHaveBeenCalledWith('acloud-playrooms://rooms/ph/demo');
+      expect(fixture.componentInstance.linkCopied()).toBe(true);
+      expect(fixture.nativeElement.querySelector('.page-header-right').textContent).toContain(
+        'Copied',
+      );
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it('opens Connect once after the room loads and waits for user confirmation', async () => {
+    const query = new BehaviorSubject(convertToParamMap({ connect: '1' }));
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: {
+        paramMap: of(convertToParamMap({ name: 'demo' })),
+        queryParamMap: query,
+      },
+    });
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const connect = vi.spyOn(wailsApi, 'connectPlayroom');
+    const fixture = await render();
+    const host = fixture.debugElement.query(By.directive(PlayroomActionsHostComponent))
+      .componentInstance as PlayroomActionsHostComponent;
+    expect(host.showConnect).toBe(true);
+    expect(host.room?.name).toBe('demo');
+    expect(connect).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { connect: null }, replaceUrl: true }),
+    );
+    host.close();
+    fixture.detectChanges();
+    expect(host.showConnect).toBe(false);
+    query.next(convertToParamMap({ connect: '1' }));
+    await fixture.whenStable();
+    expect(host.showConnect).toBe(true);
+    expect(connect).not.toHaveBeenCalled();
+  });
+
+  it('clears a Connect request for a missing room without opening a dialog', async () => {
+    TestBed.overrideProvider(ActivatedRoute, {
+      useValue: {
+        paramMap: of(convertToParamMap({ name: 'missing' })),
+        queryParamMap: of(convertToParamMap({ connect: '1' })),
+      },
+    });
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    TestBed.inject(PlayroomStateService).selectPlayhouse('ph');
+    const fixture = TestBed.createComponent(RoomDetailPageComponent);
+    await fixture.whenStable();
+    await vi.waitFor(() => expect(fixture.componentInstance.refreshing).toBe(false));
+    fixture.detectChanges();
+    const host = fixture.debugElement.query(By.directive(PlayroomActionsHostComponent))
+      .componentInstance as PlayroomActionsHostComponent;
+    expect(host.showConnect).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain('Playroom not found');
+    expect(navigate).toHaveBeenCalledWith(
+      [],
+      expect.objectContaining({ queryParams: { connect: null } }),
+    );
+  });
 
   it('shows the selected playhouse and room in the page header breadcrumb', async () => {
     const fixture = await render();
