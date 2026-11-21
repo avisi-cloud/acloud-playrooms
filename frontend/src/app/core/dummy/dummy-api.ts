@@ -153,8 +153,14 @@ export const dummyApi: typeof liveApi = {
   browseForT3CodePath: unavailable,
   getOperatingSystem: () => read('darwin'),
   // The browser preview has no native window to theme.
+  setWindowTitle: async (title) => {
+    document.title = title;
+  },
+  onMenuAction: () => () => undefined,
   setWindowTheme: () => Promise.resolve(),
-  openUrlInDefaultBrowser: unavailable,
+  openUrlInDefaultBrowser: async (url) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  },
   loginWithTerminal: async () => {
     signedIn = true;
   },

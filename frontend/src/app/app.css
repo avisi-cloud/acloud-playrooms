@@ -44,3 +44,18 @@
 .app-shell.background-grain-disabled::before {
   display: none;
 }
+
+.shortcuts-list {
+  margin: 0;
+}
+.shortcuts-list > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+.shortcuts-list dd {
+  margin: 0;
+  white-space: nowrap;
+}

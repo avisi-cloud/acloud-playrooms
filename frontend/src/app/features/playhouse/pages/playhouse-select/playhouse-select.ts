@@ -1,3 +1,5 @@
+import { DestroyRef } from '@angular/core';
+import { ShortcutsService } from '../../../../core/services/shortcuts';
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -88,6 +90,10 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
   private destroyed = false;
 
   constructor() {
+    inject(ShortcutsService).registerPageActions(
+      { refresh: () => void this.refreshPlayhouses() },
+      inject(DestroyRef),
+    );
     // Loads on open and on every scope switch. An effect rather than ngOnInit,
     // which a switch made on this screen would never fire again.
     effect(() => {

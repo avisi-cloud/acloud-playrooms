@@ -1,8 +1,10 @@
+import { ShortcutsService } from '../../../../core/services/shortcuts';
 import { CommonModule } from '@angular/common';
 import {
   Component,
+  ChangeDetectorRef,
   ElementRef,
-  HostListener,
+  DestroyRef,
   OnDestroy,
   OnInit,
   ViewChild,
@@ -54,6 +56,7 @@ import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-
 })
 export class RoomsPageComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
+  private readonly changeDetector = inject(ChangeDetectorRef);
   private readonly route = inject(ActivatedRoute);
   readonly actions = inject(PlayroomLifecycleService);
   private readonly notify = inject(ToastService);
@@ -92,6 +95,14 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   private rereadWhenTheCurrentReadLands = false;
 
   constructor() {
+    inject(ShortcutsService).registerPageActions(
+      {
+        refresh: () => void this.refreshRooms(),
+        create: () => this.openCreate(),
+        overlayOpen: () => this.anyOverlayOpen(),
+      },
+      inject(DestroyRef),
+    );
     // Reads the rooms on arrival and on every playhouse change. An effect
     // rather than ngOnInit, which does not fire again on a reused component.
     effect(() => {
@@ -113,31 +124,6 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     if (this.ageTimer) clearInterval(this.ageTimer);
-  }
-
-  @HostListener('window:keydown', ['$event'])
-  handleKeydown(event: KeyboardEvent): void {
-    // Escape still reaches the overlays; anything else would open a second one.
-    // PrimeNG owns Escape for nested selects and overlays. Do not close their
-    // parent drawer when the user only meant to dismiss a dropdown.
-    if (event.key === 'Escape') return;
-    if (this.anyOverlayOpen()) return;
-
-    // PrimeNG renders its select as <div role="combobox">, not <select>.
-    const target = event.target as HTMLElement | null;
-    if (
-      target?.closest?.(
-        'input, textarea, select, [contenteditable], [role="combobox"], [role="textbox"]',
-      )
-    )
-      return;
-    // A shortcut is a bare keypress; Cmd-C must stay a copy.
-    if (event.metaKey || event.ctrlKey || event.altKey) return;
-    if (event.key === 'c' || event.key === 'C') this.openCreate();
-    if (event.key === '/') {
-      event.preventDefault();
-      document.querySelector<HTMLInputElement>('#room-search')?.focus();
-    }
   }
 
   private anyOverlayOpen(): boolean {
@@ -245,6 +231,7 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
 
   openCreate(): void {
     this.showCreate = true;
+    this.changeDetector.markForCheck();
   }
 
   /** Cleared once read, so Back or a reload does not open the drawer a second time. */
