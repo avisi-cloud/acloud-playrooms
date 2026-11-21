@@ -22,9 +22,10 @@ it, update the entry.
 - [Embedded terminal for interactive commands](#embedded-terminal-for-interactive-commands)
 - [Root flags](#root-flags)
 - [Concurrency](#concurrency)
-- [Signing in to a playhouse again](#signing-in-to-a-playhouse-again)
 
 **Settled**
+
+- [Signing in to a playhouse again](#signing-in-to-a-playhouse-again)
 
 - [Releases are tagged by hand and published by GoReleaser](#releases-are-tagged-by-hand-and-published-by-goreleaser--2026-11-03)
 - [acloud 0.40 is the minimum: the default connection path](#acloud-040-is-the-minimum-the-default-connection-path--2026-11-02)
@@ -115,25 +116,22 @@ Two independent changes, both root-module:
 Neither belongs in `gui/`, and the GUI is not the only thing exposed to it —
 this is reachable from the CLI alone by scripting two commands in parallel.
 
-### Signing in to a playhouse again
-
-**Status: open. Recorded 2026-11-02, because the field reasons in
-`input-coverage.spec.ts` pointed here before this entry existed.**
-
-`-f/--force-install` makes a playroom command drop the cached playhouse
-kubeconfig and sign in through the browser again. The create drawer offers it as
-"Sign in to the playhouse again". List, start, stop, update, delete and connect
-do not, and `playroom open` has no such flag.
-
-The working position is that refreshing a session is not a per-operation
-concern: an expired session belongs to the playhouse, not to one command, so a
-switch on every form is the wrong place for it. The likely shape is one action,
-on the playhouse or offered when a command fails because the session expired.
-Until that exists, those fields stay unwired.
-
 ---
 
 ## Settled
+
+### Signing in to a playhouse again
+
+**Status: settled 2026-11-21.**
+
+Recognised authentication failures offer **Sign in to the playhouse again**.
+It repeats the failed playroom command with the original input and
+`--force-install`, rather than adding switches to every form. List, start,
+stop, create, update, delete and connect use their existing backend fields.
+The create drawer keeps its existing explicit option. `playroom open` has no
+such flag, so it offers no forced retry. Playhouse list errors can refresh the
+active playhouse session with `playroom list --force-install` before reloading.
+Fix actions refuse if the user has changed playhouse or scope.
 
 ### Releases are tagged by hand and published by GoReleaser — 2026-11-03
 

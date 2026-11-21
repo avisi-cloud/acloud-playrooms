@@ -112,7 +112,7 @@ Both use only the already redacted text, never a second source of CLI output.
 
 Pass the operation id to `toast()` and the toast becomes a link into the log at
 that command. The banner itself is the link, with Enter and Space support;
-there is no separate command button inside it. Dismissal only closes the toast.
+recognised failures also offer a separate fix button beside the Activity link. Dismissal only closes the toast.
 
 Polled reads deliberately skip all of this — they run without an operation id,
 so they emit nothing. A room list refreshing every ten seconds would bury
@@ -146,6 +146,24 @@ notifications. A small countdown bar shows the remaining time. The sidebar's
 Notifications button opens this session's history, newest first, with full
 messages, remedies, timestamps and links to Activity for command notifications.
 History stays in memory and resets when the app restarts.
+Recognised failures offer **Sign in to the playhouse again** (repeat the original
+command with `--force-install`), **Update playroom**, or **Go to Options** for an
+image requiring privileged mode. The action also stays in notification history;
+list read failures expose it inline. Matchers in `shared/utils/cli-error.ts` read
+the full CLI message, never a truncated toast. Unknown messages keep their current
+presentation. Fixes preserve command inputs and refuse after the selection or
+scope changes. Disposable rooms are never offered an in-place update.
+
+For NodePort, Connect offers **Add my current IP to the allowlist** only for the
+active playhouse and a selected NodePort path (including the configured default).
+It shows the backend preview, then requires confirmation before running
+`playhouse update <name> --allow-current-ip`. Success offers **Connect again**.
+The app cannot inspect SSH errors in an external terminal or infer a room's
+unreported exposure; select NodePort explicitly when its path is otherwise unknown.
+
+Dummy mode supports `?failure=session` on the room list, `?failure=outdated`
+then starting a stopped room, and `?failure=privileged` then creating a room.
+Each simulates one failure per page load; fixes and allowlist updates stay simulated.
 
 `describeError()` is the same reading collapsed to one line, for the inline
 error states that have room for one.

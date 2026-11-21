@@ -1,11 +1,18 @@
 import { DesktopNotificationsService, RoomTask } from './desktop-notifications';
 import { DestroyRef, Injectable, effect, inject, signal, untracked } from '@angular/core';
 import { CreateForm, Playroom, UpdateForm } from '../../shared/models';
-import { isTransitional, listingToRoom, readCache, updateCache } from '../../shared/utils';
+import {
+  describeError,
+  isTransitional,
+  listingToRoom,
+  readCache,
+  updateCache,
+} from '../../shared/utils';
 import { CliConsoleService } from './cli-console';
 import { ToastService } from './toast';
 import { PlayroomSelection, PlayroomStateService } from './playroom-state';
 import { PlayroomCreateInput, PlayroomUpdateInput, wailsApi } from './wails-api';
+import { CommandFixService, FailureAction } from './command-fix';
 import { UiSessionService } from './ui-session';
 
 /**
@@ -24,6 +31,8 @@ export class PlayroomLifecycleService {
   private readonly console = inject(CliConsoleService);
   private readonly session = inject(UiSessionService);
   readonly loadError = signal('');
+  readonly loadFix = signal<FailureAction | undefined>(undefined);
+  private readonly fixes = inject(CommandFixService);
   private readSequence = 0;
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
   private destroyed = false;
@@ -103,7 +112,11 @@ export class PlayroomLifecycleService {
    * Fetches the playroom list for a playhouse into shared state. Not logged: it
    * is polled, and would bury the commands worth reading.
    */
-  async reload(playhouse: string, selection = this.state.captureSelection()): Promise<Playroom[]> {
+  async reload(
+    playhouse: string,
+    selection = this.state.captureSelection(),
+    forceInstall = false,
+  ): Promise<Playroom[]> {
     if (
       !playhouse ||
       playhouse !== selection.playhouse ||
@@ -112,7 +125,10 @@ export class PlayroomLifecycleService {
       return [];
     const sequence = ++this.readSequence;
     try {
-      const listings = await wailsApi.listPlayrooms({ Playhouse: playhouse });
+      const listings = await wailsApi.listPlayrooms({
+        Playhouse: playhouse,
+        ...(forceInstall ? { ForceInstall: true } : {}),
+      });
       const rooms = listings.map((listing) => listingToRoom(listing, playhouse));
       if (sequence === this.readSequence && this.state.isCurrentSelection(selection)) {
         for (const [name, tracked] of this.settlements) {
@@ -131,11 +147,20 @@ export class PlayroomLifecycleService {
         this.state.setRoomsCount(rooms.length);
         this.state.markRoomsLoaded(playhouse);
         this.loadError.set('');
+        this.loadFix.set(undefined);
       }
       return rooms;
     } catch (error) {
-      if (sequence === this.readSequence && this.state.isCurrentSelection(selection))
-        this.loadError.set(String(error));
+      if (sequence === this.readSequence && this.state.isCurrentSelection(selection)) {
+        this.loadError.set(describeError(error));
+        this.loadFix.set(
+          this.fixes.action(
+            error,
+            { signIn: () => this.reload(playhouse, selection, true) },
+            selection,
+          ),
+        );
+      }
       throw error;
     }
   }
@@ -145,18 +170,52 @@ export class PlayroomLifecycleService {
     try {
       await this.reload(selection.playhouse, selection);
     } catch (error) {
-      this.notify.failure('Could not refresh the playrooms', error);
+      this.notify.failure('Could not refresh the playrooms', error, '', this.loadFix());
     }
   }
 
-  startCreate(form: CreateForm): boolean {
+  async updateOutdated(room: Playroom, forceInstall = false): Promise<void> {
+    if (room.ephemeral) return;
+    const selection = this.state.captureSelection();
+    const finish = this.beginOperation(room.name, room.playhouse, 'Updating');
+    if (!finish) return;
+    let startedOperationId = '';
+    try {
+      await this.console.run(`Updating "${room.name}"`, (operationId) => {
+        startedOperationId = operationId;
+        this.console.associatePlayroom(operationId, {
+          name: room.name,
+          playhouse: room.playhouse,
+          scopeRevision: selection.scopeRevision,
+        });
+        return wailsApi.updatePlayroom(operationId, {
+          Name: room.name,
+          Playhouse: room.playhouse,
+          ...(forceInstall ? { ForceInstall: true } : {}),
+        });
+      });
+      this.notify.toast(`Updated "${room.name}"`, 'ok', startedOperationId);
+    } catch (error) {
+      this.notify.failure(
+        `Could not update "${room.name}"`,
+        error,
+        startedOperationId,
+        this.fixes.action(error, { signIn: () => this.updateOutdated(room, true) }, selection),
+      );
+    } finally {
+      await this.reloadAfterMutation(selection);
+      finish();
+    }
+  }
+
+  startCreate(form: CreateForm, options?: () => void): boolean {
     const selection = this.state.captureSelection();
     if (form.playhouse !== selection.playhouse) return false;
     const finish = this.beginOperation(form.name, form.playhouse, 'Creating');
     if (!finish) return false;
     const submittedForm = structuredClone(form);
     const submittedRevision = this.session.draftRevision('create');
-    void this.create(submittedForm, selection, submittedRevision, finish);
+    void this.create(submittedForm, selection, submittedRevision, finish, options);
     return true;
   }
 
@@ -165,6 +224,7 @@ export class PlayroomLifecycleService {
     selection: PlayroomSelection,
     submittedRevision: number | undefined,
     finish: () => void,
+    options?: () => void,
   ): Promise<void> {
     const optimistic: Playroom = {
       name: form.name,
@@ -219,7 +279,21 @@ export class PlayroomLifecycleService {
       }
     } catch (error) {
       this.desktop.roomFinished('create', form.name, selection, true);
-      this.notify.failure(`Could not create "${form.name}"`, error, startedOperationId);
+      this.notify.failure(
+        `Could not create "${form.name}"`,
+        error,
+        startedOperationId,
+        this.fixes.action(
+          error,
+          {
+            signIn: () => {
+              this.startCreate({ ...form, forceInstall: true }, options);
+            },
+            options,
+          },
+          selection,
+        ),
+      );
     } finally {
       // A wait can fail after creation, so the CLI list decides what exists.
       await this.reloadAfterMutation(selection);
@@ -227,7 +301,7 @@ export class PlayroomLifecycleService {
     }
   }
 
-  async stop(room: Playroom): Promise<void> {
+  async stop(room: Playroom, forceInstall = false): Promise<void> {
     const selection = this.state.captureSelection();
     const finish = this.beginOperation(room.name, room.playhouse, 'Stopping');
     if (!finish) return;
@@ -241,20 +315,36 @@ export class PlayroomLifecycleService {
           playhouse: room.playhouse,
           scopeRevision: selection.scopeRevision,
         });
-        return wailsApi.stopPlayroom(operationId, { Name: room.name, Playhouse: room.playhouse });
+        return wailsApi.stopPlayroom(operationId, {
+          Name: room.name,
+          Playhouse: room.playhouse,
+          ...(forceInstall ? { ForceInstall: true } : {}),
+        });
       });
       this.desktop.roomFinished('stop', room.name, selection);
       this.notify.toast(`Stopped "${room.name}" (storage retained)`, 'idle', startedOperationId);
     } catch (error) {
       this.desktop.roomFinished('stop', room.name, selection, true);
-      this.notify.failure(`Could not stop "${room.name}"`, error, startedOperationId);
+      this.notify.failure(
+        `Could not stop "${room.name}"`,
+        error,
+        startedOperationId,
+        this.fixes.action(
+          error,
+          {
+            signIn: () => this.stop(room, true),
+            ...(!room.ephemeral ? { updatePlayroom: () => this.updateOutdated(room) } : {}),
+          },
+          selection,
+        ),
+      );
     } finally {
       await this.reloadAfterMutation(selection);
       finish();
     }
   }
 
-  async start(room: Playroom): Promise<void> {
+  async start(room: Playroom, forceInstall = false): Promise<void> {
     const selection = this.state.captureSelection();
     const finish = this.beginOperation(room.name, room.playhouse, 'Starting');
     if (!finish) return;
@@ -274,27 +364,40 @@ export class PlayroomLifecycleService {
           Name: room.name,
           Playhouse: room.playhouse,
           NoWait: true,
+          ...(forceInstall ? { ForceInstall: true } : {}),
         });
       });
       if (this.state.isCurrentSelection(selection))
         this.settlements.set(room.name, { task: 'start', selection });
     } catch (error) {
       this.desktop.roomFinished('start', room.name, selection, true);
-      this.notify.failure(`Could not start "${room.name}"`, error, startedOperationId);
+      this.notify.failure(
+        `Could not start "${room.name}"`,
+        error,
+        startedOperationId,
+        this.fixes.action(
+          error,
+          {
+            signIn: () => this.start(room, true),
+            ...(!room.ephemeral ? { updatePlayroom: () => this.updateOutdated(room) } : {}),
+          },
+          selection,
+        ),
+      );
     } finally {
       await this.reloadAfterMutation(selection);
       finish();
     }
   }
 
-  startUpdate(form: UpdateForm): boolean {
+  startUpdate(form: UpdateForm, forceInstall = false): boolean {
     const selection = this.state.captureSelection();
     if (form.playhouse !== selection.playhouse) return false;
     const finish = this.beginOperation(form.name, form.playhouse, 'Updating');
     if (!finish) return false;
     const submittedForm = structuredClone(form);
     const submittedRevision = this.session.draftRevision('update:' + form.name);
-    void this.update(submittedForm, selection, submittedRevision, finish);
+    void this.update(submittedForm, selection, submittedRevision, finish, forceInstall);
     return true;
   }
 
@@ -303,6 +406,7 @@ export class PlayroomLifecycleService {
     selection: PlayroomSelection,
     submittedRevision: number | undefined,
     finish: () => void,
+    forceInstall = false,
   ): Promise<void> {
     this.patch(form.name, { status: 'starting' }, form.playhouse);
     let startedOperationId = '';
@@ -315,13 +419,29 @@ export class PlayroomLifecycleService {
           scopeRevision: selection.scopeRevision,
         });
         this.notify.toast(`Updating "${form.name}" ...`, 'busy', operationId);
-        return wailsApi.updatePlayroom(operationId, updateInputFor(form));
+        return wailsApi.updatePlayroom(operationId, {
+          ...updateInputFor(form),
+          ...(forceInstall ? { ForceInstall: true } : {}),
+        });
       });
       this.notify.toast(`Updated "${form.name}"`, 'ok', startedOperationId);
       if (this.state.isCurrentSelection(selection))
         this.session.forgetSubmittedDraft('update:' + form.name, submittedRevision);
     } catch (error) {
-      this.notify.failure(`Could not update "${form.name}"`, error, startedOperationId);
+      this.notify.failure(
+        `Could not update "${form.name}"`,
+        error,
+        startedOperationId,
+        this.fixes.action(
+          error,
+          {
+            signIn: () => {
+              this.startUpdate(form, true);
+            },
+          },
+          selection,
+        ),
+      );
     } finally {
       await this.reloadAfterMutation(selection);
       finish();
@@ -337,6 +457,7 @@ export class PlayroomLifecycleService {
     noWait: boolean,
     waitTimeout: string,
     force = false,
+    forceInstall = false,
   ): Promise<boolean> {
     const selection = this.state.captureSelection();
     const finish = this.beginOperation(room.name, room.playhouse, 'Deleting');
@@ -357,6 +478,7 @@ export class PlayroomLifecycleService {
           Playhouse: room.playhouse,
           NoWait: noWait,
           Force: force,
+          ...(forceInstall ? { ForceInstall: true } : {}),
           WaitTimeout: waitTimeout,
         });
       });
@@ -373,7 +495,18 @@ export class PlayroomLifecycleService {
       return true;
     } catch (error) {
       this.desktop.roomFinished('delete', room.name, selection, true);
-      this.notify.failure(`Could not delete "${room.name}"`, error, startedOperationId);
+      this.notify.failure(
+        `Could not delete "${room.name}"`,
+        error,
+        startedOperationId,
+        this.fixes.action(
+          error,
+          {
+            signIn: () => this.delete(room, noWait, waitTimeout, force, true),
+          },
+          selection,
+        ),
+      );
       await this.reloadAfterMutation(selection);
       return false;
     } finally {

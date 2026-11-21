@@ -188,6 +188,7 @@ describe('Background room changes', () => {
         expect.stringContaining('demo'),
         expect.any(Error),
         expect.any(String),
+        undefined,
       );
     });
 
@@ -216,6 +217,8 @@ describe('Background room changes', () => {
       expect(reportFailure).toHaveBeenCalledExactlyOnceWith(
         'Could not refresh the playrooms',
         expect.any(Error),
+        '',
+        undefined,
       );
       expect(change.session.recall(change.draftKey)).toBeUndefined();
     });

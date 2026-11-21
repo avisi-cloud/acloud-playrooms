@@ -1,3 +1,4 @@
+import type { FailureAction } from './command-fix';
 import { Injectable, inject, signal } from '@angular/core';
 import { MessageService, ToastMessageOptions } from 'primeng/api';
 import { ToastMessage } from '../../shared/models';
@@ -37,6 +38,7 @@ export interface NotificationRecord {
   detail: string;
   operationId: string;
   remedy: string;
+  action?: FailureAction;
 }
 
 /**
@@ -46,6 +48,7 @@ export interface NotificationRecord {
 export interface ToastLink {
   operationId: string;
   remedy?: string;
+  action?: FailureAction;
 }
 
 /**
@@ -73,14 +76,14 @@ export class ToastService {
   }
 
   /** Keeps the failed action, problem and remedy separate for readability. */
-  failure(whatFailed: string, error: unknown, operationId = ''): void {
+  failure(whatFailed: string, error: unknown, operationId = '', action?: FailureAction): void {
     const { problem, remedy } = explainFailure(error);
     this.show({
       severity: 'error',
       summary: whatFailed,
       detail: problem,
       closable: true,
-      data: { operationId, remedy } satisfies ToastLink,
+      data: { operationId, remedy, action } satisfies ToastLink,
     });
   }
 
@@ -95,6 +98,7 @@ export class ToastService {
       detail: options.detail ?? '',
       operationId: options.data?.operationId ?? '',
       remedy: options.data?.remedy ?? '',
+      action: options.data?.action,
     };
     this._history.update((history) => [notification, ...history]);
     this.messages.add({ ...options, life: NOTIFICATION_DURATION_MS, sticky: false });

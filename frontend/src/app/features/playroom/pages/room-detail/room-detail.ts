@@ -163,6 +163,12 @@ export class RoomDetailPageComponent implements OnDestroy {
   private readonly pollTimer: ReturnType<typeof setInterval>;
 
   constructor() {
+    effect(() => {
+      if (!this.actions.loadError()) {
+        this.failure = '';
+        this.changeDetector.markForCheck();
+      }
+    });
     inject(ShortcutsService).registerPageActions(
       { refresh: () => void this.refreshRooms() },
       inject(DestroyRef),
@@ -327,6 +333,8 @@ export class RoomDetailPageComponent implements OnDestroy {
     if (operationId) this.console.open(operationId);
   }
 
+  readonly refreshAfterFix = () => this.refreshRooms();
+
   async refreshRooms(background = false): Promise<void> {
     if (this.refreshing) return;
     this.refreshing = true;
@@ -341,7 +349,8 @@ export class RoomDetailPageComponent implements OnDestroy {
     } catch (error) {
       if (revision === this.state.scopeRevision() && playhouse === this.state.playhouse()) {
         this.failure = describeError(error);
-        if (!background) this.notify.failure('Could not load the playroom', error);
+        if (!background)
+          this.notify.failure('Could not load the playroom', error, '', this.actions.loadFix());
       }
     } finally {
       this.loading = false;

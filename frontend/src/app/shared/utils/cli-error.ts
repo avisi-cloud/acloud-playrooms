@@ -150,3 +150,30 @@ function asSentence(text: string): string {
 function truncate(text: string, limit: number): string {
   return text.length > limit ? `${text.slice(0, limit - 1).trimEnd()}…` : text;
 }
+
+export type CommandFix = 'signIn' | 'updatePlayroom' | 'options';
+
+export function failureSaysSignIn(value: unknown): boolean {
+  return /(?:ensure local kubeconfig: session not active|the server has asked for the client to provide credentials)(?:$|[\n (])/.test(
+    cliErrorText(value),
+  );
+}
+
+export function failureSaysUpdatePlayroom(value: unknown): boolean {
+  return /playroom "[^"]+" is missing the latest security hardening; run .+playroom update .+ to apply it \(the playroom restarts\)/.test(
+    cliErrorText(value),
+  );
+}
+
+export function failureSaysPrivilegedMode(value: unknown): boolean {
+  return /image "[^"]+" runs a Docker daemon and requires a privileged playroom \(--privileged at create\);/.test(
+    cliErrorText(value),
+  );
+}
+
+export function commandFix(value: unknown): CommandFix | null {
+  if (failureSaysSignIn(value)) return 'signIn';
+  if (failureSaysUpdatePlayroom(value)) return 'updatePlayroom';
+  if (failureSaysPrivilegedMode(value)) return 'options';
+  return null;
+}
