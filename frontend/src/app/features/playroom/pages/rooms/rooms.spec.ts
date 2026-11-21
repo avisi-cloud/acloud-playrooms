@@ -9,7 +9,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { MessageService } from 'primeng/api';
 import { RoomsPageComponent } from './rooms';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
-import { listingToRoom } from '../../../../shared/utils';
+import { listingToRoom, updateCache } from '../../../../shared/utils';
 import { ListingDto } from '../../../../shared/models';
 import { wailsApi } from '../../../../core/services/wails-api';
 
@@ -74,6 +74,31 @@ describe('RoomsPageComponent', () => {
     expect(opened?.form.name).toBe('');
     expect(opened?.form.playhouse).toBe('playhouse-a');
     expect(opened?.mode).toBe('advanced');
+    fixture.destroy();
+  });
+
+  it('offers Easy create as the first step in an empty playhouse', async () => {
+    vi.spyOn(wailsApi, 'listPlayroomImages').mockResolvedValue([]);
+    vi.spyOn(wailsApi, 'getPlayroomDefaults').mockResolvedValue([]);
+    listPlayrooms.mockResolvedValue([]);
+    updateCache({ createPlayroomMode: 'advanced' });
+    TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-a');
+    const fixture = TestBed.createComponent(RoomsPageComponent);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const button = [...(fixture.nativeElement as HTMLElement).querySelectorAll('button')].find(
+      (element) => element.textContent?.includes('Create your first playroom'),
+    );
+    button!.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const drawer = fixture.debugElement
+      .queryAll(By.directive(CreatePlayroomDrawerComponent))
+      .map((element) => element.componentInstance as CreatePlayroomDrawerComponent)
+      .find((candidate) => candidate.visible);
+    expect(drawer?.mode).toBe('easy');
     fixture.destroy();
   });
 

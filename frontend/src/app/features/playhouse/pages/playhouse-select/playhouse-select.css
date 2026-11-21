@@ -300,20 +300,6 @@
   border-radius: 999px;
 }
 
-.empty-table {
-  min-height: 270px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-  color: var(--tx-2);
-}
-.empty-table .pi {
-  font-size: 1.6rem;
-  color: var(--tx-3);
-}
-
 .select-footer-hint {
   display: flex;
   align-items: center;

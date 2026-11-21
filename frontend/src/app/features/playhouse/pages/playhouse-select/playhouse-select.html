@@ -113,15 +113,33 @@
           </div>
 
           @if (playhouses().length === 0 && provisioningSlugs().length === 0) {
-            <div class="empty-table">
-              <i class="pi pi-inbox"></i>
-              <div>No playhouses found.</div>
-              <p-button
-                label="Create playhouse"
-                icon="pi pi-plus"
-                size="small"
-                (click)="openCreate()"
-              />
+            <div class="empty-state">
+              <div class="empty-state-icon">
+                <i class="pi pi-inbox" style="font-size: 1.75rem"></i>
+              </div>
+              <h3 class="empty-state-title">
+                No playhouses in {{ scope.currentOrganisation() || 'this organisation' }}
+              </h3>
+              <p class="empty-state-text">
+                A playhouse hosts your playrooms. Create one, or switch to the organisation that has
+                yours.
+              </p>
+              <div class="empty-state-actions">
+                <p-button
+                  label="Create a playhouse"
+                  icon="pi pi-plus"
+                  size="small"
+                  (click)="openCreate()"
+                />
+                <p-button
+                  label="Switch organisation"
+                  icon="pi pi-building"
+                  severity="secondary"
+                  [outlined]="true"
+                  size="small"
+                  (click)="showPlayhouseChooser = true"
+                />
+              </div>
             </div>
           } @else {
             <div class="ph-table-wrap">
@@ -339,6 +357,10 @@
     }
   </div>
 </div>
+
+@defer (when showPlayhouseChooser) {
+  <app-playhouse-chooser [(visible)]="showPlayhouseChooser" />
+}
 
 <!-- ── Create wizard ─────────────────────────────────────────────────────── -->
 <app-create-playhouse-drawer [(visible)]="showCreate" (create)="onCreate($event)" />

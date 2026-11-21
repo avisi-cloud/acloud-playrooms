@@ -7,7 +7,13 @@ import { PlayroomDeleteInput, wailsApi } from '../../../core/services/wails-api'
 import { CreatePlayroomDrawerComponent } from '../../../features/playroom/components/create-playroom-drawer/create-playroom-drawer';
 import { DEFAULTS, PLAYROOM_OPTION_TEXTS } from '../../data';
 import { ConnectTab, CreateForm, Playroom } from '../../models';
-import { createFormFromRoom, settingsNotCopiedFromRoom, readCache, updateCache } from '../../utils';
+import {
+  createFormFromRoom,
+  listDeleteConsequences,
+  settingsNotCopiedFromRoom,
+  readCache,
+  updateCache,
+} from '../../utils';
 import { ConfirmDeleteDialog } from '../confirm-delete-dialog/confirm-delete-dialog';
 import { PlayroomConnectDialogComponent } from '../playroom-connect-dialog/playroom-connect-dialog';
 import { PlayroomUpdateDrawerComponent } from '../playroom-update-drawer/playroom-update-drawer';
@@ -47,6 +53,7 @@ export class PlayroomActionsHostComponent {
   deleteNoWait = false;
   deleteForce = false;
   deleteTimeout: string = DEFAULTS.waitTimeout;
+  deleteConsequences: string[] = [];
 
   readonly previewDelete = wailsApi.previewDeletePlayroom;
   readonly optionTexts = PLAYROOM_OPTION_TEXTS;
@@ -81,6 +88,7 @@ export class PlayroomActionsHostComponent {
     this.deleteNoWait = false;
     this.deleteForce = false;
     this.deleteTimeout = DEFAULTS.waitTimeout;
+    this.deleteConsequences = listDeleteConsequences(room);
     this.showDelete = true;
     this.cdr.markForCheck();
   }

@@ -12,6 +12,7 @@ import { CommandFixService, FailureAction } from '../../../../core/services/comm
 import { PageLoadingService } from '../../../../core/services/page-loading';
 import { PlayhouseJobsService } from '../../../../core/services/playhouse-jobs';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
+import { ScopeService } from '../../../../core/services/scope';
 import {
   PlayhouseCreateInput,
   PlayhouseDeleteInput,
@@ -23,6 +24,7 @@ import { DEFAULTS, PLAYROOM_OPTION_TEXTS } from '../../../../shared/data';
 import { PlayhouseEntry } from '../../../../shared/models';
 import { describeLayout, explainFailure, FailureExplanation } from '../../../../shared/utils';
 import { CreatePlayhouseDrawerComponent } from '../../components/create-playhouse-drawer/create-playhouse-drawer';
+import { PlayhouseChooserComponent } from '../../components/playhouse-chooser/playhouse-chooser';
 import { UpdatePlayhouseDrawerComponent } from '../../components/update-playhouse-drawer/update-playhouse-drawer';
 
 /** How often to re-read the list while a create or delete is in flight. */
@@ -44,6 +46,7 @@ const BACKGROUND_POLL_MS = 15000;
     ConfirmDeleteDialog,
     CreatePlayhouseDrawerComponent,
     UpdatePlayhouseDrawerComponent,
+    PlayhouseChooserComponent,
   ],
   templateUrl: './playhouse-select.html',
   styleUrl: './playhouse-select.css',
@@ -53,6 +56,7 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
   private readonly fixes = inject(CommandFixService);
   private readonly router = inject(Router);
   readonly state = inject(PlayroomStateService);
+  readonly scope = inject(ScopeService);
   readonly jobs = inject(PlayhouseJobsService);
   private readonly pageLoading = inject(PageLoadingService);
 
@@ -79,6 +83,8 @@ export class PlayhouseSelectPageComponent implements OnDestroy {
   });
 
   showCreate = false;
+  /** Opened by "Switch organisation" in the empty state; the chooser is where organisations are switched. */
+  showPlayhouseChooser = false;
 
   showDelete = false;
   deleteTarget: PlayhouseEntry | null = null;

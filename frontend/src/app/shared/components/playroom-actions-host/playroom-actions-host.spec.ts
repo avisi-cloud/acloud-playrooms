@@ -95,6 +95,16 @@ describe('PlayroomActionsHostComponent', () => {
     });
   });
 
+  it('lists what the delete removes for the room being deleted', () => {
+    const host = create();
+    host.openDelete({ ...room, diskType: 'ephemeral', ephemeral: true });
+
+    expect(host.deleteConsequences).toEqual([
+      'The home folder /home/playroom (10Gi) and everything in it',
+      'Its ephemeral storage, which a restart wipes anyway',
+    ]);
+  });
+
   it('emits only after successful deletion', async () => {
     const host = create();
     const emitted = vi.fn();

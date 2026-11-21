@@ -3,6 +3,7 @@ import { provideRouter } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { PlayhouseJobsService } from '../../../../core/services/playhouse-jobs';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
+import { ScopeService } from '../../../../core/services/scope';
 import { PlayhouseEntry, wailsApi } from '../../../../core/services/wails-api';
 import { PlayhouseSelectPageComponent } from './playhouse-select';
 
@@ -88,5 +89,45 @@ describe('Playhouse versions', () => {
       .querySelector<HTMLButtonElement>('[aria-label="Resume the setup of playhouse-demo"]')!
       .click();
     expect(resume).toHaveBeenCalledWith('playhouse-demo');
+  });
+});
+
+describe('No playhouses in the organisation', () => {
+  beforeEach(async () => {
+    vi.spyOn(wailsApi, 'listPlayhouses').mockResolvedValue([]);
+    vi.spyOn(wailsApi, 'getCurrentContext').mockResolvedValue('development');
+    vi.spyOn(wailsApi, 'getCurrentOrganisation').mockResolvedValue('new-team');
+    vi.spyOn(wailsApi, 'listContexts').mockResolvedValue([]);
+    vi.spyOn(wailsApi, 'listOrganisations').mockResolvedValue([]);
+    await TestBed.configureTestingModule({
+      imports: [PlayhouseSelectPageComponent],
+      providers: [MessageService, provideRouter([])],
+    }).compileComponents();
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
+  async function renderEmptyOrganisation() {
+    await TestBed.inject(ScopeService).loadContextAndOrganisation();
+    const fixture = TestBed.createComponent(PlayhouseSelectPageComponent);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const button = (label: string) =>
+      [...root.querySelectorAll('button')].find((element) => element.textContent?.includes(label))!;
+    return { fixture, root, button };
+  }
+
+  it('says the organisation has none and offers to create one or switch', async () => {
+    const { fixture, root, button } = await renderEmptyOrganisation();
+    expect(root.querySelector('.empty-state-title')?.textContent).toContain(
+      'No playhouses in new-team',
+    );
+
+    button('Create a playhouse').click();
+    expect(fixture.componentInstance.showCreate).toBe(true);
+
+    button('Switch organisation').click();
+    expect(fixture.componentInstance.showPlayhouseChooser).toBe(true);
   });
 });
