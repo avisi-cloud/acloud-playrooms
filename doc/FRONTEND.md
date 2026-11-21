@@ -338,7 +338,11 @@ overlays to `PlayroomActionsHostComponent`. It owns the selected room, delete
 options and preview, and emits after a successful deletion. This keeps the same
 irreversible action identical from both entry points. Repeating string flag
 controls (`--env`, `--git`, `--copy`, `--port`) use one shared list editor that
-also guarantees the form retains an editable blank row.
+also guarantees the form retains an editable blank row. Pasting several lines
+into a row fills one row per line. `--git` wraps it in `GitRepositoryEditorComponent`,
+which explains entries acloud would not clone, hints at a missing clone token from
+the form's environment variables, and suggests recent repositories
+(`shared/utils/git-repository.ts`; see DECISIONS).
 
 `core/services/setup.ts` reads each setup step's status from the services above
 and keeps `setupCompleted`. Setup opens at launch only: a fresh install through
@@ -348,7 +352,8 @@ existed (no `setupCompleted` key) with a playhouse counts as completed, so
 upgrades skip it.
 
 `shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal,
-theme, background grain, AME Robot, create-playroom mode, pinned rooms and `setupCompleted` to localStorage
+theme, background grain, AME Robot, create-playroom mode, pinned rooms, the last ten git repositories of
+successful creates (URLs without ref or credentials) and `setupCompleted` to localStorage
 under `acloud-playroom-gui-cache`. Background grain defaults to on; Settings →
 Appearance applies changes immediately to the outer background and content panel.
 The theme setting offers horizontal radio tiles for Light, Dark and System. System follows live changes to

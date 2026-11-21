@@ -248,14 +248,7 @@
             </div>
 
             <app-environment-editor [(values)]="form.env" />
-            <app-string-list-editor
-              [label]="optionTexts.git.label"
-              [hint]="optionTexts.git.hint"
-              [(values)]="form.git"
-              placeholder="https://gitlab.avisi.cloud/team/repo.git"
-              addLabel="add git repo"
-              itemLabel="git repository"
-            />
+            <app-git-repository-editor [(values)]="form.git" [environmentVariables]="form.env" />
             <app-string-list-editor
               [label]="optionTexts.copy.label"
               [hint]="optionTexts.copy.hint"
