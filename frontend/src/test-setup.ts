@@ -1,4 +1,12 @@
-import { afterAll, vi } from 'vitest';
+import { afterAll, beforeEach, vi } from 'vitest';
+import { wailsApi } from './app/core/services/wails-api';
+
+// Unit tests never call native notification or Dock services.
+beforeEach(() => {
+  vi.spyOn(wailsApi, 'setDockBadge').mockResolvedValue();
+  vi.spyOn(wailsApi, 'sendDesktopNotification').mockResolvedValue();
+  vi.spyOn(wailsApi, 'onDesktopNotificationClick').mockReturnValue(() => undefined);
+});
 
 // jsdom does not implement the browser's system-theme and responsive media queries.
 window.matchMedia = (query: string): MediaQueryList => {

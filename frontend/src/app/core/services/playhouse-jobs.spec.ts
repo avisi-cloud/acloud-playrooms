@@ -1,3 +1,5 @@
+import { DesktopNotificationsService } from './desktop-notifications';
+import { PlayroomStateService } from './playroom-state';
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
 import { vi } from 'vitest';
@@ -26,6 +28,35 @@ describe('PlayhouseJobsService', () => {
   async function settle(): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
+
+  it.each(['create', 'update'] as const)(
+    'notifies when playhouse %s completes with its original scope',
+    async (task) => {
+      const state = TestBed.inject(PlayroomStateService);
+      const selection = state.captureSelection();
+      const finished = vi.spyOn(TestBed.inject(DesktopNotificationsService), 'playhouseFinished');
+      vi.spyOn(
+        wailsApi,
+        task === 'create' ? 'createPlayhouse' : 'updatePlayhouse',
+      ).mockImplementation(async () => {
+        state.noteScopeChange();
+      });
+      jobs[task]('demo', { Name: 'demo' });
+      await settle();
+      expect(finished).toHaveBeenCalledExactlyOnceWith(task, 'demo', selection);
+    },
+  );
+
+  it.each(['create', 'update'] as const)('notifies when playhouse %s fails', async (task) => {
+    const selection = TestBed.inject(PlayroomStateService).captureSelection();
+    const finished = vi.spyOn(TestBed.inject(DesktopNotificationsService), 'playhouseFinished');
+    vi.spyOn(wailsApi, task === 'create' ? 'createPlayhouse' : 'updatePlayhouse').mockRejectedValue(
+      new Error('failed'),
+    );
+    jobs[task]('demo', { Name: 'demo' });
+    await settle();
+    expect(finished).toHaveBeenCalledExactlyOnceWith(task, 'demo', selection, true);
+  });
 
   it('offers a resume when create failed after making the cluster', async () => {
     vi.spyOn(wailsApi, 'createPlayhouse').mockRejectedValue(createdButNotSetUp);

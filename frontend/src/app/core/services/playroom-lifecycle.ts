@@ -1,3 +1,4 @@
+import { DesktopNotificationsService, RoomTask } from './desktop-notifications';
 import { DestroyRef, Injectable, effect, inject, signal, untracked } from '@angular/core';
 import { CreateForm, Playroom, UpdateForm } from '../../shared/models';
 import { isTransitional, listingToRoom, readCache, updateCache } from '../../shared/utils';
@@ -13,6 +14,11 @@ import { UiSessionService } from './ui-session';
  */
 @Injectable({ providedIn: 'root' })
 export class PlayroomLifecycleService {
+  private readonly desktop = inject(DesktopNotificationsService);
+  private readonly settlements = new Map<
+    string,
+    { task: RoomTask; selection: PlayroomSelection }
+  >();
   private readonly state = inject(PlayroomStateService);
   private readonly notify = inject(ToastService);
   private readonly console = inject(CliConsoleService);
@@ -31,7 +37,11 @@ export class PlayroomLifecycleService {
       untracked(() => {
         if (this.pollTimer) clearTimeout(this.pollTimer);
         this.pollTimer = null;
-        if (selection.playhouse && transitional) this.schedulePoll(selection);
+        for (const [name, tracked] of this.settlements) {
+          if (!this.state.isCurrentSelection(tracked.selection)) this.settlements.delete(name);
+        }
+        if (selection.playhouse && (transitional || this.settlements.size > 0))
+          this.schedulePoll(selection);
       });
     });
     inject(DestroyRef).onDestroy(() => {
@@ -60,6 +70,7 @@ export class PlayroomLifecycleService {
   private beginOperation(name: string, playhouse: string, label: string): (() => void) | null {
     const key = `${this.state.scopeRevision()}:${playhouse}:${name}`;
     if (this.pending()[key]) return null;
+    this.settlements.delete(name);
     this.pending.update((operations) => ({ ...operations, [key]: label }));
     return () =>
       this.pending.update((operations) => {
@@ -104,6 +115,18 @@ export class PlayroomLifecycleService {
       const listings = await wailsApi.listPlayrooms({ Playhouse: playhouse });
       const rooms = listings.map((listing) => listingToRoom(listing, playhouse));
       if (sequence === this.readSequence && this.state.isCurrentSelection(selection)) {
+        for (const [name, tracked] of this.settlements) {
+          if (!this.state.isCurrentSelection(tracked.selection)) {
+            this.settlements.delete(name);
+            continue;
+          }
+          const room = rooms.find((candidate) => candidate.name === name);
+          const failed = tracked.task !== 'delete' && room?.status === 'failed';
+          if (failed || (tracked.task === 'delete' ? !room : room?.status === 'ready')) {
+            this.settlements.delete(name);
+            this.desktop.roomFinished(tracked.task, name, tracked.selection, failed);
+          }
+        }
         this.state.setRooms(rooms);
         this.state.setRoomsCount(rooms.length);
         this.state.markRoomsLoaded(playhouse);
@@ -185,12 +208,17 @@ export class PlayroomLifecycleService {
         this.notify.toast(`Creating "${form.name}" ...`, 'busy', operationId);
         return wailsApi.createPlayroom(operationId, createInputFor(form));
       });
+      if (form.noWait) {
+        if (this.state.isCurrentSelection(selection))
+          this.settlements.set(form.name, { task: 'create', selection });
+      } else this.desktop.roomFinished('create', form.name, selection);
       this.notify.toast(`Created "${form.name}"`, 'ok', startedOperationId);
       if (this.state.isCurrentSelection(selection)) {
         updateCache({ lastPlayroom: form.name, lastPlayhouse: form.playhouse });
         this.session.forgetSubmittedDraft('create', submittedRevision);
       }
     } catch (error) {
+      this.desktop.roomFinished('create', form.name, selection, true);
       this.notify.failure(`Could not create "${form.name}"`, error, startedOperationId);
     } finally {
       // A wait can fail after creation, so the CLI list decides what exists.
@@ -215,8 +243,10 @@ export class PlayroomLifecycleService {
         });
         return wailsApi.stopPlayroom(operationId, { Name: room.name, Playhouse: room.playhouse });
       });
+      this.desktop.roomFinished('stop', room.name, selection);
       this.notify.toast(`Stopped "${room.name}" (storage retained)`, 'idle', startedOperationId);
     } catch (error) {
+      this.desktop.roomFinished('stop', room.name, selection, true);
       this.notify.failure(`Could not stop "${room.name}"`, error, startedOperationId);
     } finally {
       await this.reloadAfterMutation(selection);
@@ -246,7 +276,10 @@ export class PlayroomLifecycleService {
           NoWait: true,
         });
       });
+      if (this.state.isCurrentSelection(selection))
+        this.settlements.set(room.name, { task: 'start', selection });
     } catch (error) {
+      this.desktop.roomFinished('start', room.name, selection, true);
       this.notify.failure(`Could not start "${room.name}"`, error, startedOperationId);
     } finally {
       await this.reloadAfterMutation(selection);
@@ -327,10 +360,19 @@ export class PlayroomLifecycleService {
           WaitTimeout: waitTimeout,
         });
       });
-      if (this.state.isCurrentSelection(selection)) this.remove(room.name, room.playhouse);
+      if (noWait) {
+        if (this.state.isCurrentSelection(selection)) {
+          this.settlements.set(room.name, { task: 'delete', selection });
+          await this.reloadAfterMutation(selection);
+        }
+      } else {
+        if (this.state.isCurrentSelection(selection)) this.remove(room.name, room.playhouse);
+        this.desktop.roomFinished('delete', room.name, selection);
+      }
       this.notify.toast(`Deleted "${room.name}"`, 'ok', startedOperationId);
       return true;
     } catch (error) {
+      this.desktop.roomFinished('delete', room.name, selection, true);
       this.notify.failure(`Could not delete "${room.name}"`, error, startedOperationId);
       await this.reloadAfterMutation(selection);
       return false;

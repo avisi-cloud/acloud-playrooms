@@ -146,8 +146,32 @@ notifications. A small countdown bar shows the remaining time. The sidebar's
 Notifications button opens this session's history, newest first, with full
 messages, remedies, timestamps and links to Activity for command notifications.
 History stays in memory and resets when the app restarts.
+
 `describeError()` is the same reading collapsed to one line, for the inline
 error states that have room for one.
+
+### Desktop notifications and Dock badge
+
+Settings → Notifications saves two device preferences: **Desktop notifications**
+(on by default) and **Dock badge** (Failed rooms by default, Running rooms, or Off).
+Room create, start, stop and delete, plus playhouse setup and update, notify on
+success or failure only while the window is unfocused. macOS permission is asked
+when the first notification would be sent; denial is not repeatedly prompted.
+Native failures are logged without changing command results or in-app history.
+
+Commands that wait notify when they return. Room start and no-wait create/delete
+wait for the room list to report Ready, Failed, or deletion. Each submitted task
+notifies once; unrelated polled transitions do not notify. A scope or playhouse
+change stops watching pending no-wait tasks, and a new task replaces the previous
+watch for that room. Notifications already delivered retain their original selection.
+Clicking brings the app forward and opens the room only if that selection is
+still current. Otherwise, including a previous app session or a playhouse task,
+it opens the Playrooms overview without switching scope.
+
+The Dock badge counts reported Failed rooms, or Ready and No host rooms for
+Running rooms, in the loaded current playhouse. Zero and Off remove it. Updates
+are debounced by 150 ms; selection changes clear the previous badge immediately.
+Dummy mode logs notification requests and badge counts instead of using macOS.
 
 Before this, every call site passed `String(error)` — which prefixes a thrown
 error with its class name, so the JSON a rejected binding call carries stopped

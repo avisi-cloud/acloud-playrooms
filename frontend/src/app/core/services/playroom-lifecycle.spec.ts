@@ -1,3 +1,4 @@
+import { DesktopNotificationsService } from './desktop-notifications';
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
 import { PlayroomLifecycleService, updateInputFor } from './playroom-lifecycle';
@@ -256,4 +257,160 @@ describe('Background room changes', () => {
       await vi.waitFor(() => expect(change.actions.pendingOperation('demo')).toBe(''));
     },
   );
+});
+
+describe('room task desktop notifications', () => {
+  let state: PlayroomStateService;
+  let actions: PlayroomLifecycleService;
+  let finished: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({ providers: [MessageService] });
+    state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('ph');
+    actions = TestBed.inject(PlayroomLifecycleService);
+    finished = vi.spyOn(TestBed.inject(DesktopNotificationsService), 'roomFinished');
+    vi.spyOn(TestBed.inject(CliConsoleService), 'run').mockImplementation(async (_title, run) =>
+      run('op'),
+    );
+    vi.spyOn(wailsApi, 'listPlayrooms').mockResolvedValue([{ Name: 'demo', Status: 'Starting' }]);
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    localStorage.clear();
+  });
+  const demo = () => listingToRoom({ Name: 'demo', Status: 'Stopped' }, 'ph');
+
+  it('waits for a start to settle and only notifies once', async () => {
+    vi.spyOn(wailsApi, 'startPlayroom').mockResolvedValue();
+    await actions.start(demo());
+    expect(finished).not.toHaveBeenCalled();
+    vi.mocked(wailsApi.listPlayrooms).mockResolvedValue([{ Name: 'demo', Status: 'Ready' }]);
+    await actions.reload('ph');
+    await actions.reload('ph');
+    expect(finished).toHaveBeenCalledExactlyOnceWith(
+      'start',
+      'demo',
+      state.captureSelection(),
+      false,
+    );
+  });
+
+  it('reports a polled failure and ignores unrelated room transitions', async () => {
+    vi.spyOn(wailsApi, 'startPlayroom').mockResolvedValue();
+    await actions.start(demo());
+    vi.mocked(wailsApi.listPlayrooms).mockResolvedValue([
+      { Name: 'demo', Status: 'Failed' },
+      { Name: 'other', Status: 'Ready' },
+    ]);
+    await actions.reload('ph');
+    expect(finished).toHaveBeenCalledExactlyOnceWith(
+      'start',
+      'demo',
+      state.captureSelection(),
+      true,
+    );
+  });
+
+  it('does not notify for polled rooms without a task started here', async () => {
+    vi.mocked(wailsApi.listPlayrooms).mockResolvedValue([{ Name: 'demo', Status: 'Ready' }]);
+    await actions.reload('ph');
+    expect(finished).not.toHaveBeenCalled();
+  });
+
+  it('waits for a no-wait creation to become ready', async () => {
+    vi.spyOn(wailsApi, 'createPlayroom').mockResolvedValue();
+    const form = blankCreateForm('ph');
+    form.name = 'demo';
+    form.noWait = true;
+    actions.startCreate(form);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(finished).not.toHaveBeenCalled();
+    vi.mocked(wailsApi.listPlayrooms).mockResolvedValue([{ Name: 'demo', Status: 'Ready' }]);
+    await actions.reload('ph');
+    expect(finished).toHaveBeenCalledExactlyOnceWith(
+      'create',
+      'demo',
+      state.captureSelection(),
+      false,
+    );
+  });
+
+  it('waits for a no-wait deletion to disappear', async () => {
+    vi.spyOn(wailsApi, 'deletePlayroom').mockResolvedValue();
+    await actions.delete(demo(), true, '5m');
+    expect(finished).not.toHaveBeenCalled();
+    vi.mocked(wailsApi.listPlayrooms).mockResolvedValue([]);
+    await actions.reload('ph');
+    expect(finished).toHaveBeenCalledExactlyOnceWith(
+      'delete',
+      'demo',
+      state.captureSelection(),
+      false,
+    );
+  });
+
+  it('does not mistake an existing failed room for a failed no-wait deletion', async () => {
+    vi.spyOn(wailsApi, 'deletePlayroom').mockResolvedValue();
+    vi.mocked(wailsApi.listPlayrooms).mockResolvedValue([{ Name: 'demo', Status: 'Failed' }]);
+    await actions.delete(demo(), true, '5m');
+    expect(finished).not.toHaveBeenCalled();
+    vi.mocked(wailsApi.listPlayrooms).mockResolvedValue([]);
+    await actions.reload('ph');
+    expect(finished).toHaveBeenCalledExactlyOnceWith(
+      'delete',
+      'demo',
+      state.captureSelection(),
+      false,
+    );
+  });
+
+  it('does not claim no-wait deletion finished if the selection changed during the command', async () => {
+    vi.spyOn(wailsApi, 'deletePlayroom').mockImplementation(async () => {
+      state.selectPlayhouse('other');
+    });
+    await actions.delete(demo(), true, '5m');
+    expect(finished).not.toHaveBeenCalled();
+  });
+
+  it('replaces a pending start watch when a stop is submitted', async () => {
+    vi.spyOn(wailsApi, 'startPlayroom').mockResolvedValue();
+    vi.spyOn(wailsApi, 'stopPlayroom').mockResolvedValue();
+    await actions.start(demo());
+    await actions.stop(demo());
+    vi.mocked(wailsApi.listPlayrooms).mockResolvedValue([{ Name: 'demo', Status: 'Ready' }]);
+    await actions.reload('ph');
+    expect(finished).toHaveBeenCalledExactlyOnceWith('stop', 'demo', state.captureSelection());
+  });
+
+  it('discards pending settlements after a scope change', async () => {
+    vi.spyOn(wailsApi, 'startPlayroom').mockResolvedValue();
+    await actions.start(demo());
+    state.noteScopeChange();
+    vi.mocked(wailsApi.listPlayrooms).mockResolvedValue([{ Name: 'demo', Status: 'Ready' }]);
+    await actions.reload('ph');
+    expect(finished).not.toHaveBeenCalled();
+  });
+
+  it('reports command failures without a second notification from the poll', async () => {
+    vi.spyOn(wailsApi, 'startPlayroom').mockRejectedValue(new Error('failed'));
+    await actions.start(demo());
+    vi.mocked(wailsApi.listPlayrooms).mockResolvedValue([{ Name: 'demo', Status: 'Failed' }]);
+    await actions.reload('ph');
+    expect(finished).toHaveBeenCalledExactlyOnceWith(
+      'start',
+      'demo',
+      state.captureSelection(),
+      true,
+    );
+  });
+
+  it('reports a completed stop with its original selection after navigation', async () => {
+    const selection = state.captureSelection();
+    vi.spyOn(wailsApi, 'stopPlayroom').mockImplementation(async () => {
+      state.selectPlayhouse('other');
+    });
+    await actions.stop(demo());
+    expect(finished).toHaveBeenCalledExactlyOnceWith('stop', 'demo', selection);
+  });
 });
