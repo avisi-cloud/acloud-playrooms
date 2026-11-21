@@ -6,11 +6,12 @@ import {
   OnChanges,
   Output,
   SimpleChanges,
+  ViewChild,
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
-import { DialogModule } from 'primeng/dialog';
+import { Dialog, DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
@@ -38,6 +39,7 @@ import { OverlayFocusDirective } from '../../directives';
  */
 @Component({
   selector: 'app-playroom-connect-dialog',
+  host: { '(document:keydown.escape)': 'closeFromEscape($event)' },
   imports: [
     FormsModule,
     DialogModule,
@@ -52,6 +54,7 @@ import { OverlayFocusDirective } from '../../directives';
   styleUrl: './playroom-connect-dialog.css',
 })
 export class PlayroomConnectDialogComponent implements OnChanges {
+  @ViewChild(Dialog) private dialog?: Dialog;
   /** Backend-generated, so the dialog shows the arguments the hand-off will run. */
   private readonly state = inject(PlayroomStateService);
   private readonly console = inject(CliConsoleService);
@@ -184,6 +187,20 @@ export class PlayroomConnectDialogComponent implements OnChanges {
   onVisibleChange(value: boolean): void {
     this.visible = value;
     this.visibleChange.emit(value);
+  }
+
+  closeFromEscape(event: Event): void {
+    // PrimeNG omits its Escape listener when a custom header hides its close button.
+    if (
+      !this.visible ||
+      event.defaultPrevented ||
+      !(event.target instanceof Node) ||
+      !this.dialog?.container()?.contains(event.target)
+    )
+      return;
+    event.preventDefault();
+    event.stopPropagation();
+    this.close();
   }
 
   close(): void {

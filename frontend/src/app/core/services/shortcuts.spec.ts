@@ -35,6 +35,16 @@ describe('ShortcutsService', () => {
     vi.restoreAllMocks();
   });
 
+  it('opens the command palette with command K and lists it in the overview', () => {
+    press('k', { metaKey: true });
+    expect(service.paletteOpen()).toBe(true);
+    expect(service.shortcuts.find((shortcut) => shortcut.action === 'command-palette')?.keys).toBe(
+      '⌘K',
+    );
+    menuAction('playhouses');
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('uses the same navigation for keys and native menu events', () => {
     press('2', { metaKey: true });
     menuAction('playhouses');
