@@ -1,3 +1,4 @@
+import { CommandPaletteComponent } from './shared/components/command-palette/command-palette';
 import { DesktopNotificationsService } from './core/services/desktop-notifications';
 import { DialogModule } from 'primeng/dialog';
 import { ShortcutsService } from './core/services/shortcuts';
@@ -58,6 +59,7 @@ export type CurrentScopeState = 'signed-out' | 'no-playhouse' | 'playhouse-selec
   },
   // The sidebar has its own dark theme boundary, including when the workspace is light.
   imports: [
+    CommandPaletteComponent,
     DialogModule,
     RouterOutlet,
     RouterLink,

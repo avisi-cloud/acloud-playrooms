@@ -480,3 +480,7 @@
     }
   </dl>
 </p-dialog>
+
+@defer (when shortcuts.paletteOpen()) {
+  <app-command-palette />
+}
