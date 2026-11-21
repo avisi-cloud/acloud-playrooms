@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { describeError, explainFailure, failureSaysResumeWithPlayhouseUpdate } from './cli-error';
+import {
+  commandFix,
+  describeError,
+  explainFailure,
+  failureSaysResumeWithPlayhouseUpdate,
+} from './cli-error';
 
 describe('explainFailure', () => {
   it('splits the CLI template into what went wrong and what to do about it', () => {
@@ -87,5 +92,44 @@ describe('failureSaysResumeWithPlayhouseUpdate', () => {
       ),
     ).toBe(false);
     expect(failureSaysResumeWithPlayhouseUpdate('no cloud account found')).toBe(false);
+  });
+});
+
+describe('command fixes from CLI messages', () => {
+  it.each([
+    ['ensure local kubeconfig: session not active', 'signIn'],
+    [
+      'list playrooms: the server has asked for the client to provide credentials (get pods)',
+      'signIn',
+    ],
+    [
+      'playroom "demo" is missing the latest security hardening; run /opt/bin/acloud playroom update demo --playhouse ph to apply it (the playroom restarts)',
+      'updatePlayroom',
+    ],
+    [
+      "image \"claude-code-dind\" runs a Docker daemon and requires a privileged playroom (--privileged at create); use 'claude-code' (or 'claude-code-rootless') for an unprivileged playroom",
+      'options',
+    ],
+  ] as const)('recognises the real message: %s', (message, fix) => {
+    expect(commandFix(new Error(JSON.stringify({ message })))).toBe(fix);
+  });
+
+  it.each([
+    'no valid login\nPlease use: acloud auth login',
+    'connection expired',
+    'playroom demo is outdated',
+    'image needs privileged mode',
+    'playroom "demo" is missing the latest security hardening; it is ephemeral and can\'t be updated in place, so delete it and create a new one to apply it',
+    'this playhouse has no dedicated privileged node pool',
+    'network unavailable',
+  ])('leaves unrelated failures alone: %s', (message) => {
+    expect(commandFix(message)).toBeNull();
+  });
+
+  it('matches the full output beyond the toast truncation', () => {
+    const message =
+      'while listing playrooms: '.repeat(20) +
+      'the server has asked for the client to provide credentials';
+    expect(commandFix(message)).toBe('signIn');
   });
 });

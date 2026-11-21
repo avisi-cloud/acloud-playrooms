@@ -569,6 +569,7 @@ describe('Create environment confirmation', () => {
         EnvVars: ['MISSING_KEY'],
         MissingEnvironmentConfirmed: ['MISSING_KEY'],
       }),
+      expect.any(Function),
     );
     expect(component.visible).toBe(false);
   });

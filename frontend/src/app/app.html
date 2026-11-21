@@ -38,6 +38,16 @@
           <span class="toast-remedy">{{ message.data.remedy }}</span>
         }
       </div>
+      @if (message.data?.action; as action) {
+        <p-button
+          class="toast-fix"
+          [style]="{ whiteSpace: 'normal', textAlign: 'start' }"
+          [label]="action.label"
+          [loading]="action.busy()"
+          size="small"
+          (click)="action.run()"
+        />
+      }
       <button
         type="button"
         class="p-toast-close-button"
@@ -77,6 +87,16 @@
       <p>{{ notification.detail }}</p>
       @if (notification.remedy) {
         <p class="notification-history-remedy">{{ notification.remedy }}</p>
+      }
+      @if (notification.action; as action) {
+        <p-button
+          class="toast-fix"
+          [style]="{ whiteSpace: 'normal', textAlign: 'start' }"
+          [label]="action.label"
+          [loading]="action.busy()"
+          size="small"
+          (click)="action.run()"
+        />
       }
       @if (notification.operationId) {
         <button

@@ -1,3 +1,7 @@
+import { PlayroomStateService } from '../../../core/services/playroom-state';
+import { CliConsoleService } from '../../../core/services/cli-console';
+import { ToastService } from '../../../core/services/toast';
+import { wailsApi } from '../../../core/services/wails-api';
 import { SimpleChange } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MessageService } from 'primeng/api';
@@ -71,5 +75,73 @@ describe('Playroom connect dialog', () => {
       component.via = path.id;
       expect(component.selectedConnectionPathHint(), path.id || 'default').toBe(path.hint);
     }
+  });
+});
+
+describe('NodePort allowlist help', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({
+      imports: [PlayroomConnectDialogComponent],
+      providers: [MessageService],
+    });
+    TestBed.inject(PlayroomStateService).selectPlayhouse(room.playhouse);
+    vi.spyOn(TestBed.inject(CliConsoleService), 'run').mockImplementation(async (_label, run) => {
+      await run('allow-ip');
+    });
+  });
+  afterEach(() => vi.restoreAllMocks());
+
+  it('offers help only for a known NodePort path in the active playhouse', () => {
+    const component = dialog();
+    expect(component.canAllowCurrentIP()).toBe(false);
+    component.via = 'nodeport';
+    expect(component.canAllowCurrentIP()).toBe(true);
+    component.via = '';
+    component.configuredVia = 'nodeport';
+    expect(component.canAllowCurrentIP()).toBe(true);
+    component.via = 'tailscale';
+    expect(component.canAllowCurrentIP()).toBe(false);
+    component.via = 'nodeport';
+    TestBed.inject(PlayroomStateService).selectPlayhouse('other');
+    expect(component.canAllowCurrentIP()).toBe(false);
+  });
+
+  it('previews and confirms the same input, then offers connect again', async () => {
+    const update = vi.spyOn(wailsApi, 'updatePlayhouse').mockResolvedValue();
+    const component = dialog();
+    component.via = 'nodeport';
+    const previewInput = component.allowCurrentIPInput();
+    component.requestAllowCurrentIP();
+    expect(update).not.toHaveBeenCalled();
+    expect(component.confirmingAllowCurrentIP).toBe(true);
+    await component.allowCurrentIP();
+    expect(update).toHaveBeenCalledWith('allow-ip', previewInput);
+    expect(previewInput).toEqual({ Name: room.playhouse, AllowCurrentIP: true });
+    expect(component.allowCurrentIPComplete).toBe(true);
+    expect(component.confirmingAllowCurrentIP).toBe(false);
+  });
+
+  it('refuses confirmation after the selection changes', async () => {
+    const update = vi.spyOn(wailsApi, 'updatePlayhouse').mockResolvedValue();
+    const component = dialog();
+    component.via = 'nodeport';
+    component.requestAllowCurrentIP();
+    TestBed.inject(PlayroomStateService).noteScopeChange();
+    await component.allowCurrentIP();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('reports failure without offering connect again', async () => {
+    vi.spyOn(wailsApi, 'updatePlayhouse').mockRejectedValue(new Error('network unavailable'));
+    const component = dialog();
+    component.via = 'nodeport';
+    component.requestAllowCurrentIP();
+    await component.allowCurrentIP();
+    expect(component.allowCurrentIPComplete).toBe(false);
+    expect(component.allowingCurrentIP).toBe(false);
+    expect(TestBed.inject(ToastService).history()[0].summary).toBe(
+      'Could not add your current IP to the allowlist',
+    );
   });
 });

@@ -1,3 +1,4 @@
+import { DesktopNotificationsService } from './core/services/desktop-notifications';
 import { DialogModule } from 'primeng/dialog';
 import { ShortcutsService } from './core/services/shortcuts';
 import { CommonModule } from '@angular/common';
@@ -75,6 +76,7 @@ export const BREATH_MS = 5600;
   styleUrls: ['./app.css', './app-sidebar.css', './app-toast.css', './app-main-panel.css'],
 })
 export class App implements OnInit {
+  private readonly desktopNotifications = inject(DesktopNotificationsService);
   readonly shortcuts = inject(ShortcutsService);
   readonly state = inject(PlayroomStateService);
   readonly console = inject(CliConsoleService);

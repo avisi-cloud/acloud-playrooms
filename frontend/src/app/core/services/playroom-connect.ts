@@ -24,6 +24,7 @@ export class PlayroomConnectService {
     terminal: string,
     forwardAgent: boolean,
     via: ConnectionPath = '',
+    forceInstall = false,
   ): Promise<string> {
     const scope = {
       name: room.name,
@@ -37,6 +38,7 @@ export class PlayroomConnectService {
       ForwardAgent: forwardAgent,
       Via: via,
       Terminal: terminal,
+      ForceInstall: forceInstall,
     };
     await wailsApi.connectPlayroom(input);
     updateCache({ lastPlayroom: room.name, lastPlayhouse: room.playhouse, lastTerminal: terminal });

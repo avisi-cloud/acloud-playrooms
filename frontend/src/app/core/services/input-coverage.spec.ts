@@ -39,6 +39,7 @@ const WIRED: Record<string, string[]> = {
     'ForceInstall',
   ],
   'playroom.UpdateInput': [
+    'ForceInstall',
     'Name',
     'Playhouse',
     'Image',
@@ -62,12 +63,20 @@ const WIRED: Record<string, string[]> = {
     'NoWait',
     'WaitTimeout',
   ],
-  'playroom.DeleteInput': ['Name', 'Playhouse', 'Force', 'NoWait', 'WaitTimeout'],
-  'playroom.StartInput': ['Name', 'Playhouse', 'NoWait'],
-  'playroom.StopInput': ['Name', 'Playhouse'],
+  'playroom.DeleteInput': ['ForceInstall', 'Name', 'Playhouse', 'Force', 'NoWait', 'WaitTimeout'],
+  'playroom.StartInput': ['ForceInstall', 'Name', 'Playhouse', 'NoWait'],
+  'playroom.StopInput': ['ForceInstall', 'Name', 'Playhouse'],
   'playroom.OpenInput': ['Name', 'Playhouse', 'Editor', 'Via'],
-  'playroom.ConnectInput': ['Name', 'Playhouse', 'User', 'ForwardAgent', 'Via', 'Terminal'],
-  'playroom.ListInput': ['Playhouse'],
+  'playroom.ConnectInput': [
+    'ForceInstall',
+    'Name',
+    'Playhouse',
+    'User',
+    'ForwardAgent',
+    'Via',
+    'Terminal',
+  ],
+  'playroom.ListInput': ['ForceInstall', 'Playhouse'],
   'playhouse.CreateInput': [
     'Name',
     'CloudAccount',
@@ -118,33 +127,19 @@ const UNWIRED: Record<string, Record<string, string>> = {
   'playroom.CreateInput': {},
   'playroom.UpdateInput': {
     Force: 'Update targets a room the user is looking at; the owner guard is wanted here.',
-    ForceInstall:
-      'Session refresh is not a per-operation concern; see "Signing in to a playhouse again" in DECISIONS.md.',
   },
-  'playroom.DeleteInput': {
-    ForceInstall:
-      'Session refresh is not a per-operation concern; see "Signing in to a playhouse again" in DECISIONS.md.',
-  },
+  'playroom.DeleteInput': {},
   'playroom.StartInput': {
     Force: 'Starting a room you do not own is not a flow the GUI offers.',
-    ForceInstall:
-      'Session refresh is not a per-operation concern; see "Signing in to a playhouse again" in DECISIONS.md.',
     WaitTimeout: 'Start is always --no-wait from the GUI; the list polls until the room is ready.',
   },
   'playroom.StopInput': {
     Force: 'Stopping a room you do not own is not a flow the GUI offers.',
-    ForceInstall:
-      'Session refresh is not a per-operation concern; see "Signing in to a playhouse again" in DECISIONS.md.',
   },
   'playroom.OpenInput': {},
-  'playroom.ConnectInput': {
-    ForceInstall:
-      'Session refresh is not a per-operation concern; see "Signing in to a playhouse again" in DECISIONS.md.',
-  },
+  'playroom.ConnectInput': {},
   'playroom.ListInput': {
     Mine: 'Filtered client-side for an instant toggle; re-listing per keystroke would be worse.',
-    ForceInstall:
-      'Session refresh is not a per-operation concern; see "Signing in to a playhouse again" in DECISIONS.md.',
   },
   'playhouse.CreateInput': {},
   'playhouse.DeleteInput': {},

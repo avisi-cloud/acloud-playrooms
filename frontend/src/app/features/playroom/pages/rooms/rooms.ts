@@ -34,6 +34,7 @@ import { buildSearchableRoomText } from '../../../../shared/utils/playroom-searc
 import { ConnectTab, Playroom, StatusKey } from '../../../../shared/models';
 import { describeError } from '../../../../shared/utils';
 import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-drawer/create-playroom-drawer';
+import { PlayroomBreadcrumbComponent } from '../../components/playroom-breadcrumb/playroom-breadcrumb';
 
 /**
  * Playroom overview: search, the card grid, and the create/connect/update/
@@ -52,6 +53,7 @@ import { CreatePlayroomDrawerComponent } from '../../components/create-playroom-
     PlayroomCardComponent,
     PlayroomActionsHostComponent,
     CreatePlayroomDrawerComponent,
+    PlayroomBreadcrumbComponent,
   ],
   templateUrl: './rooms.html',
   styleUrl: './rooms.css',
@@ -97,6 +99,11 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   private rereadWhenTheCurrentReadLands = false;
 
   constructor() {
+    effect(() => {
+      if (!this.actions.loadError()) {
+        this.failure.set('');
+      }
+    });
     inject(ShortcutsService).registerPageActions(
       {
         refresh: () => void this.refreshRooms(),
@@ -211,6 +218,8 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
    * Reloads the room list, one read at a time. A `background` poll that arrives
    * mid-read is dropped; a user's read is repeated, as it may be for elsewhere.
    */
+  readonly refreshAfterFix = () => this.refreshRooms();
+
   async refreshRooms(background = false): Promise<void> {
     if (this.refreshing()) {
       if (!background) this.rereadWhenTheCurrentReadLands = true;
@@ -231,7 +240,8 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
     } catch (error) {
       if (playhouse === this.state.playhouse() && revision === this.state.scopeRevision()) {
         this.failure.set(describeError(error));
-        if (!background) this.notify.failure('Could not load the playrooms', error);
+        if (!background)
+          this.notify.failure('Could not load the playrooms', error, '', this.actions.loadFix());
       }
     } finally {
       this.refreshing.set(false);

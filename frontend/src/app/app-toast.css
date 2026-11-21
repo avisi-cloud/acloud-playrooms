@@ -127,3 +127,17 @@
 .notification-history-activity:hover {
   text-decoration: underline;
 }
+
+.toast-content {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+}
+.toast-fix {
+  grid-column: 2;
+  margin-top: 8px;
+}
+.toast-content > .p-toast-close-button {
+  grid-column: 3;
+  grid-row: 1;
+}

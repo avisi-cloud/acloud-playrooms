@@ -495,3 +495,14 @@ button that opened it.
 `App.GetAppVersion` returns the version supplied at desktop launch. Release builds
 use the injected version; local launches log their use of the existing configured
 development version. Room details use this metadata in Copy details.
+
+## Desktop notifications
+
+`run.go` registers Wails notification and Dock services next to `App`.
+`app_notifications.go` exposes thin `SendDesktopNotification` and `SetDockBadge`
+methods. Notification permission is checked at delivery and requested at most
+once per app session, only while unfocused. A second focus check after permission
+prevents an alert after the user returns. Native errors reach the frontend log;
+they never change the result of an acloud command. Zero removes the Dock badge.
+A notification click restores and focuses the main window, then emits its opaque
+target to the frontend, which checks the original selection before navigating.

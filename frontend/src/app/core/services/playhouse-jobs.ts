@@ -1,3 +1,5 @@
+import { DesktopNotificationsService } from './desktop-notifications';
+import { PlayroomSelection, PlayroomStateService } from './playroom-state';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { failureSaysResumeWithPlayhouseUpdate } from '../../shared/utils';
 import { CliConsoleService } from './cli-console';
@@ -15,6 +17,8 @@ import {
  */
 @Injectable({ providedIn: 'root' })
 export class PlayhouseJobsService {
+  private readonly desktop = inject(DesktopNotificationsService);
+  private readonly state = inject(PlayroomStateService);
   private readonly console = inject(CliConsoleService);
   private readonly notify = inject(ToastService);
 
@@ -94,6 +98,7 @@ export class PlayhouseJobsService {
         this.notify.failure(`Could not create playhouse "${slug}"`, error, operationId);
       },
       () => this._provisioning.update((list) => list.filter((trackedSlug) => trackedSlug !== slug)),
+      { task: 'create', slug, selection: this.state.captureSelection() },
     );
   }
 
@@ -155,6 +160,7 @@ export class PlayhouseJobsService {
       (operationId, error) =>
         this.notify.failure(`Could not update playhouse "${slug}"`, error, operationId),
       () => this._converging.update((list) => list.filter((trackedSlug) => trackedSlug !== slug)),
+      { task: 'update', slug, selection: this.state.captureSelection() },
     );
   }
 
@@ -173,6 +179,7 @@ export class PlayhouseJobsService {
     onSuccess: (operationId: string) => void,
     onFailure: (operationId: string, error: unknown) => void,
     untrack: () => void,
+    desktop?: { task: 'create' | 'update'; slug: string; selection: PlayroomSelection },
   ): Promise<void> {
     let startedOperationId = '';
     try {
@@ -181,8 +188,11 @@ export class PlayhouseJobsService {
         return action(operationId);
       });
       onSuccess(startedOperationId);
+      if (desktop) this.desktop.playhouseFinished(desktop.task, desktop.slug, desktop.selection);
     } catch (error) {
       onFailure(startedOperationId, error);
+      if (desktop)
+        this.desktop.playhouseFinished(desktop.task, desktop.slug, desktop.selection, true);
     } finally {
       untrack();
       this._completed.update((count) => count + 1);

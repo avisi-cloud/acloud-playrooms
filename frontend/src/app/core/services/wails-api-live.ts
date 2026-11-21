@@ -74,6 +74,12 @@ export const wailsApi = {
   clearT3CodePath: (): Promise<void> => app.ClearT3CodePath(),
   browseForT3CodePath: (): Promise<string> => app.BrowseForT3CodePath(),
 
+  sendDesktopNotification: (title: string, target: string): Promise<void> =>
+    app.SendDesktopNotification(title, target),
+  setDockBadge: (count: number): Promise<void> => app.SetDockBadge(count),
+  onDesktopNotificationClick: (handler: (target: string) => void): (() => void) =>
+    Events.On('notification:clicked', (event) => handler(event.data as string)),
+
   // Window
   setWindowTitle: (title: string): Promise<void> => Window.SetTitle(title),
   onMenuAction: (handler: (action: string) => void): (() => void) =>

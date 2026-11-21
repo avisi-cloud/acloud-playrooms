@@ -26,6 +26,7 @@ import { CliConsoleService } from '../../../../core/services/cli-console';
 import { wailsApi } from '../../../../core/services/wails-api';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { PlayroomActionsHostComponent } from '../../../../shared/components';
+import { PlayroomBreadcrumbComponent } from '../../components/playroom-breadcrumb/playroom-breadcrumb';
 import { STATUS } from '../../../../shared/data';
 import { ConnectTab, Playroom } from '../../../../shared/models';
 import {
@@ -49,7 +50,14 @@ import {
 /** Reported room details stay separate from editable form drafts. */
 @Component({
   selector: 'app-room-detail-page',
-  imports: [CommonModule, ButtonModule, MenuModule, TagModule, PlayroomActionsHostComponent],
+  imports: [
+    CommonModule,
+    ButtonModule,
+    MenuModule,
+    TagModule,
+    PlayroomActionsHostComponent,
+    PlayroomBreadcrumbComponent,
+  ],
   templateUrl: './room-detail.html',
   styleUrl: './room-detail.css',
 })
@@ -155,6 +163,12 @@ export class RoomDetailPageComponent implements OnDestroy {
   private readonly pollTimer: ReturnType<typeof setInterval>;
 
   constructor() {
+    effect(() => {
+      if (!this.actions.loadError()) {
+        this.failure = '';
+        this.changeDetector.markForCheck();
+      }
+    });
     inject(ShortcutsService).registerPageActions(
       { refresh: () => void this.refreshRooms() },
       inject(DestroyRef),
@@ -319,6 +333,8 @@ export class RoomDetailPageComponent implements OnDestroy {
     if (operationId) this.console.open(operationId);
   }
 
+  readonly refreshAfterFix = () => this.refreshRooms();
+
   async refreshRooms(background = false): Promise<void> {
     if (this.refreshing) return;
     this.refreshing = true;
@@ -333,7 +349,8 @@ export class RoomDetailPageComponent implements OnDestroy {
     } catch (error) {
       if (revision === this.state.scopeRevision() && playhouse === this.state.playhouse()) {
         this.failure = describeError(error);
-        if (!background) this.notify.failure('Could not load the playroom', error);
+        if (!background)
+          this.notify.failure('Could not load the playroom', error, '', this.actions.loadFix());
       }
     } finally {
       this.loading = false;

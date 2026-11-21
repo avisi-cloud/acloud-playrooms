@@ -1,4 +1,5 @@
 import {
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
@@ -13,6 +14,10 @@ import { DialogModule } from 'primeng/dialog';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
+import { CliConsoleService } from '../../../core/services/cli-console';
+import { PlayroomStateService } from '../../../core/services/playroom-state';
+import { CommandFixService } from '../../../core/services/command-fix';
+import { PlayroomLifecycleService } from '../../../core/services/playroom-lifecycle';
 import { PlayroomConnectService } from '../../../core/services/playroom-connect';
 import {
   PlayroomConnectInput,
@@ -48,12 +53,73 @@ import { OverlayFocusDirective } from '../../directives';
 })
 export class PlayroomConnectDialogComponent implements OnChanges {
   /** Backend-generated, so the dialog shows the arguments the hand-off will run. */
+  private readonly state = inject(PlayroomStateService);
+  private readonly console = inject(CliConsoleService);
+  private readonly fixes = inject(CommandFixService);
+  private readonly lifecycle = inject(PlayroomLifecycleService);
+  readonly previewAllowCurrentIP = wailsApi.previewUpdatePlayhouse;
+  confirmingAllowCurrentIP = false;
+  allowingCurrentIP = false;
+  allowCurrentIPComplete = false;
+  private allowCurrentIPSelection = this.state.captureSelection();
+
+  canAllowCurrentIP(): boolean {
+    return (
+      !!this.room &&
+      this.room.playhouse === this.state.playhouse() &&
+      (this.via === 'nodeport' || (this.via === '' && this.configuredVia === 'nodeport'))
+    );
+  }
+
+  allowCurrentIPInput() {
+    return { Name: this.room?.playhouse ?? '', AllowCurrentIP: true };
+  }
+
+  requestAllowCurrentIP(): void {
+    if (!this.canAllowCurrentIP()) return;
+    this.allowCurrentIPSelection = this.state.captureSelection();
+    this.confirmingAllowCurrentIP = true;
+  }
+
+  async allowCurrentIP(): Promise<void> {
+    if (
+      !this.confirmingAllowCurrentIP ||
+      this.allowingCurrentIP ||
+      !this.canAllowCurrentIP() ||
+      !this.state.isCurrentSelection(this.allowCurrentIPSelection)
+    )
+      return;
+    this.allowingCurrentIP = true;
+    const input = this.allowCurrentIPInput();
+    let operationId = '';
+    try {
+      await this.console.run('Adding current IP to the allowlist', (startedOperationId) => {
+        operationId = startedOperationId;
+        return wailsApi.updatePlayhouse(startedOperationId, input);
+      });
+      this.confirmingAllowCurrentIP = false;
+      this.allowCurrentIPComplete = true;
+      this.notify.toast(
+        'Added your current IP to the allowlist. Connect again when ready.',
+        'ok',
+        operationId,
+      );
+    } catch (error) {
+      this.notify.failure('Could not add your current IP to the allowlist', error, operationId);
+    } finally {
+      this.allowingCurrentIP = false;
+      // Zoneless: an awaited command does not redraw plain fields on its own.
+      this.changeDetector.markForCheck();
+    }
+  }
+
   readonly previewConnect = wailsApi.previewConnectPlayroom;
   readonly previewOpen = wailsApi.previewOpenPlayroomInEditor;
 
   private readonly connectSvc = inject(PlayroomConnectService);
   private readonly defaults = inject(PlayroomDefaultsService);
   private readonly notify = inject(ToastService);
+  private readonly changeDetector = inject(ChangeDetectorRef);
 
   readonly editors = [...EDITORS];
   readonly terminals = [...TERMINALS];
@@ -85,6 +151,8 @@ export class PlayroomConnectDialogComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     // Reset the per-connection fields each time the dialog opens.
     if (changes['visible'] && this.visible) {
+      this.confirmingAllowCurrentIP = false;
+      this.allowCurrentIPComplete = false;
       this.user = 'playroom';
       this.forwardAgent = true;
       this.via = '';
@@ -163,25 +231,46 @@ export class PlayroomConnectDialogComponent implements OnChanges {
     this.configuredVia = this.defaults.configuredText('via', '');
   }
 
-  async execute(): Promise<void> {
+  async execute(forceInstall = false): Promise<void> {
     const room = this.room;
     if (!room) return;
+    const selection = this.state.captureSelection();
+    const tab = this.tab;
+    const user = this.user,
+      terminal = this.terminal,
+      forwardAgent = this.forwardAgent,
+      via = this.via;
     this.close();
+    const runConnect = async (forceInstall: boolean) => {
+      const operationId = await this.connectSvc.connect(
+        room,
+        user,
+        terminal,
+        forwardAgent,
+        via,
+        forceInstall,
+      );
+      this.notify.toast(`Opened "${room.name}" in ${terminal}`, 'ok', operationId);
+    };
     try {
-      if (this.tab === 'connect') {
-        const operationId = await this.connectSvc.connect(
-          room,
-          this.user,
-          this.terminal,
-          this.forwardAgent,
-          this.via,
-        );
-        this.notify.toast(`Opened "${room.name}" in ${this.terminal}`, 'ok', operationId);
+      if (tab === 'connect') {
+        await runConnect(forceInstall);
       } else {
         await this.connectSvc.open(room, this.editor, this.via);
       }
     } catch (error) {
-      this.notify.failure(`Could not open "${room.name}"`, error);
+      if (this.state.isCurrentSelection(selection))
+        this.notify.failure(
+          `Could not open "${room.name}"`,
+          error,
+          '',
+          this.fixes.action(error, {
+            ...(tab === 'connect' ? { signIn: () => runConnect(true) } : {}),
+            ...(!room.ephemeral
+              ? { updatePlayroom: () => this.lifecycle.updateOutdated(room) }
+              : {}),
+          }),
+        );
     }
   }
 }
