@@ -86,6 +86,75 @@
           <p class="field-hint">Shows the animated robot in the sidebar.</p>
         </div>
       </section>
+      <section class="notification-settings" aria-labelledby="evening-stop-title">
+        <h2 class="settings-section-title" id="evening-stop-title">Evening stop</h2>
+        <p class="settings-section-description">
+          Only your own rooms in the current playhouse, while this app runs and your Mac is awake.
+          Missed stops need your approval.
+        </p>
+        @if (schedule.settings(); as settings) {
+          <div class="field-group">
+            <label class="field-label" for="evening-stop-enabled">Stop my running playrooms</label>
+            <div class="appearance-toggle">
+              <p-toggleswitch
+                inputId="evening-stop-enabled"
+                [ngModel]="settings.Enabled"
+                (ngModelChange)="schedule.save({ Enabled: $event })"
+                [disabled]="schedule.busy()"
+              />
+              <span>{{ settings.Enabled ? 'On' : 'Off' }}</span>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="evening-stop-time">Stop at</label>
+            <input
+              pInputText
+              id="evening-stop-time"
+              type="time"
+              [ngModel]="settings.Time"
+              (ngModelChange)="schedule.save({ Time: $event })"
+              [disabled]="schedule.busy()"
+              aria-describedby="evening-stop-time-hint"
+            />
+            <p class="field-hint" id="evening-stop-time-hint">
+              Local time. Ten minutes before, snooze for 1 hour or keep running tonight.
+            </p>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="evening-stop-days">On</label>
+            <p-select
+              inputId="evening-stop-days"
+              [options]="scheduleDays"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="settings.Days"
+              (ngModelChange)="schedule.save({ Days: $event })"
+              [disabled]="schedule.busy()"
+            />
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="idle-reminder-hours">Idle reminder after hours</label>
+            <input
+              pInputText
+              id="idle-reminder-hours"
+              type="number"
+              min="1"
+              max="168"
+              [ngModel]="settings.IdleHours"
+              (ngModelChange)="schedule.save({ IdleHours: $event })"
+              [disabled]="schedule.busy()"
+              aria-describedby="idle-reminder-hint"
+            />
+            <p class="field-hint" id="idle-reminder-hint">
+              Time since a running room was first seen or last connected or opened from this app.
+              Connections outside this app are unknown.
+            </p>
+          </div>
+        }
+        @if (schedule.error()) {
+          <p role="alert">{{ schedule.error() }}</p>
+        }
+      </section>
       <section class="notification-settings" aria-labelledby="notifications-title">
         <h2 class="settings-section-title" id="notifications-title">Notifications</h2>
         <p class="settings-section-description">Know when background tasks finish.</p>

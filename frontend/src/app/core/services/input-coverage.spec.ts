@@ -10,6 +10,7 @@ import * as localModels from '../../../../bindings/github.com/avisi-cloud/acloud
 
 /** Fields the UI sets, per input model. */
 const WIRED: Record<string, string[]> = {
+  'local.ScheduleSettings': ['Enabled', 'Time', 'Days', 'IdleHours'],
   'playroom.CreateInput': [
     'Name',
     'Playhouse',
@@ -151,6 +152,7 @@ const UNWIRED: Record<string, Record<string, string>> = {
 
 /** A zero-valued instance of each model, which is where the field names live. */
 const MODELS: Record<string, object> = {
+  'local.ScheduleSettings': new localModels.ScheduleSettings({}),
   'playroom.CreateInput': new playroomModels.CreateInput({}),
   'playroom.UpdateInput': new playroomModels.UpdateInput({}),
   'playroom.DeleteInput': new playroomModels.DeleteInput({}),

@@ -1,3 +1,4 @@
+import { RoomKeepRunningComponent } from '../../../../shared/components/room-keep-running/room-keep-running';
 import { ShortcutsService } from '../../../../core/services/shortcuts';
 import { CommonModule } from '@angular/common';
 import {
@@ -51,6 +52,7 @@ import {
 @Component({
   selector: 'app-room-detail-page',
   imports: [
+    RoomKeepRunningComponent,
     CommonModule,
     ButtonModule,
     MenuModule,

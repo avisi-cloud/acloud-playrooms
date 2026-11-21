@@ -17,6 +17,8 @@ it, update the entry.
 
 **Open — revisit these**
 
+- [Evening stops run inside the app](#evening-stops-run-inside-the-app)
+
 - [The menu bar shows the frontend's room list](#the-menu-bar-shows-the-frontends-room-list)
 - [Git repositories are checked before creation](#git-repositories-are-checked-before-creation)
 
@@ -60,6 +62,28 @@ it, update the entry.
 ---
 
 ## Open — revisit these
+
+### Evening stops run inside the app
+
+The app owns a device-local evening stop schedule and remembers only connections
+and editor opens it handed off itself. This helps with forgotten running rooms
+without claiming to know SSH activity outside the app. Only the current
+playhouse's own Ready rooms are eligible; unknown status or ownership refuses
+an automatic stop. Per-room opt-outs are scoped to context, organisation, user
+and playhouse, so a reused room name cannot inherit another scope's preference.
+
+The Go scheduler survives webview reloads, but runs only while the app runs and
+the Mac is awake. It uses local time and offers a warning ten minutes before the
+deadline, a one-hour snooze, and an exemption for tonight. No launch agent, wake
+request, cloud-side policy or CLI change is involved. Only device preferences
+persist across app restarts; observation periods restart conservatively.
+
+A deadline crossed during sleep is **never executed later automatically**:
+conditions may have changed while the user was away. Instead, a missed-stop
+notification offers an explicit Stop action that rechecks ownership and scope.
+A wall-clock tick gap over 90 seconds also treats a delayed read as missed rather
+than guessing that a late automatic stop is safe. Revisit if the CLI gains a
+server-side scheduler or reliable connection activity.
 
 ### The menu bar shows the frontend's room list
 

@@ -1,3 +1,5 @@
+import { EveningStopService } from '../../../../core/services/evening-stop';
+import { InputTextModule } from 'primeng/inputtext';
 import { EnvironmentService } from '../../../../core/services/environment';
 import { DesktopNotificationsService } from '../../../../core/services/desktop-notifications';
 import { MenuBarService } from '../../../../core/services/menu-bar';
@@ -19,6 +21,7 @@ import { T3CodePathCardComponent } from '../../components/t3-code-path/t3-code-p
   selector: 'app-settings-page',
   imports: [
     FormsModule,
+    InputTextModule,
     SelectModule,
     ButtonModule,
     ToggleSwitchModule,
@@ -30,6 +33,11 @@ import { T3CodePathCardComponent } from '../../components/t3-code-path/t3-code-p
   styleUrl: './settings.css',
 })
 export class SettingsPageComponent {
+  readonly schedule = inject(EveningStopService);
+  readonly scheduleDays = [
+    { label: 'Weekdays', value: 'weekdays' },
+    { label: 'Every day', value: 'every-day' },
+  ];
   readonly environment = inject(EnvironmentService);
   readonly preferredActionOptions: { label: string; value: PreferredAction }[] = [
     { label: 'Connect', value: 'connect' },

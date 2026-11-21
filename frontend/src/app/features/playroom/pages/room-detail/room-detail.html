@@ -138,6 +138,8 @@
           </div>
         }
 
+        <app-room-keep-running [room]="room()!" />
+
         <!-- Action buttons -->
         <section class="actions-row">
           @if (actions.pendingOperation(roomName()); as pending) {

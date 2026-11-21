@@ -4,6 +4,7 @@ package gui
 
 import (
 	"embed"
+	"strings"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/events"
@@ -85,6 +86,14 @@ func RunDesktopApplication(appVersion string) error {
 	})
 
 	notificationService.OnNotificationResponse(func(result notifications.NotificationResult) {
+		if result.Error == nil && strings.HasPrefix(result.Response.ID, "schedule:") {
+			if result.Response.ActionIdentifier == notifications.DefaultActionIdentifier {
+				showMainWindow()
+			} else {
+				go appService.RunScheduleAction(result.Response.ID, local.ScheduleAction(result.Response.ActionIdentifier))
+			}
+			return
+		}
 		if result.Error != nil || result.Response.ActionIdentifier != notifications.DefaultActionIdentifier {
 			return
 		}

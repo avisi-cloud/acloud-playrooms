@@ -1,3 +1,4 @@
+import { ScheduleNoticesComponent } from './shared/components/schedule-notices/schedule-notices';
 import { DesktopNotificationsService } from './core/services/desktop-notifications';
 import { MenuBarService } from './core/services/menu-bar';
 import { DialogModule } from 'primeng/dialog';
@@ -59,6 +60,7 @@ export type CurrentScopeState = 'signed-out' | 'no-playhouse' | 'playhouse-selec
   },
   // The sidebar has its own dark theme boundary, including when the workspace is light.
   imports: [
+    ScheduleNoticesComponent,
     DialogModule,
     RouterOutlet,
     RouterLink,

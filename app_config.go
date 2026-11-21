@@ -21,7 +21,14 @@ func (app *App) GetCurrentOrganisation() (string, error) {
 }
 
 func (app *App) SwitchOrganisation(operationID, slug string) error {
-	return config.UseOrganisation(app.commandContext(), operationID, slug)
+	app.schedule.run.Lock()
+	defer app.schedule.run.Unlock()
+	err := config.UseOrganisation(app.commandContext(), operationID, slug)
+	if err == nil {
+		app.schedule.playhouse = ""
+		app.schedule.scope = ""
+	}
+	return err
 }
 
 func (app *App) ListContexts() ([]config.ContextEntry, error) {
@@ -37,5 +44,12 @@ func (app *App) GetCurrentContext() (string, error) {
 }
 
 func (app *App) SwitchContext(operationID, name string) error {
-	return config.UseContext(app.commandContext(), operationID, name)
+	app.schedule.run.Lock()
+	defer app.schedule.run.Unlock()
+	err := config.UseContext(app.commandContext(), operationID, name)
+	if err == nil {
+		app.schedule.playhouse = ""
+		app.schedule.scope = ""
+	}
+	return err
 }
