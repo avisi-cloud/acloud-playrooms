@@ -1,0 +1,143 @@
+<td class="room-name-cell">
+  <div class="room-name-controls">
+    @if (selectMode) {
+      <input
+        type="checkbox"
+        [checked]="selected"
+        [disabled]="selectionDisabled || !currentUser || room.owner !== currentUser"
+        [attr.aria-label]="'Select playroom ' + room.name"
+        (click)="onSelect($event)"
+      />
+    }
+    <button
+      type="button"
+      class="row-pin"
+      [attr.aria-label]="(pinned ? 'Unpin' : 'Pin') + ' playroom ' + room.name"
+      [attr.aria-pressed]="pinned"
+      (click)="pinRoom.emit(room.name)"
+    >
+      <i [class]="pinned ? 'pi pi-star-fill' : 'pi pi-star'" aria-hidden="true"></i>
+    </button>
+    <span
+      tabindex="0"
+      [attr.role]="selectMode ? 'button' : 'link'"
+      class="row-name"
+      [title]="room.name"
+      [attr.aria-label]="(selectMode ? 'Select playroom ' : 'Open playroom ') + room.name"
+      (click)="onCardClick($event)"
+      (dblclick)="onCardDoubleClick($event)"
+      (keydown)="onCardKeydown($event)"
+      >{{ room.name }}</span
+    >
+  </div>
+</td>
+<td>
+  <span class="row-status" [ngClass]="statusMap[room.status]?.tone" [title]="room.rawStatus">{{
+    statusLabel()
+  }}</span>
+  @if (outdatedBadge(); as badge) {
+    @if (badge.opensUpdate && !pendingOperation) {
+      <button
+        type="button"
+        class="row-outdated"
+        [title]="badge.hint"
+        [attr.aria-label]="'Update playroom ' + room.name + ': ' + badge.hint"
+        (click)="editRoom.emit(room.name)"
+      >
+        {{ badge.label }}
+      </button>
+    } @else {
+      <span class="row-outdated" [title]="badge.hint">{{ badge.label }}</span>
+    }
+  }
+</td>
+<td>
+  <span class="truncate" [title]="room.owner">{{
+    room.owner ? ownerLabel() : 'Not reported'
+  }}</span>
+</td>
+<td>
+  <span class="truncate" [title]="room.image">{{ room.image || 'Not reported' }}</span>
+</td>
+<td class="room-size">
+  <span>CPU {{ room.cpuReq || 'Not reported' }} / {{ room.cpuLim || 'Not reported' }}</span>
+  <span>Memory {{ room.memReq || 'Not reported' }} / {{ room.memLim || 'Not reported' }}</span>
+  <span>Disk {{ room.disk || 'Not reported' }}</span>
+</td>
+<td class="room-age">{{ room.createdAt ? ageLabel() : 'Not reported' }}</td>
+<td>
+  <span class="row-ports" [title]="room.ports">{{
+    room.ports || (room.portForwards === undefined ? 'Not reported' : 'None')
+  }}</span>
+</td>
+<td>
+  <div class="row-actions">
+    @if (pendingOperation) {
+      <span role="status">{{ pendingOperation }}…</span>
+    } @else if (room.status === 'ready') {
+      <p-button
+        label="Connect"
+        size="small"
+        styleClass="card-primary-btn"
+        [ariaLabel]="'Connect to playroom ' + room.name"
+        (click)="$event.stopPropagation(); connectRoom.emit(room.name)"
+      />
+      <p-button
+        icon="pi pi-code"
+        size="small"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="card-icon-btn"
+        title="Open in editor"
+        [ariaLabel]="'Open playroom ' + room.name + ' in editor'"
+        (click)="$event.stopPropagation(); openInEditor.emit(room.name)"
+      />
+      <p-button
+        icon="pi pi-stop-circle"
+        size="small"
+        severity="secondary"
+        [outlined]="true"
+        styleClass="card-icon-btn"
+        title="Stop"
+        [ariaLabel]="'Stop playroom ' + room.name"
+        (click)="$event.stopPropagation(); stopRoom.emit(room.name)"
+      />
+    } @else if (room.status === 'stopped') {
+      <p-button
+        label="Start"
+        icon="pi pi-power-off"
+        size="small"
+        styleClass="card-primary-btn"
+        [ariaLabel]="'Start playroom ' + room.name"
+        (click)="$event.stopPropagation(); startRoom.emit(room.name)"
+      />
+    } @else if (room.status === 'failed') {
+      <p-button
+        label="Edit"
+        icon="pi pi-pencil"
+        size="small"
+        styleClass="card-primary-btn"
+        [ariaLabel]="'Edit playroom ' + room.name"
+        (click)="$event.stopPropagation(); editRoom.emit(room.name)"
+      />
+    }
+    <div class="card-actions-end">
+      <p-button
+        icon="pi pi-ellipsis-h"
+        [disabled]="!!pendingOperation"
+        size="small"
+        severity="secondary"
+        [text]="true"
+        styleClass="card-icon-btn"
+        [ariaLabel]="'More actions for playroom ' + room.name"
+        title="More actions"
+        (click)="$event.stopPropagation(); menu.toggle($event)"
+      />
+      <p-menu #menu [model]="menuItems()" [popup]="true" appendTo="body">
+        <ng-template #end>
+          <p class="ssh-menu-hint">SSH works after the first Connect or Open.</p>
+        </ng-template>
+      </p-menu>
+    </div>
+  </div>
+</td>

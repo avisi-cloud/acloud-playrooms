@@ -3,6 +3,8 @@ export type ThemePreference = Theme | 'system';
 /** Easy is one screen with name, image and size; Advanced is the full step-by-step wizard. */
 export type CreatePlayroomMode = 'easy' | 'advanced';
 
+export type PlayroomView = 'grid' | 'list';
+
 export type PreferredAction = 'connect' | 'open' | 'nothing';
 
 export type DockBadge = 'failed' | 'running' | 'off';
@@ -10,6 +12,8 @@ export type DockBadge = 'failed' | 'running' | 'off';
 export interface CacheState {
   checkForUpdates: boolean;
   lastSeenAppVersion: string;
+  playroomView: PlayroomView;
+  groupByOwner: boolean;
   notifications: boolean;
   dockBadge: DockBadge;
   keepRunningInMenuBar: boolean;

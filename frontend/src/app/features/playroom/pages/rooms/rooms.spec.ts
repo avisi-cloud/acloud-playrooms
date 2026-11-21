@@ -445,4 +445,122 @@ describe('RoomsPageComponent', () => {
       expect(page.filteredRooms()[0].name).toBe('zeta');
     });
   }
+  it('remembers the view and owner grouping across screen recreation and app sessions', async () => {
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('playhouse-a');
+    const fixture = TestBed.createComponent(RoomsPageComponent);
+    await fixture.whenStable();
+    const page = fixture.componentInstance;
+    const root = fixture.nativeElement as HTMLElement;
+    root.querySelector<HTMLButtonElement>('.view-toggle button:last-child')!.click();
+    root.querySelector<HTMLInputElement>('#group-by-owner')!.click();
+    await fixture.whenStable();
+    expect(page.playroomView()).toBe('list');
+    expect(page.groupByOwner()).toBe(true);
+    expect(root.querySelectorAll('table tbody tr')).toHaveLength(1);
+    const { readCache } = await import('../../../../shared/utils/cache');
+    expect(readCache()).toMatchObject({ playroomView: 'list', groupByOwner: true });
+    fixture.destroy();
+    const restored = TestBed.createComponent(RoomsPageComponent);
+    await restored.whenStable();
+    expect(restored.componentInstance.playroomView()).toBe('list');
+    expect(restored.componentInstance.groupByOwner()).toBe(true);
+    const { UiSessionService } = await import('../../../../core/services/ui-session');
+    const restarted = TestBed.runInInjectionContext(() => new UiSessionService());
+    expect(restarted.playroomView()).toBe('list');
+    expect(restarted.groupByOwner()).toBe(true);
+  });
+
+  it('keeps filters, pins and selection across both views and counts only matching rooms in groups', async () => {
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('playhouse-a');
+    const fixture = TestBed.createComponent(RoomsPageComponent);
+    await fixture.whenStable();
+    state.setUser('developer@example.test');
+    state.setRooms([
+      listingToRoom(
+        { Name: 'alpha', Owner: 'developer@example.test', Status: 'Ready' },
+        'playhouse-a',
+      ),
+      listingToRoom(
+        { Name: 'zeta', Owner: 'developer@example.test', Status: 'Ready' },
+        'playhouse-a',
+      ),
+      listingToRoom(
+        { Name: 'beta', Owner: 'developer@example.test', Status: 'Stopped' },
+        'playhouse-a',
+      ),
+      listingToRoom({ Name: 'other', Owner: 'other@example.test', Status: 'Ready' }, 'playhouse-a'),
+    ]);
+    const page = fixture.componentInstance;
+    page.session.setGroupByOwner(true);
+    state.togglePinned('playhouse-a', 'zeta');
+    page.statusFilter.set('ready');
+    page.selectRoom({ name: 'alpha', shiftKey: false });
+    for (const view of ['grid', 'list'] as const) {
+      page.session.setPlayroomView(view);
+      fixture.detectChanges();
+      expect(page.roomGroups().map((group) => [group.label, group.rooms.length])).toEqual([
+        ['Mine', 2],
+        ['other@example.test', 1],
+      ]);
+      const names = [
+        ...fixture.nativeElement.querySelectorAll(view === 'grid' ? '.card-name' : '.row-name'),
+      ].map((element) => (element as HTMLElement).textContent?.trim().replace(/\.$/, ''));
+      expect(names).toEqual(['zeta', 'alpha', 'other']);
+      expect(
+        fixture.nativeElement.querySelectorAll(
+          view === 'grid' ? 'article.selected' : 'tr.selected',
+        ),
+      ).toHaveLength(1);
+      expect(page.selectedNames()).toEqual(['alpha']);
+    }
+    page.query.set('other');
+    expect(page.roomGroups().map((group) => [group.label, group.rooms.length])).toEqual([
+      ['other@example.test', 1],
+    ]);
+    page.mineOnly.set(true);
+    expect(page.roomGroups()).toEqual([]);
+    expect(page.selectedNames()).toEqual(['alpha']);
+  });
+
+  it('uses displayed group order for Shift ranges and excludes collapsed rooms', async () => {
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('playhouse-a');
+    const fixture = TestBed.createComponent(RoomsPageComponent);
+    await fixture.whenStable();
+    state.setUser('developer@example.test');
+    state.setRooms(
+      ['alpha', 'beta', 'gamma'].map((name) =>
+        listingToRoom(
+          { Name: name, Owner: 'developer@example.test', Status: 'Ready' },
+          'playhouse-a',
+        ),
+      ),
+    );
+    const page = fixture.componentInstance;
+    page.session.setGroupByOwner(true);
+    page.selectRoom({ name: 'alpha', shiftKey: false });
+    page.toggleOwner('developer@example.test');
+    fixture.detectChanges();
+    expect(page.visibleRooms()).toEqual([]);
+    const toggle = fixture.nativeElement.querySelector('.owner-toggle') as HTMLButtonElement;
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(toggle.getAttribute('aria-label')).toBe('Mine, 3 rooms');
+    expect(fixture.nativeElement.querySelector('#owner-rooms-0').hidden).toBe(true);
+    page.selectRoom({ name: 'gamma', shiftKey: true });
+    expect(page.selectedNames()).toEqual(['alpha', 'gamma']);
+    toggle.click();
+    fixture.detectChanges();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    page.selectRoom({ name: 'alpha', shiftKey: true });
+    expect(page.selectedNames()).toEqual(['alpha', 'gamma', 'beta']);
+    page.toggleOwner('developer@example.test');
+    state.selectPlayhouse('playhouse-b');
+    await fixture.whenStable();
+    expect(page.collapsedOwners()).toEqual([]);
+    expect(page.selectedNames()).toEqual([]);
+    expect(page.playroomView()).toBe('grid');
+    expect(page.groupByOwner()).toBe(true);
+  });
 });

@@ -8,6 +8,8 @@ export const CACHE_KEY = runtimeMode.dummy
 export const defaultCache: CacheState = {
   checkForUpdates: true,
   lastSeenAppVersion: '',
+  playroomView: 'grid',
+  groupByOwner: false,
   preferredAction: 'nothing',
   readVariablesFromLoginShell: false,
   notifications: true,
