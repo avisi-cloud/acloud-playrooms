@@ -12,5 +12,11 @@ export {
     HealthCheckKey,
     HealthStatus,
     ImageEntry,
+    ScheduleAction,
+    ScheduleDays,
+    ScheduleEvent,
+    ScheduleKind,
+    ScheduleRoom,
+    ScheduleSettings,
     ToolStatus
 } from "./models.js";

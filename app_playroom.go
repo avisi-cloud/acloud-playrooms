@@ -39,12 +39,20 @@ func (app *App) StopPlayroom(operationID string, input playroom.StopInput) error
 }
 
 func (app *App) OpenPlayroomInEditor(operationID string, input playroom.OpenInput) error {
-	return playroom.Open(app.commandContext(), operationID, input)
+	err := playroom.Open(app.commandContext(), operationID, input)
+	if err == nil {
+		app.recordScheduleConnection(input.Playhouse, input.Name)
+	}
+	return err
 }
 
 // ConnectPlayroom opens an external terminal, so it has no cancellable operation.
 func (app *App) ConnectPlayroom(input playroom.ConnectInput) error {
-	return playroom.Connect(input)
+	err := playroom.Connect(input)
+	if err == nil {
+		app.recordScheduleConnection(input.Playhouse, input.Name)
+	}
+	return err
 }
 
 func (app *App) GetPlayroomDefaults() ([]playroom.DefaultEntry, error) {

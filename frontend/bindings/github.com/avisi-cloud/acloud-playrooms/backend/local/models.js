@@ -372,6 +372,195 @@ export class ImageEntry {
 }
 
 /**
+ * @readonly
+ * @enum {string}
+ */
+export const ScheduleAction = {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero: "",
+
+    ScheduleSnooze: "snooze",
+    ScheduleKeepTonight: "keep-tonight",
+    ScheduleStop: "stop",
+};
+
+/**
+ * @readonly
+ * @enum {string}
+ */
+export const ScheduleDays = {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero: "",
+
+    ScheduleWeekdays: "weekdays",
+    ScheduleEveryDay: "every-day",
+};
+
+export class ScheduleEvent {
+    /**
+     * Creates a new ScheduleEvent instance.
+     * @param {Partial<ScheduleEvent>} [$$source = {}] - The source object to create the ScheduleEvent.
+     */
+    constructor($$source = {}) {
+        if (!("ID" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["ID"] = "";
+        }
+        if (!("Kind" in $$source)) {
+            /**
+             * @member
+             * @type {ScheduleKind}
+             */
+            this["Kind"] = ScheduleKind.$zero;
+        }
+        if (!("Title" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Title"] = "";
+        }
+        if (!("Rooms" in $$source)) {
+            /**
+             * @member
+             * @type {ScheduleRoom[]}
+             */
+            this["Rooms"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new ScheduleEvent instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {ScheduleEvent}
+     */
+    static createFrom($$source = {}) {
+        const $$createField3_0 = $$createType1;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("Rooms" in $$parsedSource) {
+            $$parsedSource["Rooms"] = $$createField3_0($$parsedSource["Rooms"]);
+        }
+        return new ScheduleEvent(/** @type {Partial<ScheduleEvent>} */($$parsedSource));
+    }
+}
+
+/**
+ * @readonly
+ * @enum {string}
+ */
+export const ScheduleKind = {
+    /**
+     * The Go zero value for the underlying type of the enum.
+     */
+    $zero: "",
+
+    ScheduleWarning: "warning",
+    ScheduleMissed: "missed",
+    ScheduleIdle: "idle",
+    ScheduleDue: "due",
+};
+
+export class ScheduleRoom {
+    /**
+     * Creates a new ScheduleRoom instance.
+     * @param {Partial<ScheduleRoom>} [$$source = {}] - The source object to create the ScheduleRoom.
+     */
+    constructor($$source = {}) {
+        if (!("Key" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Key"] = "";
+        }
+        if (!("Name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Name"] = "";
+        }
+        if (!("Playhouse" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Playhouse"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new ScheduleRoom instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {ScheduleRoom}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new ScheduleRoom(/** @type {Partial<ScheduleRoom>} */($$parsedSource));
+    }
+}
+
+export class ScheduleSettings {
+    /**
+     * Creates a new ScheduleSettings instance.
+     * @param {Partial<ScheduleSettings>} [$$source = {}] - The source object to create the ScheduleSettings.
+     */
+    constructor($$source = {}) {
+        if (!("Enabled" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["Enabled"] = false;
+        }
+        if (!("Time" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["Time"] = "";
+        }
+        if (!("Days" in $$source)) {
+            /**
+             * @member
+             * @type {ScheduleDays}
+             */
+            this["Days"] = ScheduleDays.$zero;
+        }
+        if (!("IdleHours" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["IdleHours"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new ScheduleSettings instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {ScheduleSettings}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new ScheduleSettings(/** @type {Partial<ScheduleSettings>} */($$parsedSource));
+    }
+}
+
+/**
  * ToolStatus reports whether an external tool a playroom depends on is usable.
  */
 export class ToolStatus {
@@ -430,3 +619,7 @@ export class ToolStatus {
         return new ToolStatus(/** @type {Partial<ToolStatus>} */($$parsedSource));
     }
 }
+
+// Private type creation functions
+const $$createType0 = ScheduleRoom.createFrom;
+const $$createType1 = $Create.Array($$createType0);

@@ -3,6 +3,18 @@ import { wailsApi } from './app/core/services/wails-api';
 
 // Unit tests never call native notification or Dock services.
 beforeEach(() => {
+  vi.spyOn(wailsApi, 'setSchedulePlayhouse').mockResolvedValue();
+  vi.spyOn(wailsApi, 'getScheduleSettings').mockResolvedValue({
+    Enabled: false,
+    Time: '22:00',
+    Days: 'weekdays',
+    IdleHours: 4,
+  });
+  vi.spyOn(wailsApi, 'setScheduleSettings').mockResolvedValue();
+  vi.spyOn(wailsApi, 'getScheduleNotices').mockResolvedValue([]);
+  vi.spyOn(wailsApi, 'onScheduleNotice').mockReturnValue(() => undefined);
+  vi.spyOn(wailsApi, 'getRoomKeepRunning').mockResolvedValue(false);
+  vi.spyOn(wailsApi, 'setRoomKeepRunning').mockResolvedValue();
   vi.spyOn(wailsApi, 'onDeepLink').mockReturnValue(() => undefined);
   vi.spyOn(wailsApi, 'setDockBadge').mockResolvedValue();
   vi.spyOn(wailsApi, 'sendDesktopNotification').mockResolvedValue();
