@@ -87,6 +87,31 @@
       <option value="age">Newest first</option>
       <option value="status">Status</option>
     </select>
+    <div class="view-toggle" role="group" aria-label="Playroom view">
+      <button
+        type="button"
+        [attr.aria-pressed]="playroomView() === 'grid'"
+        (click)="session.setPlayroomView('grid')"
+      >
+        Grid
+      </button>
+      <button
+        type="button"
+        [attr.aria-pressed]="playroomView() === 'list'"
+        (click)="session.setPlayroomView('list')"
+      >
+        List
+      </button>
+    </div>
+    <label class="mine-toggle" for="group-by-owner">
+      <input
+        id="group-by-owner"
+        type="checkbox"
+        [ngModel]="groupByOwner()"
+        (ngModelChange)="session.setGroupByOwner($event)"
+      />
+      <span>Group by owner</span>
+    </label>
     <!-- The shortcuts exist; without this nothing tells you so. -->
     <span class="shortcut-hint" title="Keyboard shortcuts on this screen">
       <kbd>c</kbd> create <span class="shortcut-sep">·</span> <kbd>/</kbd> search
@@ -214,30 +239,116 @@
         }
       </div>
     } @else if (loaded()) {
-      <div class="room-grid">
-        @for (room of filteredRooms(); track room.name) {
-          <app-playroom-card
-            [room]="room"
-            [selectMode]="selectMode()"
-            [selected]="canSelect(room) && selectedNames().includes(room.name)"
-            [selectionDisabled]="bulkRunning() || !canSelect(room)"
-            (selectRoom)="selectRoom($event)"
-            [currentUser]="state.user()"
-            [pinned]="state.isPinned(room.playhouse, room.name)"
-            (pinRoom)="state.togglePinned(room.playhouse, $event)"
-            [pendingOperation]="actions.pendingOperation(room.name)"
-            (openRoom)="openRoom($event)"
-            (doubleClickRoom)="runPreferredAction($event)"
-            (connectRoom)="openConnect($event, 'connect')"
-            (openInEditor)="openConnect($event, 'open')"
-            (startRoom)="startRoom($event)"
-            (stopRoom)="stopRoom($event)"
-            (createSimilarRoom)="openCreateSimilar($event)"
-            (editRoom)="openUpdate($event)"
-            (deleteRoom)="askDelete($event)"
-          />
+      @for (group of roomGroups(); track group.owner; let groupIndex = $index) {
+        @if (groupByOwner()) {
+          <h2 class="owner-heading">
+            <button
+              type="button"
+              class="owner-toggle"
+              [attr.aria-label]="
+                group.label +
+                ', ' +
+                group.rooms.length +
+                (group.rooms.length === 1 ? ' room' : ' rooms')
+              "
+              [attr.aria-expanded]="!collapsedOwners().includes(group.owner)"
+              [attr.aria-controls]="'owner-rooms-' + groupIndex"
+              (click)="toggleOwner(group.owner)"
+            >
+              <i
+                [class]="
+                  collapsedOwners().includes(group.owner)
+                    ? 'pi pi-chevron-right'
+                    : 'pi pi-chevron-down'
+                "
+                aria-hidden="true"
+              ></i>
+              <span class="owner-label" [title]="group.label">{{ group.label }}</span>
+              <span class="owner-count">{{ group.rooms.length }}</span>
+            </button>
+          </h2>
         }
-      </div>
+        <div
+          [id]="'owner-rooms-' + groupIndex"
+          [hidden]="groupByOwner() && collapsedOwners().includes(group.owner)"
+        >
+          @if (playroomView() === 'grid') {
+            <div class="room-grid">
+              @for (room of group.rooms; track room.name) {
+                <app-playroom-card
+                  [room]="room"
+                  [selectMode]="selectMode()"
+                  [selected]="canSelect(room) && selectedNames().includes(room.name)"
+                  [selectionDisabled]="bulkRunning() || !canSelect(room)"
+                  (selectRoom)="selectRoom($event)"
+                  [currentUser]="state.user()"
+                  [pinned]="state.isPinned(room.playhouse, room.name)"
+                  (pinRoom)="state.togglePinned(room.playhouse, $event)"
+                  [pendingOperation]="actions.pendingOperation(room.name)"
+                  (openRoom)="openRoom($event)"
+                  (doubleClickRoom)="runPreferredAction($event)"
+                  (connectRoom)="openConnect($event, 'connect')"
+                  (openInEditor)="openConnect($event, 'open')"
+                  (startRoom)="startRoom($event)"
+                  (stopRoom)="stopRoom($event)"
+                  (createSimilarRoom)="openCreateSimilar($event)"
+                  (editRoom)="openUpdate($event)"
+                  (deleteRoom)="askDelete($event)"
+                />
+              }
+            </div>
+          } @else {
+            <div
+              class="room-table-scroll"
+              tabindex="0"
+              role="region"
+              [attr.aria-label]="group.label + ' playroom list'"
+            >
+              <table class="room-table" [attr.aria-label]="group.label">
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Owner</th>
+                    <th scope="col">Image</th>
+                    <th scope="col" title="CPU and memory request / limit, and disk allocation">
+                      Size
+                    </th>
+                    <th scope="col">Age</th>
+                    <th scope="col">Ports</th>
+                    <th scope="col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (room of group.rooms; track room.name) {
+                    <tr
+                      app-playroom-row
+                      [room]="room"
+                      [selectMode]="selectMode()"
+                      [selected]="canSelect(room) && selectedNames().includes(room.name)"
+                      [selectionDisabled]="bulkRunning() || !canSelect(room)"
+                      (selectRoom)="selectRoom($event)"
+                      [currentUser]="state.user()"
+                      [pinned]="state.isPinned(room.playhouse, room.name)"
+                      (pinRoom)="state.togglePinned(room.playhouse, $event)"
+                      [pendingOperation]="actions.pendingOperation(room.name)"
+                      (openRoom)="openRoom($event)"
+                      (doubleClickRoom)="runPreferredAction($event)"
+                      (connectRoom)="openConnect($event, 'connect')"
+                      (openInEditor)="openConnect($event, 'open')"
+                      (startRoom)="startRoom($event)"
+                      (stopRoom)="stopRoom($event)"
+                      (createSimilarRoom)="openCreateSimilar($event)"
+                      (editRoom)="openUpdate($event)"
+                      (deleteRoom)="askDelete($event)"
+                    ></tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      }
     }
   </section>
 </div>

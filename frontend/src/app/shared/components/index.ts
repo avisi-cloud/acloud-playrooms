@@ -7,3 +7,4 @@ export * from './playroom-update-drawer/playroom-update-drawer';
 export * from './playroom-card/playroom-card';
 export * from './string-list-editor/string-list-editor';
 export * from './playroom-actions-host/playroom-actions-host';
+export * from './playroom-row/playroom-row';

@@ -33,9 +33,14 @@ import { PageLoadingService } from '../../../../core/services/page-loading';
 import { PlayroomStateService } from '../../../../core/services/playroom-state';
 import { wailsApi } from '../../../../core/services/wails-api';
 import { UiSessionService } from '../../../../core/services/ui-session';
-import { PlayroomActionsHostComponent, PlayroomCardComponent } from '../../../../shared/components';
+import {
+  PlayroomActionsHostComponent,
+  PlayroomCardComponent,
+  PlayroomRowComponent,
+} from '../../../../shared/components';
 import { CREATE_PLAYROOM_QUERY_PARAM } from '../../../../shared/data';
 import { STATUS } from '../../../../shared/data/status';
+import { groupPlayroomsByOwner, sortPlayrooms } from '../../../../shared/utils/playroom-overview';
 import { buildSearchableRoomText } from '../../../../shared/utils/playroom-search';
 import { ConnectTab, Playroom, StatusKey } from '../../../../shared/models';
 import { describeError, formatTimeSince } from '../../../../shared/utils';
@@ -59,6 +64,7 @@ import { PlayroomBreadcrumbComponent } from '../../components/playroom-breadcrum
     InputIconModule,
     ToggleSwitchModule,
     PlayroomCardComponent,
+    PlayroomRowComponent,
     PlayroomActionsHostComponent,
     CreatePlayroomDrawerComponent,
     PlayroomBreadcrumbComponent,
@@ -81,6 +87,28 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
   readonly mineOnly = this.session.mineOnly;
   readonly statusFilter = this.session.status;
   readonly sort = this.session.sort;
+  readonly playroomView = this.session.playroomView;
+  readonly groupByOwner = this.session.groupByOwner;
+  readonly collapsedOwners = signal<string[]>([]);
+  readonly roomGroups = computed(() =>
+    this.groupByOwner()
+      ? groupPlayroomsByOwner(this.filteredRooms(), this.state.user())
+      : [{ owner: '', label: 'Playrooms', rooms: this.filteredRooms() }],
+  );
+  readonly visibleRooms = computed(() =>
+    this.roomGroups().flatMap((group) =>
+      this.groupByOwner() && this.collapsedOwners().includes(group.owner) ? [] : group.rooms,
+    ),
+  );
+
+  toggleOwner(owner: string): void {
+    this.collapsedOwners.update((owners) =>
+      owners.includes(owner)
+        ? owners.filter((candidate) => candidate !== owner)
+        : [...owners, owner],
+    );
+  }
+
   readonly failure = signal('');
   @ViewChild('listBody') private listBody?: ElementRef<HTMLElement>;
   private restoredScroll = false;
@@ -120,7 +148,7 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
     const room = this.findRoomByName(event.name);
     if (!room || !this.canSelect(room)) return;
     this.selectMode.set(true);
-    const visible = this.filteredRooms();
+    const visible = this.visibleRooms();
     const anchor = visible.findIndex((candidate) => candidate.name === this.selectionAnchor);
     const target = visible.findIndex((candidate) => candidate.name === event.name);
     if (event.shiftKey && anchor >= 0 && target >= 0) {
@@ -229,6 +257,7 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
       untracked(() => {
         this.selectedNames.set([]);
         this.selectionAnchor = '';
+        this.collapsedOwners.set([]);
         this.bulkDeleteNames.set([]);
         void this.refreshRooms();
       });
@@ -299,22 +328,11 @@ export class RoomsPageComponent implements OnInit, OnDestroy {
 
   readonly filteredRooms = computed<Playroom[]>(() => {
     const status = this.statusFilter();
-    const sort = this.sort();
-    return this.searchedRooms()
-      .filter((room) => !status || room.status === status)
-      .sort((left, right) => {
-        const pinned =
-          Number(this.state.isPinned(right.playhouse, right.name)) -
-          Number(this.state.isPinned(left.playhouse, left.name));
-        return (
-          pinned ||
-          (sort === 'age'
-            ? left.ageMin - right.ageMin || left.name.localeCompare(right.name)
-            : sort === 'status'
-              ? left.status.localeCompare(right.status) || left.name.localeCompare(right.name)
-              : left.name.localeCompare(right.name))
-        );
-      });
+    return sortPlayrooms(
+      this.searchedRooms().filter((room) => !status || room.status === status),
+      this.sort(),
+      (room) => this.state.isPinned(room.playhouse, room.name),
+    );
   });
 
   private findRoomByName(name: string): Playroom | undefined {

@@ -8,6 +8,7 @@ export type Exposure = (typeof EXPOSURES)[number]['id'];
 export type ConnectionPath = (typeof CONNECTION_PATHS)[number]['id'];
 /** A `--capabilities` profile; blank leaves the flag off. */
 export type Capabilities = (typeof CAPABILITIES)[number]['id'] | '';
+export type PlayroomSort = 'name' | 'age' | 'status';
 export type ConnectTab = 'connect' | 'open';
 
 /**
