@@ -2,7 +2,49 @@
   <header class="page-header">
     <div class="page-header-left">
       <div class="page-header-stack">
-        <h1 class="page-header-title">Playrooms<span class="punt">.</span></h1>
+        <div class="rooms-title-row">
+          <h1 class="page-header-title">Playrooms<span class="punt">.</span></h1>
+          @if (loaded()) {
+            <button
+              type="button"
+              class="requested-resources"
+              aria-label="Requested resources"
+              aria-haspopup="dialog"
+              [attr.aria-expanded]="requestedResourcesPopover.overlayVisible"
+              [title]="
+                'Requested: ' +
+                requestedResources().all +
+                ' (yours: ' +
+                requestedResources().yours +
+                ')'
+              "
+              (click)="requestedResourcesPopover.toggle($event)"
+            >
+              @if (requestedResources().unknown.length) {
+                <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+              }
+              <span class="requested-resources-label">Requested </span>
+              <span class="requested-resources-wide">{{ requestedResources().summary }}</span>
+              <span class="requested-resources-narrow">{{
+                requestedResources().narrowSummary
+              }}</span>
+            </button>
+          }
+        </div>
+        <!-- Outside @if: PrimeNG cannot restore a body-appended popover whose host was removed. -->
+        <p-popover #requestedResourcesPopover appendTo="body" ariaLabel="Requested resources">
+          <div class="requested-resources-details">
+            <p><strong>Requested:</strong> {{ requestedResources().all }}</p>
+            @for (unknown of requestedResources().unknown; track unknown) {
+              <p>{{ unknown }}</p>
+            }
+            <p><strong>Yours:</strong> {{ requestedResources().yours }}</p>
+            @for (unknown of requestedResources().yourUnknown; track unknown) {
+              <p>{{ unknown }}</p>
+            }
+            <p>All loaded rooms, including stopped rooms. Filters do not change these totals.</p>
+          </div>
+        </p-popover>
         <app-playroom-breadcrumb />
         <div class="status-chips" role="group" aria-label="Filter by status">
           @for (chip of statusChips(); track chip.status) {
