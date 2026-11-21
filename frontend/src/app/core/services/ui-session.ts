@@ -1,9 +1,9 @@
 import { Injectable, effect, inject, signal } from '@angular/core';
-import { StatusKey } from '../../shared/models';
+import { PlayroomSort, PlayroomView, StatusKey } from '../../shared/models';
+import { readCache, updateCache } from '../../shared/utils/cache';
 import { PlayroomStateService } from './playroom-state';
 
-/** Navigation and unfinished forms survive screen destruction, never an app restart.
- * In particular, environment values must not be written to localStorage. */
+/** Navigation and drafts stay in memory; only explicit overview preferences enter the cache. */
 @Injectable({ providedIn: 'root' })
 export class UiSessionService {
   private readonly state = inject(PlayroomStateService);
@@ -12,7 +12,9 @@ export class UiSessionService {
   readonly query = signal('');
   readonly mineOnly = signal(false);
   readonly status = signal<StatusKey | ''>('');
-  readonly sort = signal<'name' | 'age' | 'status'>('name');
+  readonly sort = signal<PlayroomSort>('name');
+  readonly playroomView = signal<PlayroomView>(readCache().playroomView);
+  readonly groupByOwner = signal(readCache().groupByOwner);
   scrollTop = 0;
 
   constructor() {
@@ -26,6 +28,16 @@ export class UiSessionService {
       this.sort.set('name');
       this.scrollTop = 0;
     });
+  }
+
+  setPlayroomView(playroomView: PlayroomView): void {
+    this.playroomView.set(playroomView);
+    updateCache({ playroomView });
+  }
+
+  setGroupByOwner(groupByOwner: boolean): void {
+    this.groupByOwner.set(groupByOwner);
+    updateCache({ groupByOwner });
   }
 
   remember<T>(key: string, draft: T): void {

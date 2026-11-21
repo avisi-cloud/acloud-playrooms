@@ -205,3 +205,126 @@
   margin: 8px 0 0;
   padding-left: 20px;
 }
+
+.view-toggle {
+  display: flex;
+}
+.view-toggle button {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border-2);
+  background: var(--surf-2);
+  color: var(--tx-2);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.view-toggle button:first-child {
+  border-radius: var(--r-sm) 0 0 var(--r-sm);
+}
+.view-toggle button:last-child {
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+}
+.view-toggle button[aria-pressed='true'] {
+  background: var(--surf-3);
+  color: var(--link);
+  border-color: var(--link);
+  font-weight: 600;
+}
+.owner-heading {
+  margin: 24px 0 12px;
+  font-size: 14px;
+}
+.owner-heading:first-child {
+  margin-top: 0;
+}
+.owner-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 6px 2px;
+  border: 0;
+  background: transparent;
+  color: var(--tx);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.owner-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.owner-count {
+  color: var(--tx-2);
+  font-variant-numeric: tabular-nums;
+}
+.room-table-scroll {
+  container: playroom-table / inline-size;
+  min-width: 0;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r);
+}
+.room-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.room-table th {
+  padding: 10px 6px;
+  background: var(--surf-3);
+  color: var(--tx-2);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: left;
+}
+.room-table th:nth-child(2) {
+  width: 84px;
+}
+.room-table th:nth-child(3) {
+  width: 90px;
+}
+.room-table th:nth-child(4) {
+  width: 12%;
+}
+.room-table th:nth-child(5) {
+  width: 150px;
+}
+.room-table th:nth-child(6) {
+  width: 52px;
+}
+.room-table th:nth-child(7) {
+  width: 98px;
+}
+.room-table th:nth-child(8) {
+  width: 140px;
+}
+@container playroom-table (max-width: 850px) {
+  .room-table th:nth-child(5) {
+    display: none;
+  }
+}
+@container playroom-table (max-width: 650px) {
+  .room-table th:nth-child(2) {
+    width: 64px;
+  }
+  .room-table th:nth-child(3) {
+    width: 58px;
+  }
+  .room-table th:nth-child(4) {
+    width: 9%;
+  }
+  .room-table th:nth-child(6) {
+    width: 44px;
+  }
+  .room-table th:nth-child(7) {
+    width: 76px;
+  }
+  .room-table th:nth-child(8) {
+    width: 132px;
+  }
+}
+.filter-bar {
+  flex-wrap: wrap;
+}

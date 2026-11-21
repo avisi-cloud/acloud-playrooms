@@ -1,3 +1,4 @@
+import { UpdateNoticesComponent } from './shared/components/update-notices/update-notices';
 import { ScheduleNoticesComponent } from './shared/components/schedule-notices/schedule-notices';
 import { DeepLinksService } from './core/services/deep-links';
 import { CommandPaletteComponent } from './shared/components/command-palette/command-palette';
@@ -63,6 +64,7 @@ export type CurrentScopeState = 'signed-out' | 'no-playhouse' | 'playhouse-selec
   // The sidebar has its own dark theme boundary, including when the workspace is light.
   imports: [
     ScheduleNoticesComponent,
+    UpdateNoticesComponent,
     CommandPaletteComponent,
     DialogModule,
     RouterOutlet,

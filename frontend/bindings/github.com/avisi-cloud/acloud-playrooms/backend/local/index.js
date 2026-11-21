@@ -22,5 +22,6 @@ export {
     ScheduleSettings,
     TemplateCapabilities,
     TemplateExposure,
-    ToolStatus
+    ToolStatus,
+    UpdateStatus
 } from "./models.js";

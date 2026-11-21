@@ -447,7 +447,7 @@ existed (no `setupCompleted` key) with a playhouse counts as completed, so
 upgrades skip it.
 
 `shared/utils/cache.ts` persists the last playhouse, playroom, editor, terminal,
-theme, background grain, AME Robot, create-playroom mode, pinned rooms, the last ten git repositories of
+theme, background grain, AME Robot, create-playroom mode, playroom view, owner grouping, pinned rooms, the last ten git repositories of
 successful creates (URLs without ref or credentials) and `setupCompleted` to localStorage
 under `acloud-playroom-gui-cache`. Background grain defaults to on; Settings →
 Appearance applies changes immediately to the outer background and content panel.
@@ -495,6 +495,26 @@ playhouse; pins come first within every sort and persist across launches. A
 successful list load drops pins for rooms no longer reported, while failed or
 pending reads leave them intact. Old caches start with no pins. Stopped cards
 use quieter theme surfaces and neutral text and actions without reduced opacity.
+
+The overview's **Grid / List** buttons and **Group by owner** checkbox are saved
+in `CacheState` as `playroomView` and `groupByOwner`. Existing caches open an
+ungrouped grid. Both views use the same filters, sorting, pins, selection and
+`PlayroomActionsHostComponent` overlays. The table's `PlayroomRowComponent`
+inherits the card's presentational inputs, outputs and action behavior; its Size
+column shows CPU and memory request / limit plus disk allocation. Missing row
+metadata says **Not reported**; reported empty ports say **None**. Owners use
+the same **you** / owner label as cards, with full owner names in title tooltips.
+Name and Image truncate with title tooltips. The table fits its container with
+compact icon actions always at the right; below 850px of table space, Size is
+hidden and remains available in room details.
+
+`sortPlayrooms` and `groupPlayroomsByOwner` are pure helpers. Groups show Mine
+first only for a known current user, then full owner names alphabetically and
+unreported ownership last. Counts reflect the current filters, and pins stay
+first within each group. Groups collapse independently for the current screen;
+a playhouse or scope change expands them again. Shift-selection follows the
+expanded groups' displayed order. Select all mine still selects all matching
+owned rooms, including collapsed ones. Grid/List changes preserve selection.
 
 ## Playroom status
 
@@ -894,3 +914,21 @@ closed palettes are ignored and failed playhouse reads are shown inline.
 
 The shared Connect/Open dialog handles Escape from its own controls, including
 when opened by the palette. A select that consumes Escape keeps the dialog open.
+
+## Version notices
+
+`UpdatesService` checks at startup without delaying setup or room loading. App
+updates appear as one compact sidebar entry below the acloud version. It opens
+an **Available updates** popover with release notes, a copyable
+`brew upgrade --cask acloud-playrooms`, and Dismiss for each update. acloud updates
+are labelled **according to Homebrew**. **What's new** is the only page-level
+update notice: it floats at the top right without shifting the header or page,
+and waits while an evening-stop reminder is visible.
+Settings → Updates → **Check for app updates** defaults to on and saves locally;
+turning it off hides app update notices and prevents GitHub checks. Homebrew
+checks remain local and read-only. `CacheState.lastSeenAppVersion` records the
+running app version: a change after the first launch shows **What's new** once,
+even when app update checks are off. Release links use the fixed public repository.
+
+Dummy mode uses `?updates=available` for both available versions. Seed
+`lastSeenAppVersion` in the dummy cache with a different version to show What's new.

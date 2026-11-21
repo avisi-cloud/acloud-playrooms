@@ -69,3 +69,21 @@ describe('pinned rooms cache', () => {
     expect(readCache().pinnedRooms).toEqual({ 'playhouse-platform-dev': ['demo'] });
   });
 });
+
+describe('playroom overview preferences', () => {
+  beforeEach(() => localStorage.clear());
+  afterEach(() => localStorage.clear());
+
+  it('defaults to an ungrouped grid for new and old caches', () => {
+    expect(readCache()).toMatchObject({ playroomView: 'grid', groupByOwner: false });
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ lastTheme: 'light' }));
+    expect(readCache()).toMatchObject({ playroomView: 'grid', groupByOwner: false });
+  });
+
+  it('retains view and grouping independently when other preferences change', () => {
+    updateCache({ playroomView: 'list' });
+    updateCache({ groupByOwner: true });
+    updateCache({ lastTheme: 'light' });
+    expect(readCache()).toMatchObject({ playroomView: 'list', groupByOwner: true });
+  });
+});

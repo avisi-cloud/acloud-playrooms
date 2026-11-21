@@ -278,6 +278,13 @@ const simulatedApi: typeof liveApi = {
           Set: readVariablesFromLoginShell && dummyLoginShellEnvironmentKeys.includes(entry.trim()),
         })),
     ),
+  checkUpdates: (checkApp: boolean) => {
+    const available = new URLSearchParams(window.location.search).get('updates') === 'available';
+    return read({
+      AppVersion: available && checkApp ? '0.30.0' : '',
+      AcloudVersion: available ? '0.41.0' : '',
+    });
+  },
   getAppVersion: () => read('0.29.1+dummy'),
   exportActivityLog: async (content: string): Promise<void> => {
     const url = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));

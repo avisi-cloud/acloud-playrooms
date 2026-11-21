@@ -1,0 +1,130 @@
+:host {
+  background: var(--surf-2);
+  color: var(--tx);
+}
+:host:hover {
+  background: var(--surf-3);
+}
+:host.selected {
+  background: color-mix(in srgb, var(--link) 10%, var(--surf-2));
+}
+:host.stopped {
+  color: var(--tx-2);
+}
+td {
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  font-size: 12px;
+}
+.room-name-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.row-name {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--link);
+  cursor: pointer;
+  font-weight: 600;
+}
+.row-name:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.row-pin {
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--tx-2);
+  padding: 4px;
+  cursor: pointer;
+}
+.row-pin[aria-pressed='true'] {
+  color: var(--link);
+}
+.truncate {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.room-size span {
+  display: block;
+  font-size: 11px;
+  color: var(--tx-2);
+  overflow-wrap: anywhere;
+}
+.room-size,
+.room-age,
+.row-ports {
+  font-variant-numeric: tabular-nums;
+}
+.room-age {
+  overflow-wrap: anywhere;
+}
+.row-ports {
+  display: block;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.row-status {
+  display: block;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.row-status.bad {
+  color: var(--bad);
+}
+.row-outdated {
+  display: block;
+  margin-top: 4px;
+  border: 1px solid var(--border-2);
+  border-radius: var(--r-sm);
+  background: var(--surf-3);
+  color: var(--tx-2);
+  padding: 2px 4px;
+  font: inherit;
+  font-size: 10px;
+}
+button.row-outdated {
+  cursor: pointer;
+}
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+:host ::ng-deep .row-actions .p-button {
+  padding: 4px 5px;
+  min-width: 26px;
+  min-height: 28px;
+  font-size: 11px;
+}
+:host ::ng-deep .row-actions .p-button-icon-only {
+  width: 26px;
+}
+:host ::ng-deep .row-actions .p-button-icon {
+  font-size: 12px;
+}
+.row-actions [role='status'] {
+  overflow-wrap: anywhere;
+}
+@container playroom-table (max-width: 850px) {
+  .room-size {
+    display: none;
+  }
+}
+.ssh-menu-hint {
+  max-width: 24ch;
+  margin: 4px 12px 8px;
+  color: var(--tx-2);
+  font-size: 11px;
+}

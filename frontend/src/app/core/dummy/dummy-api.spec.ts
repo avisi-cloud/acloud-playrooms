@@ -87,3 +87,11 @@ it('stores templates separately from returned copies and refuses environment val
   await expect(api.savePlayroomTemplates(templates)).rejects.toThrow('keys, never values');
   expect((await api.getPlayroomTemplates())[0].options.env).toEqual([]);
 });
+
+it('simulates app and Homebrew updates while respecting the app check switch', async () => {
+  history.replaceState({}, '', '/rooms?updates=available');
+  expect(await api.checkUpdates(true)).toEqual({ AppVersion: '0.30.0', AcloudVersion: '0.41.0' });
+  expect(await api.checkUpdates(false)).toEqual({ AppVersion: '', AcloudVersion: '0.41.0' });
+  history.replaceState({}, '', '/rooms');
+  expect(await api.checkUpdates(true)).toEqual({ AppVersion: '', AcloudVersion: '' });
+});

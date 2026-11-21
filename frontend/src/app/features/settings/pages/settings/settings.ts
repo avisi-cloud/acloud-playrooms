@@ -1,5 +1,6 @@
 import type { PlayroomTemplate } from '../../../../shared/models/playroom-template';
 import { PlayroomTemplatesService } from '../../../../core/services/playroom-templates';
+import { UpdatesService } from '../../../../core/services/updates';
 import { EveningStopService } from '../../../../core/services/evening-stop';
 import { InputTextModule } from 'primeng/inputtext';
 import { EnvironmentService } from '../../../../core/services/environment';
@@ -35,6 +36,8 @@ import { T3CodePathCardComponent } from '../../components/t3-code-path/t3-code-p
   styleUrl: './settings.css',
 })
 export class SettingsPageComponent {
+  readonly updates = inject(UpdatesService);
+
   readonly templates = inject(PlayroomTemplatesService);
 
   readonly renamingTemplate = signal('');
