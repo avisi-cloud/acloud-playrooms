@@ -35,6 +35,15 @@ func vsCodeCommandDirectory(searchPath string) string {
 	return ""
 }
 
+// FindVSCodeCommand returns the code launcher a connection would use, or "" when there is none.
+func FindVSCodeCommand() string {
+	directory := vsCodeCommandDirectory(os.Getenv("PATH"))
+	if directory == "" {
+		return ""
+	}
+	return filepath.Join(directory, "code")
+}
+
 // Finder-launched apps need to discover VS Code without changing the user's shell PATH.
 func ConfigureVSCodeCommandEnvironment(command *exec.Cmd) {
 	environment := command.Environ()

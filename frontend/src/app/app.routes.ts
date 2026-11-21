@@ -52,5 +52,13 @@ export const routes: Routes = [
         (module) => module.SettingsPageComponent,
       ),
   },
+  {
+    path: 'settings/health',
+    title: 'Health check',
+    loadComponent: () =>
+      import('./features/settings/pages/health-check/health-check').then(
+        (module) => module.HealthCheckPageComponent,
+      ),
+  },
   { path: '**', redirectTo: '/rooms' },
 ];

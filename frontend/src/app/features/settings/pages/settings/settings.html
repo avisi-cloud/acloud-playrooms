@@ -13,6 +13,14 @@
     </div>
     <div class="page-header-actions">
       <p-button
+        label="Health check"
+        icon="pi pi-heart"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        (click)="openHealthCheck()"
+      />
+      <p-button
         label="Run setup again"
         icon="pi pi-replay"
         severity="secondary"

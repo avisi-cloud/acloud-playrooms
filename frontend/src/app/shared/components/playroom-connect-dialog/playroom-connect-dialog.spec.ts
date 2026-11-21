@@ -144,4 +144,25 @@ describe('NodePort allowlist help', () => {
       'Could not add your current IP to the allowlist',
     );
   });
+
+  it('offers the health check when a connect fails for a reason no fix knows', async () => {
+    vi.spyOn(wailsApi, 'connectPlayroom').mockRejectedValue(new Error('ssh: connection refused'));
+    const component = dialog();
+    TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-demo');
+    await component.execute();
+    const failure = TestBed.inject(ToastService).history()[0];
+    expect(failure.summary).toBe('Could not open "demo"');
+    expect(failure.action?.label).toBe('Run health check');
+  });
+
+  it('keeps a recognised fix instead of the health check', async () => {
+    vi.spyOn(wailsApi, 'connectPlayroom').mockRejectedValue(
+      new Error('ensure local kubeconfig: session not active'),
+    );
+    const component = dialog();
+    await component.execute();
+    expect(TestBed.inject(ToastService).history()[0].action?.label).toBe(
+      'Sign in to the playhouse again',
+    );
+  });
 });

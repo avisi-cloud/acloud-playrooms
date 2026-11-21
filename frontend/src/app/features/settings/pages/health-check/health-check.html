@@ -1,0 +1,105 @@
+<div class="page-shell">
+  <header class="page-header">
+    <div class="page-header-left">
+      <button class="page-back-btn" (click)="goBack()">
+        <i class="pi pi-arrow-left" aria-hidden="true"></i>
+        <span>Settings</span>
+      </button>
+      <div class="page-header-divider"></div>
+      <div class="page-header-stack">
+        <h1 class="page-header-title">Health check<span class="punt">.</span></h1>
+        <p class="page-header-sub">Everything a working connection needs.</p>
+      </div>
+    </div>
+    <div class="page-header-actions">
+      <p-button
+        label="Copy results"
+        icon="pi pi-copy"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        [disabled]="running() || checks().length === 0"
+        (click)="copyResults()"
+      />
+      <p-button
+        label="Run again"
+        icon="pi pi-refresh"
+        size="small"
+        [loading]="running()"
+        (click)="runChecks()"
+      />
+    </div>
+  </header>
+  <div class="page-body health-body">
+    <div class="health-column">
+      <p class="health-summary" role="status">
+        @if (running()) {
+          Checking…
+        } @else if (problem()) {
+          Could not run the checks: {{ problem() }}
+        } @else if (checksNeedingAttention() === 0) {
+          No problems found.
+        } @else if (checksNeedingAttention() === 1) {
+          1 check needs attention.
+        } @else {
+          {{ checksNeedingAttention() }} checks need attention.
+        }
+      </p>
+      @for (check of checks(); track check.Key) {
+        <section
+          class="health-check"
+          [class.is-failed]="check.Status === 'failed'"
+          [class.is-warning]="check.Status === 'warning'"
+          [attr.aria-labelledby]="'health-' + check.Key"
+        >
+          <div class="health-check-head">
+            <i
+              class="pi health-icon"
+              [class]="statusIcon(check)"
+              [attr.data-status]="check.Status"
+              aria-hidden="true"
+            ></i>
+            <h2 class="health-check-name" [id]="'health-' + check.Key">{{ check.Name }}</h2>
+            <p-tag
+              [value]="check.Status"
+              [severity]="statusSeverity(check)"
+              [rounded]="true"
+              styleClass="source-tag"
+            />
+          </div>
+          <p class="health-explanation">{{ check.Explanation }}</p>
+          @if (check.Fix) {
+            <p class="health-fix">{{ check.Fix }}</p>
+          }
+          @if (check.Command || check.Action) {
+            <div class="health-fix-row">
+              @if (check.Command) {
+                <code class="health-command">{{ check.Command }}</code>
+                <p-button
+                  icon="pi pi-copy"
+                  severity="secondary"
+                  [text]="true"
+                  size="small"
+                  [ariaLabel]="'Copy ' + check.Command"
+                  (click)="copyCommand(check.Command)"
+                />
+              }
+              @if (actionLabel(check); as label) {
+                <p-button
+                  [label]="label"
+                  severity="secondary"
+                  [outlined]="true"
+                  size="small"
+                  [loading]="check.Action === 'sign-in' && signingIn()"
+                  [disabled]="running()"
+                  (click)="runAction(check)"
+                />
+              }
+            </div>
+          }
+        </section>
+      }
+      <p class="field-hint">Checks the terminal and editor you last connected with.</p>
+    </div>
+  </div>
+</div>

@@ -1,4 +1,5 @@
 import { Injectable, WritableSignal, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { commandFix, CommandFix } from '../../shared/utils/cli-error';
 import { PlayroomSelection, PlayroomStateService } from './playroom-state';
 import { ToastService } from './toast';
@@ -19,6 +20,7 @@ const LABELS: Record<CommandFix, string> = {
 export class CommandFixService {
   private readonly state = inject(PlayroomStateService);
   private readonly notify = inject(ToastService);
+  private readonly router = inject(Router);
 
   action(
     error: unknown,
@@ -49,6 +51,18 @@ export class CommandFixService {
         } finally {
           busy.set(false);
         }
+      },
+    };
+  }
+
+  /** For a failure no specific fix recognises: the health check looks everywhere a connection can break. */
+  healthCheckAction(): FailureAction {
+    const busy = signal(false);
+    return {
+      label: 'Run health check',
+      busy,
+      run: async () => {
+        await this.router.navigate(['/settings/health']);
       },
     };
   }
