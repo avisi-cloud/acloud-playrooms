@@ -1,3 +1,6 @@
+import { DialogModule } from 'primeng/dialog';
+import { EnvironmentService } from '../../../../core/services/environment';
+import { EnvironmentEditorComponent } from '../../../../shared/components/environment-editor/environment-editor';
 import { CommonModule } from '@angular/common';
 import {
   Component,
@@ -73,6 +76,8 @@ const INPUT_FIELDS_SHOWN_IN_EASY_MODE: (keyof PlayroomCreateInput)[] = [
   selector: 'app-create-playroom-drawer',
   imports: [
     CommonModule,
+    DialogModule,
+    EnvironmentEditorComponent,
     FormsModule,
     DrawerModule,
     ButtonModule,
@@ -93,6 +98,11 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   private readonly defaults = inject(PlayroomDefaultsService);
   private readonly imageCatalog = inject(ImageCatalogService);
   private readonly session = inject(UiSessionService);
+  private readonly environment = inject(EnvironmentService);
+  missingEnvironment: string[] = [];
+  private pendingEnvironmentInput: Partial<PlayroomCreateInput> | null = null;
+  checkingEnvironment = false;
+  private environmentCheckRevision = 0;
   submitFailure = '';
 
   get submitting(): boolean {
@@ -131,6 +141,11 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   advancedSecurityOpenedFromImageError = false;
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['visible']) {
+      this.environmentCheckRevision++;
+      this.checkingEnvironment = false;
+      this.cancelMissingEnvironment();
+    }
     if (changes['visible'] && this.visible) {
       const draft = this.initialForm
         ? undefined
@@ -181,7 +196,12 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   }
 
   onVisibleChange(value: boolean): void {
-    if (!value) this.rememberDraft();
+    if (!value) {
+      this.rememberDraft();
+      this.environmentCheckRevision++;
+      this.checkingEnvironment = false;
+      this.cancelMissingEnvironment();
+    }
     this.visible = value;
     this.visibleChange.emit(value);
   }
@@ -200,6 +220,7 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.environmentCheckRevision++;
     if (this.visible) this.rememberDraft();
   }
 
@@ -219,7 +240,12 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
 
   /** The same in both modes, so Easy sends exactly what Advanced would for this form. */
   toInput(): Partial<PlayroomCreateInput> {
-    return createInputFor(this.form);
+    return {
+      ...createInputFor(this.form),
+      ...(this.environment.readVariablesFromLoginShell()
+        ? { ReadVariablesFromLoginShell: true }
+        : {}),
+    };
   }
 
   // ── Easy and Advanced ──────────────────────────────────────────────────────
@@ -430,12 +456,63 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
   // ── Create ─────────────────────────────────────────────────────────────────
 
   create(): void {
-    if (this.submitting) return;
+    if (this.submitting || this.checkingEnvironment || this.pendingEnvironmentInput) return;
     this.touched = true;
     if (!this.canCreate()) return;
     this.submitFailure = '';
+    const input = this.toInput();
+    if (this.form.env.some((entry) => entry.trim() && !entry.includes('='))) {
+      void this.checkEnvironment(input);
+      return;
+    }
+    this.submitCreate(input);
+  }
+
+  private async checkEnvironment(input: Partial<PlayroomCreateInput>): Promise<void> {
+    this.checkingEnvironment = true;
+    const fingerprint = JSON.stringify(input);
+    const revision = this.environmentCheckRevision;
+    try {
+      const presence = await wailsApi.getEnvironmentPresence(
+        input.EnvVars ?? [],
+        !!input.ReadVariablesFromLoginShell,
+      );
+      if (
+        revision !== this.environmentCheckRevision ||
+        !this.visible ||
+        JSON.stringify(this.toInput()) !== fingerprint
+      )
+        return;
+      this.missingEnvironment = [
+        ...new Set(presence.filter((item) => !item.Set).map((item) => item.Key)),
+      ];
+      if (this.missingEnvironment.length) this.pendingEnvironmentInput = input;
+      else this.submitCreate(input);
+    } catch {
+      if (revision === this.environmentCheckRevision && this.visible)
+        this.submitFailure =
+          'Could not check environment variables. Check your login shell setting and try again.';
+    } finally {
+      if (revision === this.environmentCheckRevision) this.checkingEnvironment = false;
+    }
+  }
+
+  cancelMissingEnvironment(): void {
+    this.missingEnvironment = [];
+    this.pendingEnvironmentInput = null;
+  }
+
+  confirmMissingEnvironment(): void {
+    const input = this.pendingEnvironmentInput;
+    const confirmed = [...this.missingEnvironment];
+    this.cancelMissingEnvironment();
+    if (!input || !this.visible || JSON.stringify(input) !== JSON.stringify(this.toInput())) return;
+    this.submitCreate({ ...input, MissingEnvironmentConfirmed: confirmed });
+  }
+
+  private submitCreate(input: Partial<PlayroomCreateInput>): void {
     this.rememberDraft();
-    if (!this.actions.startCreate(this.form)) {
+    if (!this.actions.startCreate(this.form, input)) {
       this.submitFailure = 'This room is already being changed, or the selected playhouse changed.';
       return;
     }

@@ -20,6 +20,8 @@ const WIRED: Record<string, string[]> = {
     'MemoryLimit',
     'SSHKey',
     'EnvVars',
+    'ReadVariablesFromLoginShell',
+    'MissingEnvironmentConfirmed',
     'GitRepos',
     'Copies',
     'Ports',

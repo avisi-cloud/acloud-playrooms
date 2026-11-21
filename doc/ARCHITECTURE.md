@@ -179,6 +179,8 @@ The limited exceptions live in `backend/local` and `backend/tools`:
 - Listing a small, maintained image catalog as a picker convenience.
 - Probing local tools and comparing the installed CLI version with the version
   the screens were last verified against.
+- Reading presence of requested environment variables, optionally through the login
+  shell, and passing resolved values only in the acloud child environment.
 - Remembering the app theme in a GUI-specific file.
 - Remembering and applying the app's Tailscale executable path.
 

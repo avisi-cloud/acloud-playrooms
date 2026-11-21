@@ -17,6 +17,8 @@ it, update the entry.
 
 **Open — revisit these**
 
+- [Forwarded variables can come from the login shell](#forwarded-variables-can-come-from-the-login-shell)
+
 - [Port links require a reported tailnet hostname](#port-links-require-a-reported-tailnet-hostname)
 
 - [Embedded terminal for interactive commands](#embedded-terminal-for-interactive-commands)
@@ -51,6 +53,26 @@ it, update the entry.
 ---
 
 ## Open — revisit these
+
+### Forwarded variables can come from the login shell
+
+Settings offers **Read variables from my login shell**, off by default. When on,
+each debounced environment presence check and each create reads `$SHELL -l -c
+'env -0'` with a three-second timeout. This executes the user's login startup
+files; shell configuration determines which variables are exported. It does not
+source interactive-only files separately. Failures block creation with a remedy,
+log only a fixed failure message, and never fall back silently to the app environment.
+
+The create drawer shows only Set / Not set for bare keys. Values stay in backend
+memory and enter only the acloud child environment so credentials cannot enter
+previews, activity, bindings or localStorage. Empty values count as set. Creation
+rechecks presence and refuses any newly missing key unless that specific key was
+confirmed; the preview stays `--env KEY`. Inline assignments keep the command-line
+warning and the existing session-only draft behavior. The update command has no
+environment input.
+
+Revisit if supported shells need another startup mode or repeated startup proves
+slow; caching secret values or sourcing extra files is not implicit consent.
 
 ### Port links require a reported tailnet hostname
 

@@ -247,14 +247,7 @@
               <small class="field-hint">{{ optionTexts['ssh-key'].hint }}</small>
             </div>
 
-            <app-string-list-editor
-              [label]="optionTexts.env.label"
-              [hint]="optionTexts.env.hint"
-              [(values)]="form.env"
-              placeholder="ANTHROPIC_API_KEY"
-              addLabel="add env var"
-              itemLabel="environment variable"
-            />
+            <app-environment-editor [(values)]="form.env" />
             <app-string-list-editor
               [label]="optionTexts.git.label"
               [hint]="optionTexts.git.hint"
@@ -636,10 +629,27 @@
         label="Create"
         icon="pi pi-plus"
         size="small"
-        [disabled]="submitting || !canCreate()"
-        [loading]="submitting"
+        [disabled]="submitting || checkingEnvironment || !canCreate()"
+        [loading]="submitting || checkingEnvironment"
         (click)="create()"
       />
     }
   </ng-template>
 </p-drawer>
+
+<p-dialog
+  header="Missing environment variables"
+  [visible]="missingEnvironment.length > 0"
+  (visibleChange)="cancelMissingEnvironment()"
+  [modal]="true"
+  [closable]="true"
+  appendTo="body"
+>
+  @for (key of missingEnvironment; track key) {
+    <p>{{ key }} is not set. Create without it?</p>
+  }
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" (click)="cancelMissingEnvironment()" />
+    <p-button label="Create without it" (click)="confirmMissingEnvironment()" />
+  </ng-template>
+</p-dialog>

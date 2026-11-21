@@ -177,6 +177,20 @@ export class CreateInput {
              */
             this["EnvVars"] = [];
         }
+        if (!("ReadVariablesFromLoginShell" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["ReadVariablesFromLoginShell"] = false;
+        }
+        if (!("MissingEnvironmentConfirmed" in $$source)) {
+            /**
+             * @member
+             * @type {string[]}
+             */
+            this["MissingEnvironmentConfirmed"] = [];
+        }
         if (!("GitRepos" in $$source)) {
             /**
              * @member
@@ -295,25 +309,29 @@ export class CreateInput {
      */
     static createFrom($$source = {}) {
         const $$createField9_0 = $$createType0;
-        const $$createField10_0 = $$createType0;
         const $$createField11_0 = $$createType0;
         const $$createField12_0 = $$createType0;
-        const $$createField17_0 = $$createType0;
+        const $$createField13_0 = $$createType0;
+        const $$createField14_0 = $$createType0;
+        const $$createField19_0 = $$createType0;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("EnvVars" in $$parsedSource) {
             $$parsedSource["EnvVars"] = $$createField9_0($$parsedSource["EnvVars"]);
         }
+        if ("MissingEnvironmentConfirmed" in $$parsedSource) {
+            $$parsedSource["MissingEnvironmentConfirmed"] = $$createField11_0($$parsedSource["MissingEnvironmentConfirmed"]);
+        }
         if ("GitRepos" in $$parsedSource) {
-            $$parsedSource["GitRepos"] = $$createField10_0($$parsedSource["GitRepos"]);
+            $$parsedSource["GitRepos"] = $$createField12_0($$parsedSource["GitRepos"]);
         }
         if ("Copies" in $$parsedSource) {
-            $$parsedSource["Copies"] = $$createField11_0($$parsedSource["Copies"]);
+            $$parsedSource["Copies"] = $$createField13_0($$parsedSource["Copies"]);
         }
         if ("Ports" in $$parsedSource) {
-            $$parsedSource["Ports"] = $$createField12_0($$parsedSource["Ports"]);
+            $$parsedSource["Ports"] = $$createField14_0($$parsedSource["Ports"]);
         }
         if ("CapAdd" in $$parsedSource) {
-            $$parsedSource["CapAdd"] = $$createField17_0($$parsedSource["CapAdd"]);
+            $$parsedSource["CapAdd"] = $$createField19_0($$parsedSource["CapAdd"]);
         }
         return new CreateInput(/** @type {Partial<CreateInput>} */($$parsedSource));
     }

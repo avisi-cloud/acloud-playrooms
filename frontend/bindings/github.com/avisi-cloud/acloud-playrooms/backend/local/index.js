@@ -4,6 +4,7 @@
 
 export {
     AcloudCompatibility,
+    EnvironmentPresence,
     ImageEntry,
     ToolStatus
 } from "./models.js";

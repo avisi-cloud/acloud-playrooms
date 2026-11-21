@@ -1,3 +1,4 @@
+import { EnvironmentService } from '../../../../core/services/environment';
 import { Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -26,6 +27,7 @@ import { T3CodePathCardComponent } from '../../components/t3-code-path/t3-code-p
   styleUrl: './settings.css',
 })
 export class SettingsPageComponent {
+  readonly environment = inject(EnvironmentService);
   readonly preferredActionOptions: { label: string; value: PreferredAction }[] = [
     { label: 'Connect', value: 'connect' },
     { label: 'Open in editor', value: 'open' },

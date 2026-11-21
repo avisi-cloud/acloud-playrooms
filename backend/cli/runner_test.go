@@ -29,6 +29,13 @@ func TestMain(m *testing.M) {
 
 func runFakeCommand(script string) {
 	switch script {
+	case "environment":
+		if os.Getenv("FORWARDED_DEMO") != "private-forwarded-value\nsecond-private-part" || os.Getenv("UNREQUESTED_DEMO") != "" {
+			os.Exit(9)
+		}
+		fmt.Fprintln(os.Stdout, os.Getenv("FORWARDED_DEMO"))
+		fmt.Fprintln(os.Stderr, "Error: "+os.Getenv("FORWARDED_DEMO"))
+		os.Exit(3)
 	case "ok":
 		fmt.Fprintln(os.Stdout, "resolved playhouse")
 		fmt.Fprintln(os.Stderr, "a warning")
@@ -383,5 +390,21 @@ func TestRunReportsTimingAndExitCode(t *testing.T) {
 				t.Fatalf("exit code = %d, want %d", done.ExitCode, wantExitCode)
 			}
 		})
+	}
+}
+
+func TestRunnerForwardsEnvironmentAndRedactsEveryOutput(t *testing.T) {
+	t.Setenv("UNREQUESTED_DEMO", "app-value")
+	recorder := &eventRecorder{}
+	runner := fakeRunner(t, "environment", WithEmitter(recorder.emit))
+	result, err := runner.Run(context.Background(), []string{"playroom", "create", "demo", "--env", "FORWARDED_DEMO"}, Options{OperationID: "environment", Environment: []string{"FORWARDED_DEMO=private-forwarded-value\nsecond-private-part"}, UnsetEnvironment: []string{"UNREQUESTED_DEMO"}})
+	if result.ExitCode != 3 || err == nil {
+		t.Fatalf("child did not receive expected environment: %+v %v", result, err)
+	}
+	if text := fmt.Sprint(result, err, recorder.snapshot()); strings.Contains(text, "private-forwarded-value") || strings.Contains(text, "second-private-part") {
+		t.Fatal("forwarded value leaked")
+	}
+	if os.Getenv("FORWARDED_DEMO") != "" || os.Getenv("UNREQUESTED_DEMO") != "app-value" {
+		t.Fatal("parent environment changed")
 	}
 }

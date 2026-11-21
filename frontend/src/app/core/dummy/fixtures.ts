@@ -7,6 +7,8 @@ import type {
   PlayroomDefaultEntry,
 } from '../services/wails-api-live';
 
+export const dummyLoginShellEnvironmentKeys = ['DEMO_API_KEY'];
+
 export const dummyUser = 'alex@example.test';
 
 export const dummyContexts: ContextEntry[] = [

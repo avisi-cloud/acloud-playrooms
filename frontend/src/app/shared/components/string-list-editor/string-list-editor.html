@@ -24,6 +24,9 @@
         (click)="removeValueAt($index)"
       />
     </div>
+    @if (itemHints[$index]) {
+      <small class="field-hint" aria-live="polite">{{ itemHints[$index] }}</small>
+    }
   }
   <p-button
     [label]="'+ ' + addLabel"

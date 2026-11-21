@@ -2,7 +2,15 @@
 
 package gui
 
-import "github.com/avisi-cloud/acloud-playrooms/backend/playroom"
+import (
+	"github.com/avisi-cloud/acloud-playrooms/backend/local"
+	"github.com/avisi-cloud/acloud-playrooms/backend/playroom"
+)
+
+func (app *App) GetEnvironmentPresence(entries []string, readVariablesFromLoginShell bool) ([]local.EnvironmentPresence, error) {
+	environment, err := local.ResolveEnvironment(app.commandContext(), entries, readVariablesFromLoginShell)
+	return environment.Presence, err
+}
 
 func (app *App) ListPlayrooms(input playroom.ListInput) ([]playroom.Listing, error) {
 	operationContext, cancel := app.createReadContext()

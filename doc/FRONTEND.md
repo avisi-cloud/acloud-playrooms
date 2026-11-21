@@ -197,6 +197,12 @@ in the local cache. Option names and their one-line explanations live in
 `shared/data/playroom-options.ts`, keyed by CLI flag, so the create, update and
 Defaults screens use the same words.
 
+The Forwarding step reports Set / Not set under each bare environment key and
+warns that inline `KEY=VALUE` entries enter the command line. Settings can opt into
+reading the login shell; only that boolean is cached. Create asks before omitting
+a missing key, including in Easy mode with a restored draft. A failed presence
+check blocks submission. Resolved values never enter the frontend.
+
 The name field checks the loaded rooms in the selected playhouse while typing and
 shows **Already used in this playhouse**. Invalid names offer a **Use …** button
 that lowercases, replaces spaces and underscores with dashes, drops invalid
