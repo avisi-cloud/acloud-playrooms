@@ -77,6 +77,24 @@ describe('RoomsPageComponent', () => {
     fixture.destroy();
   });
 
+  it('says in the header when the list was last read', async () => {
+    let finishTheFirstRead = (_: ListingDto[]) => {};
+    listPlayrooms.mockImplementationOnce(
+      () => new Promise<ListingDto[]>((resolve) => (finishTheFirstRead = resolve)),
+    );
+    TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-a');
+    const fixture = TestBed.createComponent(RoomsPageComponent);
+    TestBed.tick();
+    const header = () => (fixture.nativeElement as HTMLElement).querySelector('header');
+    expect(header()?.textContent).not.toContain('Updated');
+
+    finishTheFirstRead(roomsIn('playhouse-a'));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(header()?.textContent).toContain('Updated just now');
+    fixture.destroy();
+  });
+
   it('reads the rooms once when the screen opens', async () => {
     TestBed.inject(PlayroomStateService).selectPlayhouse('playhouse-a');
 

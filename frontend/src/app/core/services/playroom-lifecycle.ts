@@ -16,6 +16,32 @@ import { PlayroomCreateInput, PlayroomUpdateInput, wailsApi } from './wails-api'
 import { CommandFixService, FailureAction } from './command-fix';
 import { UiSessionService } from './ui-session';
 
+export const REFRESH_DELAY_WHILE_A_ROOM_CHANGES_MS = 10_000;
+export const REFRESH_DELAY_MS = 60_000;
+/** The waits after the first, second and third failed read in a row; later ones keep the last. */
+export const REFRESH_BACK_OFF_MS = [60_000, 120_000, 300_000] as const;
+
+export interface RefreshConditions {
+  windowVisible: boolean;
+  roomChanging: boolean;
+  failedReadsInARow: number;
+}
+
+/** Milliseconds until the room list reads itself again, or null while the window is hidden. */
+export function nextRefreshDelay(conditions: RefreshConditions): number | null {
+  if (!conditions.windowVisible) return null;
+  if (conditions.failedReadsInARow > 0)
+    return REFRESH_BACK_OFF_MS[
+      Math.min(conditions.failedReadsInARow, REFRESH_BACK_OFF_MS.length) - 1
+    ];
+  return conditions.roomChanging ? REFRESH_DELAY_WHILE_A_ROOM_CHANGES_MS : REFRESH_DELAY_MS;
+}
+
+interface LandedRead {
+  selection: PlayroomSelection;
+  failedReadsInARow: number;
+}
+
 /**
  * Playroom create, start, stop, update and delete, with optimistic patching and
  * toasts around them. All of it against the shared PlayroomStateService list.
@@ -35,40 +61,88 @@ export class PlayroomLifecycleService {
   readonly loadFix = signal<FailureAction | undefined>(undefined);
   private readonly fixes = inject(CommandFixService);
   private readSequence = 0;
+  private readsInFlight = 0;
+  private readonly lastRead = signal<LandedRead | null>(null);
+  private readonly windowVisible = signal(document.visibilityState === 'visible');
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
+  private scheduledPoll: { lastRead: LandedRead; delay: number } | null = null;
   private destroyed = false;
 
   constructor() {
     effect(() => {
       const selection = this.state.captureSelection();
-      const transitional = this.state
+      const roomChanging = this.state
         .rooms()
         .some((room) => room.playhouse === selection.playhouse && isTransitional(room.status));
+      const lastRead = this.lastRead();
+      const windowVisible = this.windowVisible();
       untracked(() => {
-        if (this.pollTimer) clearTimeout(this.pollTimer);
-        this.pollTimer = null;
         for (const [name, tracked] of this.settlements) {
           if (!this.state.isCurrentSelection(tracked.selection)) this.settlements.delete(name);
         }
-        if (selection.playhouse && (transitional || this.settlements.size > 0))
-          this.schedulePoll(selection);
+        // Polling starts with the first read a screen makes for this selection.
+        const delay =
+          selection.playhouse && lastRead && this.state.isCurrentSelection(lastRead.selection)
+            ? nextRefreshDelay({
+                windowVisible,
+                roomChanging: roomChanging || this.settlements.size > 0,
+                failedReadsInARow: lastRead.failedReadsInARow,
+              })
+            : null;
+        // Other room edits (ages, patches) must not keep pushing the next read back.
+        if (
+          this.pollTimer &&
+          this.scheduledPoll?.lastRead === lastRead &&
+          this.scheduledPoll.delay === delay
+        )
+          return;
+        this.cancelPoll();
+        if (delay === null || !lastRead) return;
+        this.scheduledPoll = { lastRead, delay };
+        this.pollTimer = setTimeout(() => {
+          this.pollTimer = null;
+          this.scheduledPoll = null;
+          this.refreshInTheBackground(selection);
+        }, delay);
       });
     });
+    const refreshWhenTheWindowIsShownAgain = () => {
+      const wasVisible = this.windowVisible();
+      this.windowVisible.set(document.visibilityState === 'visible');
+      if (this.windowVisible() && !wasVisible)
+        this.refreshInTheBackground(this.state.captureSelection());
+    };
+    document.addEventListener('visibilitychange', refreshWhenTheWindowIsShownAgain);
     inject(DestroyRef).onDestroy(() => {
       this.destroyed = true;
-      if (this.pollTimer) clearTimeout(this.pollTimer);
+      this.cancelPoll();
+      document.removeEventListener('visibilitychange', refreshWhenTheWindowIsShownAgain);
     });
   }
 
-  private schedulePoll(selection: PlayroomSelection): void {
-    this.pollTimer = setTimeout(() => {
-      this.pollTimer = null;
-      if (!this.state.isCurrentSelection(selection) || this.destroyed) return;
-      void this.reload(selection.playhouse, selection).catch(() => {
-        if (this.state.isCurrentSelection(selection) && !this.destroyed)
-          this.schedulePoll(selection);
-      });
-    }, 10_000);
+  private cancelPoll(): void {
+    if (this.pollTimer) clearTimeout(this.pollTimer);
+    this.pollTimer = null;
+    this.scheduledPoll = null;
+  }
+
+  /** One poll: dropped while another read runs, and only a first failure in a row is shown. */
+  private refreshInTheBackground(selection: PlayroomSelection): void {
+    const lastRead = this.lastRead();
+    if (
+      this.destroyed ||
+      this.readsInFlight > 0 ||
+      !this.windowVisible() ||
+      !lastRead ||
+      !this.state.isCurrentSelection(selection) ||
+      !this.state.isCurrentSelection(lastRead.selection)
+    )
+      return;
+    const firstFailureInARow = lastRead.failedReadsInARow === 0;
+    void this.reload(selection.playhouse, selection).catch((error) => {
+      if (firstFailureInARow && this.state.isCurrentSelection(selection) && !this.destroyed)
+        this.notify.failure('Could not refresh the playrooms', error, '', this.loadFix());
+    });
   }
 
   private readonly pending = signal<Record<string, string>>({});
@@ -125,6 +199,7 @@ export class PlayroomLifecycleService {
     )
       return [];
     const sequence = ++this.readSequence;
+    this.readsInFlight++;
     try {
       const listings = await wailsApi.listPlayrooms({
         Playhouse: playhouse,
@@ -149,10 +224,19 @@ export class PlayroomLifecycleService {
         this.state.markRoomsLoaded(playhouse);
         this.loadError.set('');
         this.loadFix.set(undefined);
+        this.lastRead.set({ selection, failedReadsInARow: 0 });
       }
       return rooms;
     } catch (error) {
       if (sequence === this.readSequence && this.state.isCurrentSelection(selection)) {
+        const previous = this.lastRead();
+        this.lastRead.set({
+          selection,
+          failedReadsInARow:
+            previous && this.state.isCurrentSelection(previous.selection)
+              ? previous.failedReadsInARow + 1
+              : 1,
+        });
         this.loadError.set(describeError(error));
         this.loadFix.set(
           this.fixes.action(
@@ -163,6 +247,8 @@ export class PlayroomLifecycleService {
         );
       }
       throw error;
+    } finally {
+      this.readsInFlight--;
     }
   }
 
