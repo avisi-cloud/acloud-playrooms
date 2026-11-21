@@ -339,6 +339,21 @@ describe('room task desktop notifications', () => {
     );
   });
 
+  it('remembers the git repositories of a created room, and none of a failed one', async () => {
+    const create = vi.spyOn(wailsApi, 'createPlayroom').mockRejectedValueOnce(new Error('no'));
+    const form = blankCreateForm('ph');
+    form.name = 'demo';
+    form.git = ['https://github.com/team/failed.git'];
+    actions.startCreate(form);
+    await vi.waitFor(() => expect(actions.pendingOperation('demo')).toBe(''));
+    expect(readCache().recentGitRepositories).toEqual([]);
+    create.mockResolvedValue();
+    form.git = ['https://github.com/team/api.git@main'];
+    actions.startCreate(form);
+    await vi.waitFor(() => expect(actions.pendingOperation('demo')).toBe(''));
+    expect(readCache().recentGitRepositories).toEqual(['https://github.com/team/api.git']);
+  });
+
   it('waits for a no-wait deletion to disappear', async () => {
     vi.spyOn(wailsApi, 'deletePlayroom').mockResolvedValue();
     await actions.delete(demo(), true, '5m');

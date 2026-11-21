@@ -6,6 +6,7 @@ import {
   isTransitional,
   listingToRoom,
   readCache,
+  rememberRecentGitRepositories,
   updateCache,
 } from '../../shared/utils';
 import { CliConsoleService } from './cli-console';
@@ -281,6 +282,13 @@ export class PlayroomLifecycleService {
           this.settlements.set(form.name, { task: 'create', selection });
       } else this.desktop.roomFinished('create', form.name, selection);
       this.notify.toast(`Created "${form.name}"`, 'ok', startedOperationId);
+      if (input.GitRepos?.length)
+        updateCache({
+          recentGitRepositories: rememberRecentGitRepositories(
+            readCache().recentGitRepositories,
+            input.GitRepos,
+          ),
+        });
       if (this.state.isCurrentSelection(selection)) {
         updateCache({ lastPlayroom: form.name, lastPlayhouse: form.playhouse });
         this.session.forgetSubmittedDraft('create', submittedRevision);
