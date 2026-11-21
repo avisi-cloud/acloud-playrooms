@@ -19,6 +19,7 @@ import (
 
 // App exposes backend operations to the frontend through Wails bindings.
 type App struct {
+	schedule                    appSchedule
 	applicationContext          context.Context
 	appVersion                  string
 	notifications               desktopNotifier
@@ -35,6 +36,7 @@ type App struct {
 func (app *App) ServiceStartup(applicationContext context.Context, _ application.ServiceOptions) error {
 	app.applicationContext = applicationContext
 	cli.SetEmitter(emitCommandEventToFrontend)
+	go app.runSchedule()
 	return nil
 }
 

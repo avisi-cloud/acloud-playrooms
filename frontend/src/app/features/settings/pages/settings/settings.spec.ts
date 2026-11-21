@@ -59,6 +59,35 @@ describe('Settings page', () => {
     vi.restoreAllMocks();
   });
 
+  it('shows evening stop defaults and saves the switch and idle threshold', async () => {
+    const save = vi.spyOn(wailsApi, 'setScheduleSettings').mockResolvedValue();
+    const fixture = TestBed.createComponent(SettingsPageComponent);
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    const toggle = root.querySelector<HTMLInputElement>('#evening-stop-enabled')!;
+    expect(toggle.checked).toBe(false);
+    expect(root.querySelector<HTMLInputElement>('#evening-stop-time')?.value).toBe('22:00');
+    expect(root.querySelector<HTMLInputElement>('#idle-reminder-hours')?.value).toBe('4');
+    toggle.click();
+    await fixture.whenStable();
+    expect(save).toHaveBeenLastCalledWith({
+      Enabled: true,
+      Time: '22:00',
+      Days: 'weekdays',
+      IdleHours: 4,
+    });
+    const hours = root.querySelector<HTMLInputElement>('#idle-reminder-hours')!;
+    hours.value = '6';
+    hours.dispatchEvent(new Event('input'));
+    await fixture.whenStable();
+    expect(save).toHaveBeenLastCalledWith({
+      Enabled: true,
+      Time: '22:00',
+      Days: 'weekdays',
+      IdleHours: 6,
+    });
+  });
+
   it('offers notification and Dock badge preferences and saves them', async () => {
     const fixture = TestBed.createComponent(SettingsPageComponent);
     await fixture.whenStable();

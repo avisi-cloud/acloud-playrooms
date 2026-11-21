@@ -834,6 +834,41 @@ native title through `wailsApi`: `demo — Playrooms` for a room,
 It also updates the list title when the playhouse changes without navigation.
 The dummy API sets `document.title` and opens Help links in a browser tab.
 
+## Evening stop and idle reminders
+
+Settings → Evening stop saves a device-local schedule (off by default, 22:00
+on weekdays) and idle reminder threshold (4 hours). Only your own Ready rooms
+in the current playhouse are considered, while the app runs and the Mac is
+awake. Times use the Mac's local timezone. Keep running on room details skips
+automatic evening stops for that room on this Mac; idle reminders still apply.
+
+Ten minutes before the stop, a desktop notification and an in-app reminder name
+the rooms and actual stop time (including snooze). A top-right notice overlays
+the page without shifting its header, separate from bottom-right task toasts. Both offer
+**Snooze 1 hour** and **Keep running tonight**. A missed deadline after sleep
+asks **Evening stop was missed**, with **Stop**, instead of catching up. Native
+notification actions are checked in Go even when the webview reloads. An in-app
+Stop waits for the command and refreshes the current selection through the room
+lifecycle service, so its signal-backed room list redraws immediately. Reminders
+are available in the app when macOS notification permission is denied; task
+completion notification preferences do not suppress these explicit reminders.
+
+An idle reminder counts from the first running observation in this app session,
+or the latest successful Connect/Open handoff. It says **No connection from this
+app for 4 hours**; outside connections and actual SSH activity are unknown.
+Restarting the app starts a fresh observation period. A new connection allows
+another reminder; an unchanged idle period reminds once. Settings and per-room
+opt-outs persist; snooze, tonight's exemption and observations are session-only.
+
+Dummy preview uses simulated stops and localStorage preferences. Add
+`?schedule=fast` to start a Monday clock at 21:49, one minute per second;
+`?schedule=idle` advances an hour per second; `?schedule=missed` advances two hours
+per second. Enable the schedule before its deadline to try warning and missed
+stop actions. Enabling the fast preview resets its clock to 21:49. Editor opens
+are simulated successfully only in these explicit scheduling previews; the normal
+dummy editor-open failure still offers the health check. No native notification
+or real acloud command runs in these modes.
+
 ### Command palette
 
 ⌘K opens `shared/components/command-palette/`. It searches screen and action

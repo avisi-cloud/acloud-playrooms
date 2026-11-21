@@ -456,6 +456,7 @@
        data, or a command running. It is the app's only first-load indicator —
        screens render nothing while they wait. -->
   <main id="main-content" tabindex="-1" class="main-panel" [class.is-loading]="shellBusy()">
+    <app-schedule-notices />
     <router-outlet (activate)="focusRoutedContent()" />
   </main>
 </div>

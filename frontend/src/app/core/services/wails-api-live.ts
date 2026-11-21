@@ -36,6 +36,9 @@ export type HealthCheckInput = localModels.HealthCheckInput;
 export type AcloudBinaryStatus = cliModels.BinaryStatus;
 export type TailscaleBinaryStatus = toolsModels.TailscaleBinaryStatus;
 export type T3CodePathStatus = toolsModels.T3CodePathStatus;
+export type ScheduleSettings = localModels.ScheduleSettings;
+export type ScheduleEvent = localModels.ScheduleEvent;
+export type ScheduleAction = localModels.ScheduleAction;
 export type MenuBarRooms = appModels.MenuBarRooms;
 
 /** A room action chosen in the menu bar, for the room list it was built from. */
@@ -51,6 +54,19 @@ const playroomInput = playroomModels;
 const playhouseInput = playhouseModels;
 
 export const wailsApi = {
+  setSchedulePlayhouse: (playhouse: string): Promise<void> => app.SetSchedulePlayhouse(playhouse),
+  getScheduleSettings: (): Promise<ScheduleSettings> => app.GetScheduleSettings(),
+  setScheduleSettings: (settings: ScheduleSettings): Promise<void> =>
+    app.SetScheduleSettings(new localModels.ScheduleSettings(settings)),
+  getRoomKeepRunning: (playhouse: string, name: string): Promise<boolean> =>
+    app.GetRoomKeepRunning(playhouse, name),
+  setRoomKeepRunning: (playhouse: string, name: string, keep: boolean): Promise<void> =>
+    app.SetRoomKeepRunning(playhouse, name, keep),
+  getScheduleNotices: (): Promise<ScheduleEvent[]> => app.GetScheduleNotices(),
+  runScheduleAction: (id: string, action: ScheduleAction): Promise<void> =>
+    app.RunScheduleAction(id, action),
+  onScheduleNotice: (receive: (event: ScheduleEvent) => void): (() => void) =>
+    Events.On('schedule:notice', (event) => receive(event.data as ScheduleEvent)),
   getEnvironmentPresence: (
     entries: string[],
     readVariablesFromLoginShell: boolean,

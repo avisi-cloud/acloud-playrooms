@@ -538,6 +538,33 @@ on, a `WindowClosing` hook hides the window instead of closing it, so the app an
 its Angular state keep running; ⌘Q and Quit still end the app.
 `App.ShowMainWindow` lets the frontend bring the window back for a failure.
 
+## Evening stop scheduler
+
+`local/schedule.go` owns the clock-injected schedule and observation state.
+`app_schedule.go` ticks it every 30 seconds for the frontend-selected current playhouse,
+using the CLI's own-room list and a matching current-user identity. Only reported
+Ready rooms qualify. It re-reads ownership and context/organisation before each
+stop, then uses `App.StopPlayroom` with an operation ID so normal CLI events
+record the command in Activity. In-app scope switches serialize with these
+checks; an external CLI changing configuration concurrently is still subject to
+the CLI's normal owner guard. Unknown ownership or status never authorizes a stop.
+
+`gui-schedule.json` in the GUI's acloud configuration directory saves the typed
+settings and context/organisation/user/playhouse/room opt-outs with an atomic
+rename. Invalid or unreadable preferences are reported and scheduling is disabled;
+no replacement file is silently written. Snooze, tonight's exemption, delivered
+notice IDs and idle observations stay in Go memory across webview reloads and
+end with the app session. Notice actions expire, cannot be replayed, and never
+switch scope to find a room. Explicit Stop revalidates ownership, including for
+idle reminders on rooms exempt from automatic stops.
+
+A wall-clock gap over 90 seconds crossing a deadline is treated as a missed stop
+(including across midnight). Clock gaps from slow or failed reads also take this
+conservative path. Native notifications reuse the notification permission service
+and registered action categories. Notification failures are logged; in-app
+reminders remain available. The scheduler does not use OS scheduled delivery or
+wake the Mac. Tests inject time and use fake commands and notification services.
+
 ## Deep links
 
 `build/darwin/Info.plist` registers the `acloud-playrooms` URL scheme. `run.go`

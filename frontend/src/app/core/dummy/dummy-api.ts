@@ -1,3 +1,5 @@
+import { readCache } from '../../shared/utils/cache';
+import { DummySchedule } from './schedule';
 import { simulateActivity } from './activity-events';
 import type { ListingDto } from '../../shared/models';
 import type {
@@ -183,8 +185,41 @@ function simulateHealthChecks(input: Partial<HealthCheckInput>): HealthCheck[] {
   ];
 }
 
+const schedule = new DummySchedule(
+  () =>
+    Object.entries(rooms)
+      .filter(
+        ([key]) =>
+          key === roomKey(readCache().lastPlayhouse || playhouses[scopeKey()]?.[0]?.Slug || ''),
+      )
+      .flatMap(([key, entries]) =>
+        entries
+          .filter((room) => room.Owner === dummyUser && room.Status === 'Ready')
+          .map((room) => ({
+            Key: `${key}/${room.Name}`,
+            Name: room.Name!,
+            Playhouse: key.slice(scopeKey().length + 1),
+          })),
+      ),
+  (room) => dummyApi.stopPlayroom(crypto.randomUUID(), room),
+);
+const scheduleKey = (playhouse: string, name: string) => `${roomKey(playhouse)}/${name}`;
+
 // An exhaustive adapter: dummy mode never imports a live backend implementation at runtime.
 const simulatedApi: typeof liveApi = {
+  setSchedulePlayhouse: async () => undefined,
+  getScheduleSettings: () => read(schedule.settings),
+  setScheduleSettings: async (settings) => {
+    schedule.configure(settings);
+  },
+  getRoomKeepRunning: (playhouse, name) =>
+    read(schedule.kept.includes(scheduleKey(playhouse, name))),
+  setRoomKeepRunning: async (playhouse, name, keep) => {
+    schedule.keep(scheduleKey(playhouse, name), keep);
+  },
+  getScheduleNotices: () => read(schedule.notices),
+  runScheduleAction: (id, action) => schedule.act(id, action),
+  onScheduleNotice: (receive) => schedule.subscribe(receive),
   getEnvironmentPresence: (entries, readVariablesFromLoginShell) =>
     read(
       entries
@@ -434,10 +469,20 @@ const simulatedApi: typeof liveApi = {
   stopPlayroom: async (_operationId, input) => {
     findRoom(input).Status = 'Stopped';
   },
-  openPlayroomInEditor: unavailable,
+  openPlayroomInEditor: async (_operationId, input) => {
+    if (
+      !['fast', 'idle', 'missed'].includes(
+        new URLSearchParams(window.location.search).get('schedule') ?? '',
+      )
+    )
+      return unavailable();
+    findRoom(input);
+    schedule.connected(scheduleKey(input.Playhouse ?? '', input.Name ?? ''));
+  },
   connectPlayroom: async (input) => {
     simulateFailure(input, 'session');
     findRoom(input);
+    schedule.connected(scheduleKey(input.Playhouse ?? '', input.Name ?? ''));
   },
   getPlayroomDefaults: () => read(defaults),
   setPlayroomDefault: async (_operationId, key, value) => {
