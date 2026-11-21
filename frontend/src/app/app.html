@@ -253,28 +253,48 @@
 
     <!-- Navigation scrolls independently in short windows; utilities stay below it. -->
     <div class="sidebar-scroll">
+      <!-- Where you work, set apart from the screen navigation below it. -->
+      <span class="sidebar-label scope-label" id="current-scope-label">Working in</span>
       <button
         type="button"
         pButton
         severity="secondary"
         [outlined]="true"
         class="current-playhouse"
-        aria-haspopup="dialog"
-        [attr.aria-expanded]="showPlayhouseChooser"
-        (click)="showPlayhouseChooser = true"
+        [class.signed-out]="currentScopeState() === 'signed-out'"
+        aria-describedby="current-scope-label"
+        [attr.aria-haspopup]="currentScopeState() === 'signed-out' ? null : 'dialog'"
+        [attr.aria-expanded]="currentScopeState() === 'signed-out' ? null : showPlayhouseChooser"
+        (click)="openCurrentScope()"
       >
-        <span class="playhouse-mark"><i class="pi pi-server" aria-hidden="true"></i></span>
-        <span class="playhouse-identity">
-          <span class="playhouse-caption">Playhouse</span>
-          <span class="playhouse-name">{{ state.playhouse() || 'Choose a playhouse' }}</span>
-          @if (scope.currentOrganisation()) {
-            <span class="playhouse-organisation">{{ scope.currentOrganisation() }}</span>
-          }
-          <span class="switch-label">{{
-            state.playhouse() ? 'Switch playhouse' : 'Find your workspace'
-          }}</span>
+        @if (currentScopeState() === 'signed-out') {
+          <span class="scope-signed-out">
+            <span class="scope-value">Not signed in</span>
+            <span class="scope-hint">Log in to see your playhouses.</span>
+          </span>
+        } @else {
+          <span class="scope-levels">
+            <span class="scope-caption">Context</span>
+            <span class="scope-value" [title]="scope.currentContext() || 'Not reported'">{{
+              scope.currentContext() || 'Not reported'
+            }}</span>
+            <span class="scope-caption">Organisation</span>
+            <span class="scope-value" [title]="scope.currentOrganisation() || 'Not reported'">{{
+              scope.currentOrganisation() || 'Not reported'
+            }}</span>
+            <span class="scope-caption">Playhouse</span>
+            <span
+              class="scope-value playhouse-name"
+              [class.not-chosen]="currentScopeState() === 'no-playhouse'"
+              [title]="state.playhouse() || 'None chosen yet'"
+              >{{ state.playhouse() || 'None chosen yet' }}</span
+            >
+          </span>
+        }
+        <span class="scope-action">
+          <span>{{ currentScopeAction() }}</span>
+          <i class="pi pi-angle-right" aria-hidden="true"></i>
         </span>
-        <i class="pi pi-angle-right switch-chevron" aria-hidden="true"></i>
       </button>
 
       @if (dummyMode) {
