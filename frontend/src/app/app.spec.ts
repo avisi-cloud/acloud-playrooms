@@ -104,9 +104,6 @@ describe('App', () => {
     expect(compiled.querySelector('.sidebar-brand-name')?.textContent).toContain(
       'Avisi Playground',
     );
-    expect(compiled.querySelector('.current-playhouse')?.textContent).toContain(
-      'Choose a playhouse',
-    );
   });
 
   it('breathes for a running command, not only for a screen load', async () => {
@@ -321,15 +318,114 @@ describe('App', () => {
     }
   });
 
-  it('opens the dedicated chooser from the current playhouse button', async () => {
-    const fixture = TestBed.createComponent(App);
-    await fixture.whenStable();
-    const button = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
-      '.current-playhouse',
-    )!;
-    expect(button.getAttribute('aria-haspopup')).toBe('dialog');
-    button.click();
-    expect(fixture.componentInstance.showPlayhouseChooser).toBe(true);
+  describe('Working in block', () => {
+    /** Renders the shell as the given acloud reports it, then returns the block. */
+    const renderWorkingIn = async (facts: {
+      loggedIn: boolean;
+      playhouse?: string;
+      context?: string;
+      organisation?: string;
+      acloudFound?: boolean;
+    }) => {
+      vi.spyOn(wailsApi, 'isLoggedIn').mockResolvedValue(facts.loggedIn);
+      vi.spyOn(wailsApi, 'getCurrentUserEmail').mockResolvedValue('');
+      vi.spyOn(wailsApi, 'getCurrentContext').mockResolvedValue(facts.context ?? '');
+      vi.spyOn(wailsApi, 'getCurrentOrganisation').mockResolvedValue(facts.organisation ?? '');
+      vi.spyOn(wailsApi, 'getAcloudBinaryStatus').mockResolvedValue({
+        Found: facts.acloudFound ?? true,
+      } as AcloudBinaryStatus);
+      const fixture = TestBed.createComponent(App);
+      const app = fixture.componentInstance;
+      app.state.selectPlayhouse(facts.playhouse ?? '');
+      await app.ngOnInit();
+      fixture.detectChanges();
+      const block = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+        '.current-playhouse',
+      )!;
+      const values = [...block.querySelectorAll<HTMLElement>('.scope-value')];
+      return { fixture, app, block, values };
+    };
+
+    afterEach(() => {
+      localStorage.clear();
+      vi.restoreAllMocks();
+    });
+
+    it('says when nobody is signed in and leads to the login step of setup', async () => {
+      const { app, block } = await renderWorkingIn({ loggedIn: false, playhouse: 'kept' });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      expect(app.currentScopeState()).toBe('signed-out');
+      expect(block.textContent).toContain('Not signed in');
+      expect(block.textContent).toContain('Set up Acloud');
+      expect(block.textContent).not.toContain('kept');
+      expect(block.getAttribute('aria-haspopup')).toBeNull();
+
+      block.click();
+
+      expect(navigate).toHaveBeenCalledWith(['/setup'], { queryParams: { step: 'login' } });
+      expect(app.showPlayhouseChooser).toBe(false);
+    });
+
+    it('leads to the acloud step of setup when acloud is missing', async () => {
+      const { block } = await renderWorkingIn({ loggedIn: false, acloudFound: false });
+      const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+      block.click();
+
+      expect(navigate).toHaveBeenCalledWith(['/setup'], { queryParams: { step: 'acloud' } });
+    });
+
+    it('shows the hierarchy with no playhouse yet and opens the chooser to pick one', async () => {
+      const { app, block, values } = await renderWorkingIn({
+        loggedIn: true,
+        context: 'development',
+        organisation: 'platform',
+      });
+
+      expect(app.currentScopeState()).toBe('no-playhouse');
+      expect(values.map((value) => value.textContent?.trim())).toEqual([
+        'development',
+        'platform',
+        'None chosen yet',
+      ]);
+      expect(block.textContent).toContain('Choose a playhouse');
+      expect(block.getAttribute('aria-haspopup')).toBe('dialog');
+
+      block.click();
+
+      expect(app.showPlayhouseChooser).toBe(true);
+    });
+
+    it('shows the selected playhouse with full names on hover and opens the chooser', async () => {
+      const longName = 'playhouse-platform-infrastructure-experiments-with-a-long-name';
+      const { app, block, values } = await renderWorkingIn({
+        loggedIn: true,
+        context: 'development',
+        organisation: 'platform',
+        playhouse: longName,
+      });
+
+      expect(app.currentScopeState()).toBe('playhouse-selected');
+      expect(values[2].textContent?.trim()).toBe(longName);
+      expect(values.map((value) => value.title)).toEqual(['development', 'platform', longName]);
+      expect(block.textContent).toContain('Switch playhouse');
+
+      block.click();
+
+      expect(app.showPlayhouseChooser).toBe(true);
+      expect(block.getAttribute('aria-haspopup')).toBe('dialog');
+    });
+
+    it('shows Not reported for a context or organisation acloud did not report', async () => {
+      const { values } = await renderWorkingIn({ loggedIn: true, playhouse: 'playhouse-a' });
+
+      expect(values.map((value) => value.textContent?.trim())).toEqual([
+        'Not reported',
+        'Not reported',
+        'playhouse-a',
+      ]);
+    });
   });
 
   describe('release stage', () => {

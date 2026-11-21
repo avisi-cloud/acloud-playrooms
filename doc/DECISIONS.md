@@ -21,6 +21,8 @@ it, update the entry.
 
 - [Port links require a reported tailnet hostname](#port-links-require-a-reported-tailnet-hostname)
 
+- [Working in leads to setup only when signed out](#working-in-leads-to-setup-only-when-signed-out)
+
 - [Embedded terminal for interactive commands](#embedded-terminal-for-interactive-commands)
 - [Root flags](#root-flags)
 - [Concurrency](#concurrency)
@@ -82,6 +84,14 @@ browser links only for a reported `.ts.net` MagicDNS host. Copy details identifi
 those hosts as Tailscale and leaves other exposure values Not reported; an IP,
 blank host or arbitrary DNS name cannot establish the exposure. This deliberately
 leaves tailnet IP-only rooms unlinked. Revisit when the CLI reports exposure.
+
+### Working in leads to setup only when signed out
+
+The sidebar's Working in block sends a signed-out user to setup (the acloud step
+when acloud is missing, the login step otherwise). Signed in without a playhouse,
+it opens the playhouse chooser instead: setup's playhouse step cannot change
+context or organisation, so someone in an organisation without playhouses would
+have no way out there. Revisit if setup gains those pickers.
 
 ### Embedded terminal for interactive commands
 
