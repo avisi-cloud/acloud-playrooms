@@ -10,6 +10,31 @@ import * as localModels from '../../../../bindings/github.com/avisi-cloud/acloud
 
 /** Fields the UI sets, per input model. */
 const WIRED: Record<string, string[]> = {
+  'local.PlayroomTemplate': ['name', 'options'],
+  'local.PlayroomTemplateOptions': [
+    'image',
+    'storage',
+    'cpuReq',
+    'cpuLim',
+    'memReq',
+    'memLim',
+    'env',
+    'git',
+    'copy',
+    'ports',
+    'proxyGroup',
+    'exposure',
+    'nodePortSSH',
+    'capabilities',
+    'capAdd',
+    'ephemeral',
+    'readOnly',
+    'privileged',
+    'workspaceNamespace',
+    'noWait',
+    'waitTimeout',
+    'forceInstall',
+  ],
   'local.ScheduleSettings': ['Enabled', 'Time', 'Days', 'IdleHours'],
   'playroom.CreateInput': [
     'Name',
@@ -152,6 +177,8 @@ const UNWIRED: Record<string, Record<string, string>> = {
 
 /** A zero-valued instance of each model, which is where the field names live. */
 const MODELS: Record<string, object> = {
+  'local.PlayroomTemplate': new localModels.PlayroomTemplate({}),
+  'local.PlayroomTemplateOptions': new localModels.PlayroomTemplateOptions({}),
   'local.ScheduleSettings': new localModels.ScheduleSettings({}),
   'playroom.CreateInput': new playroomModels.CreateInput({}),
   'playroom.UpdateInput': new playroomModels.UpdateInput({}),

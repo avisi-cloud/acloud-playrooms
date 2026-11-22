@@ -1,3 +1,5 @@
+import { decodePlayroomTemplates } from '../../shared/utils/playroom-template';
+import type { PlayroomTemplate } from '../../shared/models/playroom-template';
 import { Browser, Events, Window } from '@wailsio/runtime';
 import type { ListingDto } from '../../shared/models';
 
@@ -55,6 +57,31 @@ const playroomInput = playroomModels;
 const playhouseInput = playhouseModels;
 
 export const wailsApi = {
+  getPlayroomTemplates: async (): Promise<PlayroomTemplate[]> =>
+    decodePlayroomTemplates(
+      JSON.stringify({ version: 1, templates: await app.GetPlayroomTemplates() }),
+    ),
+  savePlayroomTemplates: (templates: PlayroomTemplate[]): Promise<void> =>
+    app.SavePlayroomTemplates(
+      templates.map(
+        (template) =>
+          new localModels.PlayroomTemplate({
+            ...template,
+            options: new localModels.PlayroomTemplateOptions(template.options),
+          }),
+      ),
+    ),
+  exportPlayroomTemplate: (template: PlayroomTemplate): Promise<void> =>
+    app.ExportPlayroomTemplate(
+      new localModels.PlayroomTemplate({
+        ...template,
+        options: new localModels.PlayroomTemplateOptions(template.options),
+      }),
+    ),
+  importPlayroomTemplates: async (): Promise<PlayroomTemplate[]> =>
+    decodePlayroomTemplates(
+      JSON.stringify({ version: 1, templates: await app.ImportPlayroomTemplates() }),
+    ),
   setSchedulePlayhouse: (playhouse: string): Promise<void> => app.SetSchedulePlayhouse(playhouse),
   getScheduleSettings: (): Promise<ScheduleSettings> => app.GetScheduleSettings(),
   setScheduleSettings: (settings: ScheduleSettings): Promise<void> =>

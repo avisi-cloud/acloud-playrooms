@@ -1,3 +1,5 @@
+import { templateFromCreateForm } from '../../shared/utils/playroom-template';
+import { blankCreateForm } from '../../shared/utils/forms';
 import type { ListingDto } from '../../shared/models';
 import type {
   ContextEntry,
@@ -158,3 +160,11 @@ export const dummyActivityOutput = Array.from(
   { length: 24 },
   (_, index) => `Simulated output line ${index + 1} of 24. No external action was taken.`,
 );
+
+export const dummyTemplates = [
+  templateFromCreateForm('Web development', {
+    ...blankCreateForm(''),
+    image: 'opencode',
+    ports: ['8080:8080'],
+  }),
+];

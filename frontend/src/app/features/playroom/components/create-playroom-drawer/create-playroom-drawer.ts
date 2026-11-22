@@ -1,3 +1,6 @@
+import { PlayroomTemplatesService } from '../../../../core/services/playroom-templates';
+import type { PlayroomTemplate } from '../../../../shared/models/playroom-template';
+import { createFormFromTemplate } from '../../../../shared/utils/playroom-template';
 import { DialogModule } from 'primeng/dialog';
 import { EnvironmentService } from '../../../../core/services/environment';
 import { EnvironmentEditorComponent } from '../../../../shared/components/environment-editor/environment-editor';
@@ -98,6 +101,30 @@ const INPUT_FIELDS_SHOWN_IN_EASY_MODE: (keyof PlayroomCreateInput)[] = [
   styleUrl: './create-playroom-drawer.css',
 })
 export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
+  readonly templates = inject(PlayroomTemplatesService);
+  templateName = '';
+  templateSaved = false;
+  private templateRevision = 0;
+
+  applyTemplate(template: PlayroomTemplate): void {
+    this.templateRevision++;
+    this.environmentCheckRevision++;
+    this.checkingEnvironment = false;
+    this.cancelMissingEnvironment();
+    this.form = createFormFromTemplate(template, this.form);
+    this.templateSaved = false;
+    this.notCopiedHint = '';
+    this.submitFailure = '';
+    this.touched = false;
+    this.step = 0;
+    this.focusName();
+  }
+
+  async saveTemplate(): Promise<void> {
+    this.templateSaved = await this.templates.saveTemplate(this.templateName, this.form);
+    this.changeDetector.markForCheck();
+  }
+
   private readonly state = inject(PlayroomStateService);
   private readonly actions = inject(PlayroomLifecycleService);
   private readonly defaults = inject(PlayroomDefaultsService);
@@ -178,6 +205,8 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
       this.step = draft?.step ?? 0;
       this.advancedSecurityOpenedFromImageError = false;
       if (draft?.options) this.goToPrivilegedModeOnOptionsStep();
+      void this.templates.loadTemplates();
+      this.templateSaved = false;
       void this.loadImages();
       if (!draft) void this.seedFromDefaults();
     }
@@ -191,14 +220,17 @@ export class CreatePlayroomDrawerComponent implements OnChanges, OnDestroy {
     const opened = this.playhouse;
     const initialForm = structuredClone(this.initialForm ?? {});
     const pristine = JSON.stringify(this.form);
+    const templateRevision = this.templateRevision;
     try {
       await this.defaults.loadConfiguredDefaultsOnce();
     } catch {
       // The built-in form defaults remain usable when the CLI is unavailable.
     }
     if (!this.visible || this.playhouse !== opened) return;
-    if (JSON.stringify(this.form) !== pristine) return;
+    if (this.templateRevision !== templateRevision || JSON.stringify(this.form) !== pristine)
+      return;
     this.form = { ...blankCreateForm(opened, this.defaults), ...initialForm };
+    this.changeDetector.markForCheck();
   }
 
   /**

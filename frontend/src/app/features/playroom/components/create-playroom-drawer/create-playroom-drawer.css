@@ -28,3 +28,45 @@
   flex-direction: column;
   gap: 12px;
 }
+
+.template-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex: none;
+  min-width: 0;
+}
+.template-controls > .field-label {
+  margin: 0;
+  flex: none;
+}
+.template-controls > p-select {
+  flex: 1;
+  min-width: 0;
+}
+.template-choices {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  min-width: 0;
+}
+.template-choices p-button {
+  flex: none;
+}
+.save-template {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.template-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.template-actions input {
+  min-width: 0;
+  max-width: 100%;
+  flex: 1;
+}

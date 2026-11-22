@@ -297,6 +297,31 @@ storage override the configured defaults. Everything else keeps its defaults,
 with a **Not copied** hint naming those settings. Privileged mode starts off and
 still requires acknowledgement. Closing saves this form as the new create draft.
 
+### Playroom templates
+
+The create drawer saves named options as local templates and applies them to the
+same `CreateForm` used by Create similar. When templates exist, a compact top row
+offers one-click choices in Easy and Start from template in Advanced. Save as
+template sits where the form ends: on the Review step in Advanced and at the end of
+the Easy card, so the form starts at the top. Applying keeps the current room name,
+playhouse and SSH key, replaces every saved option, and resets privileged acknowledgement. Creation
+still uses the normal validation, environment presence check, preview and CLI path.
+Acloud refuses unsupported playhouse options with its normal failure message;
+node-pool availability is not reported by the playhouse list, so the GUI does not
+guess compatibility or silently remove an option.
+
+Settings → Playroom templates sits after Environment variables and before Tool paths.
+Names appear as text until Rename opens an input; Enter saves and Escape cancels.
+Delete, export and import remain available alongside the names. Only
+bare environment keys are saved (inline values are stripped when saving); SSH
+keys and privileged acknowledgement are excluded. Import refuses unknown fields,
+unsupported versions, incomplete options, invalid choices and duplicate names.
+An import with a conflicting name changes nothing; rename the existing template
+first. Read or write failures remain visible and do not replace the saved list.
+Dummy mode uses in-memory templates, a JSON download and a browser file chooser;
+reload resets its templates. The live app uses native Wails file dialogs and Go
+storage. `PlayroomTemplatesService` exposes async state through signals.
+
 ### Requested resources
 
 The overview's title row shows requested CPU, memory and storage for all loaded

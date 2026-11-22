@@ -15,6 +15,8 @@ it, update the entry.
 
 ## Contents
 
+- [Playroom template file format](#playroom-templates-use-a-strict-versioned-json-file)
+
 **Open — revisit these**
 
 - [A settings file replaces, it does not merge](#a-settings-file-replaces-it-does-not-merge)
@@ -80,6 +82,22 @@ apply in that order and stop at the first failure, which is named; earlier
 changes stay applied. Version 1 refuses unknown or missing keys, other versions
 and defaults the running acloud does not know. Revisit if teams want to share a
 partial file, such as defaults only.
+
+### Playroom templates use a strict versioned JSON file
+
+Templates are local GUI data in `gui-templates.json`, with the shareable shape
+`{ "version": 1, "templates": [{ "name": "Web", "options": { … } }] }`.
+Version 1 requires every option field and refuses unknown fields, unsupported
+versions, environment values and duplicate names. Export contains one template;
+import may contain several and merges only when every name is unique. Nothing
+is overwritten or silently dropped. Revisit migration when version 2 is needed.
+
+Options mirror the create form, excluding room identity, playhouse, SSH key and
+privileged acknowledgement. Saving strips inline environment values to keys;
+applying requires acknowledgement again. Copy paths and repository URLs remain
+as entered, so review them before sharing. Playhouse capabilities are not
+reported by the list command: the CLI owns their validation at create time and
+its refusal is shown through the existing failure path.
 
 ### Evening stops run inside the app
 

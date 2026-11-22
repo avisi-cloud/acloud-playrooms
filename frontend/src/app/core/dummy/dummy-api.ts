@@ -1,3 +1,8 @@
+import {
+  decodePlayroomTemplates,
+  validatePlayroomTemplates,
+} from '../../shared/utils/playroom-template';
+
 import { readCache } from '../../shared/utils/cache';
 import { DummySchedule } from './schedule';
 import { simulateActivity } from './activity-events';
@@ -11,6 +16,7 @@ import type {
 } from '../services/wails-api-live';
 import { TERMINALS } from '../../shared/data';
 import {
+  dummyTemplates,
   dummyContexts,
   dummyLoginShellEnvironmentKeys,
   dummyDefaults,
@@ -20,6 +26,8 @@ import {
   dummyRooms,
   dummyUser,
 } from './fixtures';
+
+const templates = structuredClone(dummyTemplates);
 
 let context = 'development';
 let organisation = 'platform';
@@ -235,6 +243,47 @@ const scheduleKey = (playhouse: string, name: string) => `${roomKey(playhouse)}/
 
 // An exhaustive adapter: dummy mode never imports a live backend implementation at runtime.
 const simulatedApi: typeof liveApi = {
+  getPlayroomTemplates: () => read(templates),
+  savePlayroomTemplates: async (updated) => {
+    validatePlayroomTemplates(updated);
+    templates.splice(0, templates.length, ...structuredClone(updated));
+  },
+  exportPlayroomTemplate: async (template) => {
+    validatePlayroomTemplates([template]);
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify({ version: 1, templates: [template] }, null, 2)], {
+        type: 'application/json',
+      }),
+    );
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'playroom-template.json';
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  },
+  importPlayroomTemplates: () =>
+    new Promise((resolve, reject) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json,application/json';
+      input.addEventListener('cancel', () => resolve([]), { once: true });
+      input.addEventListener(
+        'change',
+        () => {
+          const file = input.files?.[0];
+          if (!file) {
+            resolve([]);
+            return;
+          }
+          void file
+            .text()
+            .then((content) => resolve(decodePlayroomTemplates(content)))
+            .catch(reject);
+        },
+        { once: true },
+      );
+      input.click();
+    }),
   setSchedulePlayhouse: async () => undefined,
   getScheduleSettings: () => read(schedule.settings),
   setScheduleSettings: async (settings) => {

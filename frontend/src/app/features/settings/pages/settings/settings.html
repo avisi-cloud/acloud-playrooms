@@ -273,6 +273,101 @@
           </p>
         </div>
       </section>
+      <section class="template-settings" aria-labelledby="templates-title">
+        <h2 class="settings-section-title" id="templates-title">Playroom templates</h2>
+        <p class="settings-section-description">
+          Named create options saved on this device. Export a template to share it; environment
+          values are never included.
+        </p>
+        <div class="template-actions">
+          <p-button
+            label="Import templates"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            [disabled]="templates.busy() || !templates.loaded()"
+            (click)="templates.importTemplates()"
+          />
+          <p-button
+            label="Reload templates"
+            severity="secondary"
+            [text]="true"
+            size="small"
+            [disabled]="templates.busy()"
+            (click)="templates.loadTemplates()"
+          />
+        </div>
+        @if (templates.error()) {
+          <p class="field-hint error" role="alert">{{ templates.error() }}</p>
+        }
+        @for (template of templates.templates(); track template.name) {
+          <div class="template-row" role="group" [attr.aria-label]="'Template ' + template.name">
+            @if (renamingTemplate() === template.name) {
+              <input
+                id="rename-template"
+                pInputText
+                aria-label="Template name"
+                [ngModel]="templateName()"
+                (ngModelChange)="templateName.set($event)"
+                [disabled]="templates.busy()"
+                (keydown.enter)="saveTemplateName(template)"
+                (keydown.escape)="
+                  cancelTemplateRename(); $event.preventDefault(); $event.stopPropagation()
+                "
+              />
+            } @else {
+              <span class="template-name">{{ template.name }}</span>
+            }
+            <div class="template-actions">
+              @if (renamingTemplate() === template.name) {
+                <p-button
+                  label="Save"
+                  severity="secondary"
+                  [text]="true"
+                  size="small"
+                  [disabled]="templates.busy() || !templateName().trim()"
+                  (click)="saveTemplateName(template)"
+                />
+                <p-button
+                  label="Cancel"
+                  severity="secondary"
+                  [text]="true"
+                  size="small"
+                  [disabled]="templates.busy()"
+                  (click)="cancelTemplateRename()"
+                />
+              } @else {
+                <p-button
+                  label="Rename"
+                  severity="secondary"
+                  [text]="true"
+                  size="small"
+                  [disabled]="templates.busy()"
+                  (click)="beginTemplateRename(template)"
+                />
+              }
+              <p-button
+                label="Export"
+                severity="secondary"
+                [text]="true"
+                size="small"
+                [disabled]="templates.busy()"
+                (click)="templates.exportTemplate(template)"
+              />
+              <p-button
+                label="Delete"
+                severity="danger"
+                [text]="true"
+                size="small"
+                [disabled]="templates.busy()"
+                (click)="templates.deleteTemplate(template)"
+              />
+            </div>
+          </div>
+        } @empty {
+          <p class="field-hint">No templates yet. Save one in Create playroom.</p>
+        }
+      </section>
       <section class="settings-file-settings" aria-labelledby="settings-file-title">
         <h2 class="settings-section-title" id="settings-file-title">Settings file</h2>
         <p class="settings-section-description">
