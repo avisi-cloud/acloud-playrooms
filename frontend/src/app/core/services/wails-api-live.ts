@@ -170,6 +170,10 @@ export const wailsApi = {
   logout: (operationID: string): Promise<void> => app.Logout(operationID),
 
   exportActivityLog: (content: string): Promise<void> => app.ExportActivityLog(content),
+  /** Native save dialog for the settings file; cancelling saves nothing. */
+  exportSettings: (content: string): Promise<void> => app.ExportSettings(content),
+  /** Native open dialog; resolves to the file's text, or '' when cancelled. */
+  readSettingsToImport: (): Promise<string> => app.ReadSettingsToImport(),
 
   // Operations
   cancelOperation: (operationID: string): Promise<boolean> => app.CancelOperation(operationID),

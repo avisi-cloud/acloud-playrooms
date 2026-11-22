@@ -61,7 +61,7 @@ describe('Settings page', () => {
     vi.restoreAllMocks();
   });
 
-  it('keeps Appearance first and templates between Environment variables and Tool paths', async () => {
+  it('keeps Appearance first and templates and the settings file between Environment variables and Tool paths', async () => {
     const fixture = TestBed.createComponent(SettingsPageComponent);
     await fixture.whenStable();
     const headings = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('h2')).map(
@@ -69,9 +69,10 @@ describe('Settings page', () => {
     );
     expect(headings[0]).toBe('Appearance');
     const environment = headings.indexOf('Environment variables');
-    expect(headings.slice(environment, environment + 3)).toEqual([
+    expect(headings.slice(environment, environment + 4)).toEqual([
       'Environment variables',
       'Playroom templates',
+      'Settings file',
       'Tool paths',
     ]);
   });

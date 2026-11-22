@@ -7,7 +7,10 @@ import { EnvironmentService } from '../../../../core/services/environment';
 import { DesktopNotificationsService } from '../../../../core/services/desktop-notifications';
 import { MenuBarService } from '../../../../core/services/menu-bar';
 import { DockBadge } from '../../../../shared/models';
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
+import { DialogModule } from 'primeng/dialog';
+import { SettingsFileService } from '../../../../core/services/settings-file';
+import { OverlayFocusDirective } from '../../../../shared/directives';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -31,6 +34,8 @@ import { T3CodePathCardComponent } from '../../components/t3-code-path/t3-code-p
     AcloudBinaryCardComponent,
     TailscaleBinaryCardComponent,
     T3CodePathCardComponent,
+    DialogModule,
+    OverlayFocusDirective,
   ],
   templateUrl: './settings.html',
   styleUrl: './settings.css',
@@ -91,8 +96,25 @@ export class SettingsPageComponent {
     { label: 'Dark', value: 'dark', icon: 'pi-moon' },
     { label: 'System', value: 'system', icon: 'pi-desktop' },
   ];
+  readonly settingsFile = inject(SettingsFileService);
+  readonly applyLabel = computed(() => {
+    const count = this.settingsFile.pendingImport()?.changes.length ?? 0;
+    return count === 1 ? 'Apply 1 change' : `Apply ${count} changes`;
+  });
+  private readonly acloudBinary = viewChild(AcloudBinaryCardComponent);
+  private readonly tailscaleBinary = viewChild(TailscaleBinaryCardComponent);
+  private readonly t3CodePath = viewChild(T3CodePathCardComponent);
   private readonly router = inject(Router);
 
+  /** The tool path cards keep their own status, so they read it again after an import. */
+  async applyImport(): Promise<void> {
+    await this.settingsFile.applyPendingImport();
+    await Promise.all([
+      this.acloudBinary()?.refresh(),
+      this.tailscaleBinary()?.refresh(),
+      this.t3CodePath()?.refresh(),
+    ]);
+  }
   goBack(): void {
     void this.router.navigate(['/rooms']);
   }

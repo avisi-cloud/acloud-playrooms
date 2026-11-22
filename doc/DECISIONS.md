@@ -19,6 +19,7 @@ it, update the entry.
 
 **Open — revisit these**
 
+- [A settings file replaces, it does not merge](#a-settings-file-replaces-it-does-not-merge)
 - [Evening stops run inside the app](#evening-stops-run-inside-the-app)
 
 - [The menu bar shows the frontend's room list](#the-menu-bar-shows-the-frontends-room-list)
@@ -64,6 +65,23 @@ it, update the entry.
 ---
 
 ## Open — revisit these
+
+### A settings file replaces, it does not merge
+
+**Export settings…** writes the Settings screen's preferences, the evening stop,
+the saved tool paths and only the `playroom config` defaults whose source is
+`config`. Values from `cache` or built-ins are left out, so a new Mac keeps
+following its own built-ins. Credentials, tokens and environment variable values
+have no field in the file. Templates and remembered choices (last editor,
+terminal, pinned rooms) are not included.
+
+**Import settings…** treats the file as the whole picture: a configured default
+missing from the file is unset, and an empty tool path returns to automatic
+lookup. Every change is listed (current → new) before anything runs. Changes
+apply in that order and stop at the first failure, which is named; earlier
+changes stay applied. Version 1 refuses unknown or missing keys, other versions
+and defaults the running acloud does not know. Revisit if teams want to share a
+partial file, such as defaults only.
 
 ### Playroom templates use a strict versioned JSON file
 

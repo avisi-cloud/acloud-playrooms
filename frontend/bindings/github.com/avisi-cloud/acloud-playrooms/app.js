@@ -177,6 +177,15 @@ export function ExportPlayroomTemplate(template) {
 }
 
 /**
+ * ExportSettings saves the settings file the frontend built; it never contains credentials or environment values.
+ * @param {string} content
+ * @returns {$CancellablePromise<void>}
+ */
+export function ExportSettings(content) {
+    return $Call.ByID(3183060272, content);
+}
+
+/**
  * GetAcloudBinaryStatus describes the binary the app will run, why, and what to
  * do when there is none.
  * @returns {$CancellablePromise<cli$0.BinaryStatus>}
@@ -516,6 +525,14 @@ export function PreviewUpdatePlayroom(input) {
     return $Call.ByID(2213859593, input).then(/** @type {($result: any) => any} */(($result) => {
         return $$createType32($result);
     }));
+}
+
+/**
+ * ReadSettingsToImport returns the chosen file's text, or "" when the dialog was cancelled.
+ * @returns {$CancellablePromise<string>}
+ */
+export function ReadSettingsToImport() {
+    return $Call.ByID(2272561802);
 }
 
 /**

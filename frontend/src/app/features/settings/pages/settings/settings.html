@@ -368,6 +368,33 @@
           <p class="field-hint">No templates yet. Save one in Create playroom.</p>
         }
       </section>
+      <section class="settings-file-settings" aria-labelledby="settings-file-title">
+        <h2 class="settings-section-title" id="settings-file-title">Settings file</h2>
+        <p class="settings-section-description">
+          Moves these settings, tool paths and your playroom defaults to another Mac as one file.
+          Never includes credentials, tokens or environment variable values.
+        </p>
+        <div class="settings-file-actions">
+          <p-button
+            label="Export settings…"
+            icon="pi pi-download"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            [disabled]="settingsFile.busy()"
+            (click)="settingsFile.exportSettings()"
+          />
+          <p-button
+            label="Import settings…"
+            icon="pi pi-upload"
+            severity="secondary"
+            [outlined]="true"
+            size="small"
+            [disabled]="settingsFile.busy()"
+            (click)="settingsFile.chooseSettingsToImport()"
+          />
+        </div>
+      </section>
       <h2 class="settings-section-title">Tool paths</h2>
       <p class="settings-section-description">
         Detected automatically. Set a path when you want to use a specific installation.
@@ -378,3 +405,59 @@
     </div>
   </div>
 </div>
+<p-dialog
+  appOverlayFocus="Import settings"
+  [appOverlayVisible]="!!settingsFile.pendingImport()"
+  [visible]="!!settingsFile.pendingImport()"
+  (visibleChange)="$event || settingsFile.cancelPendingImport()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  header="Import settings?"
+  [style]="{ width: 'var(--overlay-lg)' }"
+  appendTo="body"
+  styleClass="av-dialog"
+>
+  @if (settingsFile.pendingImport(); as pending) {
+    @if (pending.changes.length === 0) {
+      <p>This file matches your current settings. Nothing will change.</p>
+    } @else {
+      <p>
+        Playroom defaults run through <code>playroom config set</code> and <code>unset</code>, and
+        show up in Activity.
+      </p>
+      <table class="settings-changes" aria-label="Settings that will change">
+        <thead>
+          <tr>
+            <th scope="col">Setting</th>
+            <th scope="col">Current</th>
+            <th scope="col">New</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (change of pending.changes; track change.section + change.key) {
+            <tr>
+              <th scope="row">
+                <span class="settings-change-section">{{ change.section }}</span>
+                {{ change.label }}
+              </th>
+              <td>{{ change.currentText }}</td>
+              <td class="settings-change-next">{{ change.nextText }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  }
+  <ng-template pTemplate="footer">
+    <p-button
+      [label]="settingsFile.pendingImport()?.changes?.length ? 'Cancel' : 'Close'"
+      severity="secondary"
+      [outlined]="true"
+      (click)="settingsFile.cancelPendingImport()"
+    />
+    @if (settingsFile.pendingImport()?.changes?.length) {
+      <p-button [label]="applyLabel()" (click)="applyImport()" />
+    }
+  </ng-template>
+</p-dialog>
