@@ -45,6 +45,71 @@ describe('RoomsPageComponent', () => {
       (call: unknown[]) => (call[0] as { Playhouse?: string }).Playhouse,
     );
 
+  it('renders loaded totals, keeps them independent of filters and reacts to rooms and ownership', async () => {
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('playhouse-a');
+    const fixture = TestBed.createComponent(RoomsPageComponent);
+    await fixture.whenStable();
+    state.setUser('developer@example.test');
+    state.setRooms([
+      listingToRoom(
+        {
+          Name: 'mine',
+          Owner: 'developer@example.test',
+          CPURequest: '250m',
+          MemRequest: '2Gi',
+          DiskSize: '20Gi',
+        },
+        'playhouse-a',
+      ),
+      listingToRoom(
+        {
+          Name: 'other',
+          Owner: 'other@example.test',
+          CPURequest: '2',
+          MemRequest: '8Gi',
+          DiskSize: '40Gi',
+        },
+        'playhouse-a',
+      ),
+      listingToRoom({ Name: 'unknown' }, 'playhouse-a'),
+    ]);
+    const page = fixture.componentInstance;
+    page.query.set('missing');
+    page.mineOnly.set(true);
+    page.statusFilter.set('stopped');
+    await fixture.whenStable();
+    const summary = fixture.nativeElement.querySelector(
+      'button[aria-label="Requested resources"]',
+    ) as HTMLButtonElement;
+    expect(summary.querySelector('.requested-resources-wide')!.textContent).toBe(
+      '2.25 CPU · 10 GiB · 60 GiB',
+    );
+    expect(summary.querySelector('.requested-resources-narrow')!.textContent).toBe(
+      '2.25 CPU · 10 GiB',
+    );
+    expect(summary.title).toBe(
+      'Requested: 2.25 CPU · 10 GiB memory · 60 GiB storage (yours: 0.25 CPU · 2 GiB memory · 20 GiB storage)',
+    );
+    expect(summary.querySelector('.pi-exclamation-circle')).not.toBeNull();
+    expect(page.requestedResources().unknown).toContain('1 room without a CPU request');
+    summary.click();
+    await fixture.whenStable();
+    expect(document.body.textContent).toContain('1 room without a CPU request');
+    state.setUser('other@example.test');
+    expect(page.requestedResources().yours).toBe('2 CPU · 8 GiB memory · 40 GiB storage');
+    state.setUser('');
+    expect(page.requestedResources().yours).toBe('Not reported');
+    state.setRooms([]);
+    expect(page.requestedResources().all).toBe('0 CPU · 0 GiB memory · 0 GiB storage');
+    state.selectPlayhouse('playhouse-b');
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('button[aria-label="Requested resources"]'),
+    ).toBeNull();
+    fixture.destroy();
+  });
+
   it('selects only owned rooms, toggles names and adds a visible Shift range', async () => {
     const state = TestBed.inject(PlayroomStateService);
     state.selectPlayhouse('playhouse-a');

@@ -328,3 +328,77 @@
 .filter-bar {
   flex-wrap: wrap;
 }
+
+.page-header-stack {
+  width: 100%;
+  container-type: inline-size;
+}
+.rooms-title-row {
+  display: flex;
+  align-items: center;
+  column-gap: 12px;
+  min-width: 0;
+}
+.rooms-title-row h1 {
+  flex-shrink: 0;
+}
+.requested-resources {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: 0;
+  border-radius: var(--r-sm);
+  padding: 2px;
+  background: transparent;
+  color: var(--tx-2);
+  font: inherit;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+  cursor: pointer;
+}
+.requested-resources .pi {
+  margin-right: 4px;
+  color: var(--warn);
+  font-size: 11px;
+}
+.requested-resources-label {
+  color: var(--tx-3);
+}
+.requested-resources-narrow {
+  display: none;
+}
+/* At the 900px window minimum the column is title-wide: wrap under it, CPU and memory only. */
+@container (max-width: 320px) {
+  .rooms-title-row {
+    flex-wrap: wrap;
+  }
+  .requested-resources-label,
+  .requested-resources-wide {
+    display: none;
+  }
+  .requested-resources-narrow {
+    display: inline;
+  }
+}
+.requested-resources:hover {
+  color: var(--link);
+}
+.requested-resources:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+.requested-resources-details {
+  max-width: min(440px, 70vw);
+  color: var(--tx-2);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.requested-resources-details p {
+  margin: 0 0 8px;
+}
+.requested-resources-details p:last-child {
+  margin-bottom: 0;
+}

@@ -322,6 +322,20 @@ Dummy mode uses in-memory templates, a JSON download and a browser file chooser;
 reload resets its templates. The live app uses native Wails file dialogs and Go
 storage. `PlayroomTemplatesService` exposes async state through signals.
 
+### Requested resources
+
+The overview's title row shows requested CPU, memory and storage for all loaded
+rooms, including stopped rooms. Search, status, Mine and owner grouping do not
+change these totals. The row uses short labels (`4.5 CPU · 18 GiB · 140 GiB`,
+rounded to 2 decimals); at the 900px window minimum it wraps under the title and
+keeps CPU and memory. Click it for the full totals, yours, and counts such as
+**2 rooms without a CPU request**; a warning icon marks that some are missing.
+Missing ownership says **Not reported** for yours.
+`shared/utils/requested-resources.ts` parses Kubernetes decimal, binary and
+exponent quantities into cores and bytes, then shows memory and storage in GiB.
+Missing, malformed, negative or non-finite quantities stay unknown; explicit
+zero remains known. No capacity or percentage is inferred from these requests.
+
 ### Bulk playroom actions
 
 The overview keeps selection in page signals, outside the cache. Select playrooms
