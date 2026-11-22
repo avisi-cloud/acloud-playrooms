@@ -36,6 +36,34 @@ async function read<T>(value: T): Promise<T> {
   return structuredClone(value);
 }
 
+// The browser stands in for the native save dialog.
+function downloadFile(content: string, filename: string, type: string): void {
+  const url = URL.createObjectURL(new Blob([content], { type }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// The browser stands in for the native open dialog; cancelling resolves to ''.
+function chooseFileText(accept: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.hidden = true;
+    const finish = (text: Promise<string>) => {
+      input.remove();
+      text.then(resolve, reject);
+    };
+    input.addEventListener('change', () => finish(input.files?.[0]?.text() ?? Promise.resolve('')));
+    input.addEventListener('cancel', () => finish(Promise.resolve('')));
+    document.body.append(input);
+    input.click();
+  });
+}
+
 async function unavailable(): Promise<never> {
   throw new Error('Dummy mode: this action is not simulated. No external action was taken.');
 }
@@ -237,14 +265,11 @@ const simulatedApi: typeof liveApi = {
     });
   },
   getAppVersion: () => read('0.29.1+dummy'),
-  exportActivityLog: async (content: string): Promise<void> => {
-    const url = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'activity-log.txt';
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-  },
+  exportActivityLog: async (content: string): Promise<void> =>
+    downloadFile(content, 'activity-log.txt', 'text/plain;charset=utf-8'),
+  exportSettings: async (content: string): Promise<void> =>
+    downloadFile(content, 'acloud-playrooms-settings.json', 'application/json'),
+  readSettingsToImport: () => chooseFileText('application/json,.json'),
   getAcloudVersion: () => read('0.39.0'),
   isLoggedIn: () => read(signedIn),
   getCachedPlayhouse: () => read(playhouses[scopeKey()]?.[0]?.Slug ?? ''),

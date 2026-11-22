@@ -372,6 +372,16 @@ tool status. The cards live in `features/settings/components` and use
 the saved app or CLI path is reserved for future integration and is not launched
 or added to the command environment. Defaults remains dedicated to playroom defaults.
 
+Settings → **Settings file** exports and imports one JSON file
+(`acloud-playrooms-settings.json`). The schema, its validation and the change list
+live in `shared/utils/settings-file.ts`; `core/services/settings-file.ts` reads the
+current values, and applies a confirmed import through the same service setters,
+tool path calls and `PlayroomDefaultsService.saveDefault` (so `playroom config
+set/unset`, in Activity) the screens use. Go's `ExportSettings` and
+`ReadSettingsToImport` own the native dialogs and refuse files over 1 MB. Dummy
+mode downloads the file and reads it from a browser file picker. See DECISIONS for
+what is included and why an import replaces.
+
 The health check (`features/settings/pages/health-check`, at `/settings/health`) runs
 `CheckHealth` once on open and again with **Run again**. It is opened from the Settings
 header and from the **Run health check** action on a connect or open failure that no
