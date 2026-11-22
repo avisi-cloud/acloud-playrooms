@@ -76,6 +76,18 @@ it('receives simulated deep links until unsubscribed', () => {
   expect(handler).toHaveBeenCalledTimes(1);
 });
 
+it('stores templates separately from returned copies and refuses environment values', async () => {
+  const templates = await api.getPlayroomTemplates();
+  expect(templates[0].name).toBe('Web development');
+  templates[0].name = 'Saved';
+  await api.savePlayroomTemplates(templates);
+  templates[0].name = 'Not saved';
+  expect((await api.getPlayroomTemplates())[0].name).toBe('Saved');
+  templates[0].options.env = ['TOKEN=value'];
+  await expect(api.savePlayroomTemplates(templates)).rejects.toThrow('keys, never values');
+  expect((await api.getPlayroomTemplates())[0].options.env).toEqual([]);
+});
+
 it('simulates app and Homebrew updates while respecting the app check switch', async () => {
   history.replaceState({}, '', '/rooms?updates=available');
   expect(await api.checkUpdates(true)).toEqual({ AppVersion: '0.30.0', AcloudVersion: '0.41.0' });
