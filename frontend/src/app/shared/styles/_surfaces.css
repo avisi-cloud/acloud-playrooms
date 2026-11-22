@@ -34,7 +34,7 @@
   border-color: rgba(17, 153, 187, 0.42);
 }
 .command-prompt {
-  color: var(--accent);
+  color: var(--ok-on-dark);
   flex-shrink: 0;
 }
 .command-text {
@@ -47,7 +47,7 @@
    bar with a prompt glyph — which is what you stare at while typing a name on
    the first step of the create wizard. */
 .command-text--pending {
-  color: rgba(184, 221, 232, 0.42);
+  color: var(--idle-on-dark);
   font-style: italic;
 }
 

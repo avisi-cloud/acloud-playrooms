@@ -10,6 +10,8 @@
    explaining why. The log no longer opens itself over an overlay, and if the
    user opens it by hand the drawer stays reachable. */
 .cli-log__backdrop {
+  border: 0;
+  padding: 0;
   position: fixed;
   inset: 0;
   z-index: 1090;
@@ -103,7 +105,7 @@
 
 .cli-log__line--cmd::before {
   content: '$ ';
-  color: var(--cyan);
+  color: var(--link);
 }
 
 .cli-log__line--err {

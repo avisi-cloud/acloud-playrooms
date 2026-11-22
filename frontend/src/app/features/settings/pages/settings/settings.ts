@@ -1,3 +1,5 @@
+import { PageHeadingDirective } from '../../../../shared/directives/page-heading';
+import { FieldDescriptionDirective } from '../../../../shared/directives/field-description';
 import type { PlayroomTemplate } from '../../../../shared/models/playroom-template';
 import { PlayroomTemplatesService } from '../../../../core/services/playroom-templates';
 import { UpdatesService } from '../../../../core/services/updates';
@@ -26,6 +28,8 @@ import { T3CodePathCardComponent } from '../../components/t3-code-path/t3-code-p
 @Component({
   selector: 'app-settings-page',
   imports: [
+    PageHeadingDirective,
+    FieldDescriptionDirective,
     FormsModule,
     InputTextModule,
     SelectModule,

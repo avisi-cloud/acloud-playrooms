@@ -1,3 +1,5 @@
+import { PageHeadingDirective } from '../../../../shared/directives/page-heading';
+import { TooltipModule } from 'primeng/tooltip';
 import { DestroyRef } from '@angular/core';
 import { ShortcutsService } from '../../../../core/services/shortcuts';
 import { CommonModule } from '@angular/common';
@@ -37,6 +39,8 @@ const BACKGROUND_POLL_MS = 15000;
 @Component({
   selector: 'app-playhouse-select-page',
   imports: [
+    PageHeadingDirective,
+    TooltipModule,
     CommonModule,
     FormsModule,
     ButtonModule,

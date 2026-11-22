@@ -1,3 +1,4 @@
+import { FieldDescriptionDirective } from '../../../shared/directives/field-description';
 import {
   ChangeDetectorRef,
   Component,
@@ -41,6 +42,7 @@ import { OverlayFocusDirective } from '../../directives';
   selector: 'app-playroom-connect-dialog',
   host: { '(document:keydown.escape)': 'closeFromEscape($event)' },
   imports: [
+    FieldDescriptionDirective,
     FormsModule,
     DialogModule,
     ButtonModule,
@@ -65,6 +67,14 @@ export class PlayroomConnectDialogComponent implements OnChanges {
   allowingCurrentIP = false;
   allowCurrentIPComplete = false;
   private allowCurrentIPSelection = this.state.captureSelection();
+
+  get executeLabel(): string {
+    return this.allowCurrentIPComplete
+      ? 'Connect again'
+      : this.tab === 'connect'
+        ? 'Connect'
+        : 'Open';
+  }
 
   canAllowCurrentIP(): boolean {
     return (

@@ -37,6 +37,7 @@
         <input
           pInputText
           id="t3-code-path"
+          aria-describedby="t3-code-path-problem"
           class="binary-input"
           type="text"
           spellcheck="false"
@@ -65,7 +66,7 @@
         />
       </div>
       @if (problem(); as failed) {
-        <p class="binary-problem" role="alert">
+        <p id="t3-code-path-problem" class="binary-problem" role="alert">
           <i class="pi pi-exclamation-circle" aria-hidden="true"></i><span>{{ failed }}</span>
         </p>
       }

@@ -1,3 +1,4 @@
+import { Tooltip } from 'primeng/tooltip';
 import { vi } from 'vitest';
 
 import { By } from '@angular/platform-browser';
@@ -88,7 +89,10 @@ describe('RoomsPageComponent', () => {
     expect(summary.querySelector('.requested-resources-narrow')!.textContent).toBe(
       '2.25 CPU · 10 GiB',
     );
-    expect(summary.title).toBe(
+    expect(
+      fixture.debugElement.query(By.css('[aria-label="Requested resources"]')).injector.get(Tooltip)
+        .content,
+    ).toBe(
       'Requested: 2.25 CPU · 10 GiB memory · 60 GiB storage (yours: 0.25 CPU · 2 GiB memory · 20 GiB storage)',
     );
     expect(summary.querySelector('.pi-exclamation-circle')).not.toBeNull();

@@ -8,6 +8,23 @@ describe('StringListEditorComponent', () => {
     }).compileComponents();
   });
 
+  it('names the inner remove button and ties row errors and the list hint to the input', () => {
+    const fixture = TestBed.createComponent(StringListEditorComponent);
+    fixture.componentRef.setInput('values', ['bad']);
+    fixture.componentRef.setInput('itemLabel', 'port');
+    fixture.componentRef.setInput('hint', 'Forward a port.');
+    fixture.componentRef.setInput('itemErrors', ['Enter a port number.']);
+    fixture.detectChanges();
+    const root: HTMLElement = fixture.nativeElement;
+    expect(root.querySelector('button')?.getAttribute('aria-label')).toBe('Remove port 1');
+    const ids = root.querySelector('input')!.getAttribute('aria-describedby')!.split(' ');
+    expect(ids.map((id) => root.querySelector(`[id="${id}"]`)?.textContent?.trim())).toEqual([
+      'Forward a port.',
+      'Enter a port number.',
+    ]);
+    expect(root.querySelector('[role="alert"]')?.textContent?.trim()).toBe('Enter a port number.');
+  });
+
   it('edits and appends values', () => {
     const fixture = TestBed.createComponent(StringListEditorComponent);
     fixture.componentRef.setInput('values', ['first']);

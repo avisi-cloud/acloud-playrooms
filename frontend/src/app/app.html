@@ -117,6 +117,9 @@
 @defer (when showPlayhouseChooser) {
   <app-playhouse-chooser [(visible)]="showPlayhouseChooser" />
 }
+<p class="sr-only" role="status" aria-live="polite" aria-atomic="true">
+  {{ state.roomStatusAnnouncement() }}
+</p>
 <a class="skip-link" href="#main-content">Skip to main content</a>
 
 <div
@@ -240,7 +243,12 @@
         <!-- Only ever set when the running acloud is too old for these screens,
              or newer than the version they were checked against. -->
         @if (session.compatibility(); as compatibility) {
-          <span class="sidebar-brand-warning" [title]="compatibility.Explanation">
+          <span
+            class="sidebar-brand-warning"
+            [pTooltip]="compatibility.Explanation"
+            tooltipEvent="both"
+            tabindex="0"
+          >
             <i class="pi pi-exclamation-triangle"></i>
             @if (compatibility.RunningVersionIsOlderThanMinimum) {
               <span>needs {{ compatibility.MinimumVersion }} or later</span>
@@ -276,18 +284,28 @@
         } @else {
           <span class="scope-levels">
             <span class="scope-caption">Context</span>
-            <span class="scope-value" [title]="scope.currentContext() || 'Not reported'">{{
-              scope.currentContext() || 'Not reported'
-            }}</span>
+            <span
+              class="scope-value"
+              [pTooltip]="scope.currentContext() || 'Not reported'"
+              tooltipEvent="both"
+              tabindex="0"
+              >{{ scope.currentContext() || 'Not reported' }}</span
+            >
             <span class="scope-caption">Organisation</span>
-            <span class="scope-value" [title]="scope.currentOrganisation() || 'Not reported'">{{
-              scope.currentOrganisation() || 'Not reported'
-            }}</span>
+            <span
+              class="scope-value"
+              [pTooltip]="scope.currentOrganisation() || 'Not reported'"
+              tooltipEvent="both"
+              tabindex="0"
+              >{{ scope.currentOrganisation() || 'Not reported' }}</span
+            >
             <span class="scope-caption">Playhouse</span>
             <span
               class="scope-value playhouse-name"
               [class.not-chosen]="currentScopeState() === 'no-playhouse'"
-              [title]="state.playhouse() || 'None chosen yet'"
+              [pTooltip]="state.playhouse() || 'None chosen yet'"
+              tooltipEvent="both"
+              tabindex="0"
               >{{ state.playhouse() || 'None chosen yet' }}</span
             >
           </span>
@@ -380,7 +398,12 @@
         @if (showLocalTools) {
           <div id="local-tool-statuses" class="tool-list">
             @for (tool of session.toolStatuses(); track tool.Command) {
-              <div class="tool-row" [title]="toolStatusTitle(tool)">
+              <div
+                class="tool-row"
+                [pTooltip]="toolStatusTitle(tool)"
+                tooltipEvent="both"
+                tabindex="0"
+              >
                 <span
                   class="tool-dot"
                   [class.installed]="tool.State === 'installed'"
@@ -400,8 +423,9 @@
             class="activity-btn"
             [class.running]="console.isRunning()"
             [class.failed]="console.lastFailed() && !console.isRunning()"
-            [title]="activityTitle()"
+            [pTooltip]="activityTitle()"
             (click)="console.toggle()"
+            tooltipEvent="both"
           >
             @if (console.isRunning()) {
               <i class="pi pi-spin pi-spinner activity-icon"></i>
@@ -430,8 +454,9 @@
           class="account-btn"
           [class.signed-out]="!state.loggedIn()"
           [disabled]="session.signingInOrOut()"
-          [title]="state.loggedIn() ? 'Account options' : 'Sign in to acloud'"
+          [pTooltip]="state.loggedIn() ? 'Account options' : 'Sign in to acloud'"
           (click)="authMenu.toggle($event)"
+          tooltipEvent="both"
         >
           <div class="account-text">
             <span class="account-name">{{
@@ -456,10 +481,16 @@
   <!-- is-loading makes the brand mark breathe: a screen loading its first
        data, or a command running. It is the app's only first-load indicator —
        screens render nothing while they wait. -->
-  <main id="main-content" tabindex="-1" class="main-panel" [class.is-loading]="shellBusy()">
+  <main
+    id="main-content"
+    tabindex="-1"
+    class="main-panel"
+    [class.is-loading]="shellBusy()"
+    [attr.aria-busy]="pageLoading.active()"
+  >
     <app-schedule-notices />
     <app-update-notices placement="page" />
-    <router-outlet (activate)="focusRoutedContent()" />
+    <router-outlet />
   </main>
 </div>
 

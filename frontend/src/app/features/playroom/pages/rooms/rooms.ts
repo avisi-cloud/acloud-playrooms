@@ -1,3 +1,5 @@
+import { PageHeadingDirective } from '../../../../shared/directives/page-heading';
+import { TooltipModule } from 'primeng/tooltip';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ShortcutsService } from '../../../../core/services/shortcuts';
 import { CommonModule } from '@angular/common';
@@ -62,6 +64,8 @@ import { PlayroomBreadcrumbComponent } from '../../components/playroom-breadcrum
 @Component({
   selector: 'app-rooms-page',
   imports: [
+    PageHeadingDirective,
+    TooltipModule,
     ConfirmDeleteDialog,
     CommonModule,
     FormsModule,

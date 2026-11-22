@@ -21,15 +21,16 @@
   --border-2: rgba(0, 51, 69, 0.15);
 
   --tx: #1a3440;
-  --tx-2: #4d6975;
-  --tx-3: #526f7d;
-  --link: #08748f;
+  --tx-2: #435e6a;
+  --tx-3: #486572;
+  --link: #00647d;
+  --accent-text: #007344;
 
-  --ok: #05b16a;
+  --ok: #007344;
   --busy: #006a86;
-  --warn: #b07d14;
-  --bad: #d24a3d;
-  --idle: #8a8a90;
+  --warn: #805900;
+  --bad: #b33429;
+  --idle: #626269;
 
   /* The card head and both overlay headers are a fixed dark gradient in either
      theme, so status text on them needs its own set — brighter than --ok/--bad
@@ -38,8 +39,8 @@
   --ok-on-dark: #4fd99a;
   --busy-on-dark: #7dd7ea;
   --warn-on-dark: #e7b85b;
-  --bad-on-dark: #f87171;
-  --idle-on-dark: #9bb0bc;
+  --bad-on-dark: #ffaaaa;
+  --idle-on-dark: #c5d5df;
 
   --r: 0.5rem;
   --r-sm: 0.375rem;
@@ -72,12 +73,13 @@ html.app-dark {
   --tx-2: #9bb0bc;
   --tx-3: #91aab7;
   --link: #7dd7ea;
+  --accent-text: #1dd478;
 
   --ok: #1dd478;
-  --busy: #1199bb;
+  --busy: #62c9e3;
   --warn: #e7b85b;
-  --bad: #f2675a;
-  --idle: #6b8898;
+  --bad: #ff8d82;
+  --idle: #a2b9c6;
 
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.25);
   --shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
@@ -101,6 +103,12 @@ html.app-dark {
    has too little contrast against it. */
 .sidebar :where(a, button, [tabindex]):focus-visible {
   outline-color: #7dd7ea;
+}
+
+/* Page headings get focus from code after navigation (for screen readers), not
+   from the user, so they show no ring. */
+h1[tabindex='-1']:focus-visible {
+  outline: none;
 }
 
 .skip-link {

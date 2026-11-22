@@ -8,6 +8,6 @@
 }
 
 .command-flag {
-  color: var(--cyan);
+  color: var(--busy-on-dark);
   font-weight: 600;
 }

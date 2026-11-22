@@ -1,3 +1,5 @@
+import { By } from '@angular/platform-browser';
+import { Tooltip } from 'primeng/tooltip';
 import { TestBed } from '@angular/core/testing';
 import { listingToRoom } from '../../utils';
 import { PlayroomRowComponent } from './playroom-row';
@@ -62,17 +64,25 @@ describe('PlayroomRowComponent', () => {
     expect(cells[6].textContent).toContain('None');
   });
 
-  it('uses the card owner label and keeps full owner, name and image in titles', () => {
+  it('uses the card owner label and keeps full owner, name and image in keyboard tooltips', () => {
     const fixture = createRow();
     const cells = fixture.nativeElement.querySelectorAll('td');
     expect(cells[2].textContent.trim()).toBe('you');
-    expect(cells[2].querySelector('[title]').title).toBe('me');
-    expect(cells[0].querySelector('.row-name').title).toBe('demo');
-    expect(cells[3].querySelector('[title]').title).toBe('ubuntu');
+    expect(
+      fixture.debugElement.query(By.css('td:nth-child(3) .truncate')).injector.get(Tooltip).content,
+    ).toBe('me');
+    expect(fixture.debugElement.query(By.css('.row-name')).injector.get(Tooltip).content).toBe(
+      'demo',
+    );
+    expect(
+      fixture.debugElement.query(By.css('td:nth-child(4) .truncate')).injector.get(Tooltip).content,
+    ).toBe('ubuntu');
     fixture.componentRef.setInput('room', { ...room, owner: 'other@example.test' });
     fixture.detectChanges();
     expect(cells[2].textContent.trim()).toBe('other');
-    expect(cells[2].querySelector('[title]').title).toBe('other@example.test');
+    expect(
+      fixture.debugElement.query(By.css('td:nth-child(3) .truncate')).injector.get(Tooltip).content,
+    ).toBe('other@example.test');
     fixture.componentRef.setInput('room', { ...room, ephemeral: true });
     fixture.detectChanges();
     expect(cells[2].textContent.trim()).toBe('you · ephemeral');

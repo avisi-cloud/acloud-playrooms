@@ -18,6 +18,7 @@
         <div class="dialog-subtitle">{{ room?.host || 'Host not assigned yet' }}</div>
       </div>
       <p-button
+        ariaLabel="Close"
         icon="pi pi-times"
         severity="secondary"
         [text]="true"
@@ -37,7 +38,7 @@
         [class.active]="tab === 'connect'"
         (click)="tab = 'connect'"
       >
-        <i class="pi pi-terminal"></i> Connect
+        <i class="pi pi-desktop"></i> Connect
       </button>
       <button
         id="open-tab"
@@ -78,9 +79,12 @@
             appendTo="body"
           />
         </div>
-        <label class="toggle-line">
+        <label class="toggle-line" for="playroom-connect-dialog-forwardAgent">
           <span>Forward SSH agent<small class="flag-ref">--forward-agent</small></span>
-          <p-toggleswitch [(ngModel)]="forwardAgent" />
+          <p-toggleswitch
+            inputId="playroom-connect-dialog-forwardAgent"
+            [(ngModel)]="forwardAgent"
+          />
         </label>
         <div class="field-group">
           <label class="field-label" for="connect-via">Connect via</label>
@@ -92,8 +96,11 @@
             [(ngModel)]="via"
             [style]="{ width: '100%' }"
             appendTo="body"
+            appFieldDescription="connect-via-hint-1"
           />
-          <small class="field-hint">{{ selectedConnectionPathHint() }}</small>
+          <small class="field-hint" id="connect-via-hint-1">{{
+            selectedConnectionPathHint()
+          }}</small>
         </div>
       } @else {
         <div class="field-group">
@@ -118,8 +125,9 @@
             [(ngModel)]="via"
             [style]="{ width: '100%' }"
             appendTo="body"
+            appFieldDescription="open-via-hint-1"
           />
-          <small class="field-hint">{{ selectedConnectionPathHint() }}</small>
+          <small class="field-hint" id="open-via-hint-1">{{ selectedConnectionPathHint() }}</small>
         </div>
       }
     </div>
@@ -188,8 +196,9 @@
       (click)="close()"
     />
     <p-button
-      [label]="allowCurrentIPComplete ? 'Connect again' : tab === 'connect' ? 'Connect' : 'Open'"
-      [icon]="tab === 'connect' ? 'pi pi-terminal' : 'pi pi-code'"
+      [label]="executeLabel"
+      [ariaLabel]="executeLabel"
+      [icon]="tab === 'connect' ? 'pi pi-desktop' : 'pi pi-code'"
       size="small"
       [disabled]="allowingCurrentIP || confirmingAllowCurrentIP"
       (click)="execute()"

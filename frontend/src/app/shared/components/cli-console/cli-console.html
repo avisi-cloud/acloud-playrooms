@@ -4,7 +4,12 @@
        whole app for it would read as heavier than it is. It sits directly under
        the panel, so it also swallows the click on the sidebar's Activity
        button, which is what makes that button close rather than re-toggle. -->
-  <div class="cli-log__backdrop" (click)="console.close()"></div>
+  <button
+    type="button"
+    class="cli-log__backdrop"
+    aria-label="Close activity log"
+    (click)="console.close()"
+  ></button>
   <section class="cli-log" role="region" aria-label="Activity log">
     <header class="cli-log__head">
       <span class="cli-log__title">
@@ -40,16 +45,20 @@
             severity="secondary"
             [text]="true"
             size="small"
-            title="Copy the whole log"
+            pTooltip="Copy the whole log"
             (click)="copyWholeLogToClipboard()"
+            tooltipEvent="both"
+            ariaLabel="Copy the whole log"
           />
           <p-button
             icon="pi pi-trash"
             severity="secondary"
             [text]="true"
             size="small"
-            title="Clear the log"
+            pTooltip="Clear the log"
             (click)="console.clearLog()"
+            tooltipEvent="both"
+            ariaLabel="Clear the log"
           />
         }
         <p-button
@@ -57,8 +66,10 @@
           severity="secondary"
           [text]="true"
           size="small"
-          title="Close"
+          pTooltip="Close"
           (click)="console.close()"
+          tooltipEvent="both"
+          ariaLabel="Close"
         />
       </span>
     </header>

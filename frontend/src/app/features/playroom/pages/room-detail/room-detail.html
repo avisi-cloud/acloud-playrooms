@@ -7,7 +7,9 @@
       </button>
       <div class="page-header-divider"></div>
       <div class="page-header-stack">
-        <h1 class="page-header-title">{{ roomName() }}<span class="punt">.</span></h1>
+        <h1 appPageHeading class="page-header-title">
+          {{ roomName() }}<span class="punt">.</span>
+        </h1>
         <app-playroom-breadcrumb [roomName]="roomName()" />
         @if (room(); as room) {
           <p class="page-header-sub">
@@ -57,16 +59,19 @@
               [label]="badge.label"
               icon="pi pi-sync"
               size="small"
-              [title]="badge.hint"
+              [pTooltip]="badge.hint"
               (click)="openUpdate()"
+              tooltipEvent="both"
             />
           } @else {
             <p-tag
               [value]="badge.label"
               severity="warn"
               [rounded]="true"
-              [title]="badge.hint"
+              [pTooltip]="badge.hint"
               styleClass="detail-tag"
+              tooltipEvent="both"
+              tabindex="0"
             />
           }
         }
@@ -157,7 +162,7 @@
             @case ('ready') {
               <p-button
                 label="Connect"
-                icon="pi pi-terminal"
+                icon="pi pi-desktop"
                 size="small"
                 (click)="openConnect('connect')"
               />
@@ -224,9 +229,10 @@
               severity="secondary"
               [text]="true"
               styleClass="detail-more-btn"
-              title="More actions"
-              [attr.aria-label]="'More actions for playroom ' + roomName()"
+              pTooltip="More actions"
+              [ariaLabel]="'More actions for playroom ' + roomName()"
               (click)="moreMenu.toggle($event)"
+              tooltipEvent="both"
             />
             <p-menu #moreMenu [model]="moreMenuItems()" [popup]="true" appendTo="body" />
           </div>
@@ -250,9 +256,10 @@
                     [text]="true"
                     size="small"
                     styleClass="copy-btn"
-                    title="Copy SSH host"
-                    [attr.aria-label]="'Copy SSH host for ' + roomName()"
+                    pTooltip="Copy SSH host"
+                    [ariaLabel]="'Copy SSH host for ' + roomName()"
                     (click)="copyHost()"
+                    tooltipEvent="both"
                   />
                 } @else {
                   <strong class="ssh-empty">not yet assigned</strong>
@@ -360,9 +367,13 @@
             </div>
             <div class="list-row">
               <span>Image</span
-              ><strong class="mono truncate" [title]="room()!.image">{{
-                room()!.image || '—'
-              }}</strong>
+              ><strong
+                class="mono truncate"
+                [pTooltip]="room()!.image"
+                tooltipEvent="both"
+                tabindex="0"
+                >{{ room()!.image || '—' }}</strong
+              >
             </div>
             <div class="list-row">
               <span>CPU reserved</span><strong>{{ room()!.cpuReq || 'Not reported' }}</strong>
@@ -421,7 +432,9 @@
             <div class="list-row">
               <span>Room configuration</span>
               @if (describeOutdated(room()!); as badge) {
-                <strong [title]="badge.hint">{{ badge.label }}</strong>
+                <strong [pTooltip]="badge.hint" tooltipEvent="both" tabindex="0">{{
+                  badge.label
+                }}</strong>
               } @else {
                 <strong>Up to date</strong>
               }
@@ -450,8 +463,9 @@
                   severity="secondary"
                   [text]="true"
                   size="small"
-                  title="Jump to this room's latest command in the shared Activity log"
+                  pTooltip="Jump to this room's latest command in the shared Activity log"
                   (click)="openRoomActivity()"
+                  tooltipEvent="both"
                 />
               } @else {
                 <strong>No commands this session</strong>

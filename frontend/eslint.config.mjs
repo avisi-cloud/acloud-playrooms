@@ -75,19 +75,5 @@ export default tseslint.config(
   {
     files: ['**/*.html'],
     extends: [...angular.configs.templateRecommended, ...angular.configs.templateAccessibility],
-    rules: {
-      // Known gap, deliberately not blocking. Every field label in the app is
-      // a plain <label> beside its PrimeNG control rather than bound to it,
-      // which a screen reader cannot associate. Fixing it means threading
-      // `inputId` through roughly sixty controls across ten templates — real
-      // work with real UI risk, and its own task rather than a side effect of
-      // turning the linter on. Left as a warning so the count stays visible
-      // and cannot quietly grow.
-      '@angular-eslint/template/label-has-associated-control': 'warn',
-      // Same call: a handful of clickable non-button elements (the toast body,
-      // a console line, a room card) need a keyboard path and a focus stop.
-      '@angular-eslint/template/click-events-have-key-events': 'warn',
-      '@angular-eslint/template/interactive-supports-focus': 'warn',
-    },
   },
 );

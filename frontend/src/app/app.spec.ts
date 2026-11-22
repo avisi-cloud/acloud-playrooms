@@ -1,3 +1,5 @@
+import { By } from '@angular/platform-browser';
+import { Tooltip } from 'primeng/tooltip';
 import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
@@ -104,6 +106,29 @@ describe('App', () => {
     expect(compiled.querySelector('.sidebar-brand-name')?.textContent).toContain(
       'Avisi Playground',
     );
+  });
+
+  it('marks page loading separately from the decorative breath finishing', async () => {
+    const fixture = TestBed.createComponent(App);
+    const app = fixture.componentInstance;
+    await fixture.whenStable();
+    const main = fixture.nativeElement.querySelector('main') as HTMLElement;
+    let finish = () => {};
+    const loading = app.pageLoading.runAndShowIndicatorIf(
+      true,
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    fixture.detectChanges();
+    expect(main.getAttribute('aria-busy')).toBe('true');
+    expect(main.classList.contains('is-loading')).toBe(true);
+    finish();
+    await loading;
+    fixture.detectChanges();
+    expect(main.getAttribute('aria-busy')).toBe('false');
+    expect(main.classList.contains('is-loading')).toBe(true);
   });
 
   it('breathes for a running command, not only for a screen load', async () => {
@@ -399,7 +424,7 @@ describe('App', () => {
 
     it('shows the selected playhouse with full names on hover and opens the chooser', async () => {
       const longName = 'playhouse-platform-infrastructure-experiments-with-a-long-name';
-      const { app, block, values } = await renderWorkingIn({
+      const { fixture, app, block, values } = await renderWorkingIn({
         loggedIn: true,
         context: 'development',
         organisation: 'platform',
@@ -408,7 +433,11 @@ describe('App', () => {
 
       expect(app.currentScopeState()).toBe('playhouse-selected');
       expect(values[2].textContent?.trim()).toBe(longName);
-      expect(values.map((value) => value.title)).toEqual(['development', 'platform', longName]);
+      expect(
+        fixture.debugElement
+          .queryAll(By.css('.scope-value'))
+          .map((value) => value.injector.get(Tooltip).content),
+      ).toEqual(['development', 'platform', longName]);
       expect(block.textContent).toContain('Switch playhouse');
 
       block.click();

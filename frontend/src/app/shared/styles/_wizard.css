@@ -51,7 +51,7 @@
   background: color-mix(in srgb, var(--cyan) 10%, transparent);
   padding: 1px 5px;
   border-radius: 3px;
-  color: var(--cyan);
+  color: var(--link);
   white-space: nowrap;
 }
 

@@ -3,7 +3,7 @@
     <div class="page-header-left">
       <div class="page-header-stack">
         <div class="rooms-title-row">
-          <h1 class="page-header-title">Playrooms<span class="punt">.</span></h1>
+          <h1 appPageHeading class="page-header-title">Playrooms<span class="punt">.</span></h1>
           @if (loaded()) {
             <button
               type="button"
@@ -11,7 +11,7 @@
               aria-label="Requested resources"
               aria-haspopup="dialog"
               [attr.aria-expanded]="requestedResourcesPopover.overlayVisible"
-              [title]="
+              [pTooltip]="
                 'Requested: ' +
                 requestedResources().all +
                 ' (yours: ' +
@@ -19,6 +19,7 @@
                 ')'
               "
               (click)="requestedResourcesPopover.toggle($event)"
+              tooltipEvent="both"
             >
               @if (requestedResources().unknown.length) {
                 <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
@@ -70,10 +71,11 @@
         severity="secondary"
         [outlined]="true"
         size="small"
-        [title]="updatedAgo() ? 'Updated ' + updatedAgo() : ''"
+        [pTooltip]="updatedAgo() ? 'Updated ' + updatedAgo() : ''"
         [disabled]="refreshing()"
         [loading]="refreshing()"
         (click)="refreshRooms()"
+        tooltipEvent="both"
       />
       <p-button
         [label]="selectMode() ? 'Done selecting' : 'Select playrooms'"
@@ -88,8 +90,9 @@
         icon="pi pi-plus"
         severity="success"
         size="small"
-        title="Create a playroom (c)"
+        pTooltip="Create a playroom (c)"
         (click)="openCreate()"
+        tooltipEvent="both"
       />
     </div>
   </header>
@@ -155,7 +158,12 @@
       <span>Group by owner</span>
     </label>
     <!-- The shortcuts exist; without this nothing tells you so. -->
-    <span class="shortcut-hint" title="Keyboard shortcuts on this screen">
+    <span
+      class="shortcut-hint"
+      pTooltip="Keyboard shortcuts on this screen"
+      tooltipEvent="both"
+      tabindex="0"
+    >
       <kbd>c</kbd> create <span class="shortcut-sep">·</span> <kbd>/</kbd> search
       <span class="shortcut-sep">·</span> <kbd>esc</kbd> close
     </span>
@@ -305,7 +313,9 @@
                 "
                 aria-hidden="true"
               ></i>
-              <span class="owner-label" [title]="group.label">{{ group.label }}</span>
+              <span class="owner-label" [pTooltip]="group.label" tooltipEvent="both" tabindex="0">{{
+                group.label
+              }}</span>
               <span class="owner-count">{{ group.rooms.length }}</span>
             </button>
           </h2>
@@ -353,7 +363,12 @@
                     <th scope="col">Status</th>
                     <th scope="col">Owner</th>
                     <th scope="col">Image</th>
-                    <th scope="col" title="CPU and memory request / limit, and disk allocation">
+                    <th
+                      scope="col"
+                      pTooltip="CPU and memory request / limit, and disk allocation"
+                      tooltipEvent="both"
+                      tabindex="0"
+                    >
                       Size
                     </th>
                     <th scope="col">Age</th>

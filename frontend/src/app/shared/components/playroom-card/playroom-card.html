@@ -37,7 +37,9 @@
         <i [class]="pinned ? 'pi pi-star-fill' : 'pi pi-star'" aria-hidden="true"></i>
       </button>
       <div class="card-name">{{ room.name }}<span class="punt">.</span></div>
-      <span class="card-flavor" [title]="flavorTitle()">{{ flavorLabel() }}</span>
+      <span class="card-flavor" [pTooltip]="flavorTitle()" tooltipEvent="both" tabindex="0">{{
+        flavorLabel()
+      }}</span>
     </div>
     <div class="card-sub">
       {{ ownerLabel() }}
@@ -57,21 +59,30 @@
         statusLabel()
       }}</span>
       @if (room.rawStatus && room.rawStatus.toLowerCase() !== statusLabel().toLowerCase()) {
-        <span class="card-raw-status" [title]="room.rawStatus">{{ room.rawStatus }}</span>
+        <span
+          class="card-raw-status"
+          [pTooltip]="room.rawStatus"
+          tooltipEvent="both"
+          tabindex="0"
+          >{{ room.rawStatus }}</span
+        >
       }
       @if (outdatedBadge(); as badge) {
         @if (badge.opensUpdate && !pendingOperation) {
           <button
             type="button"
             class="card-outdated"
-            [title]="badge.hint"
+            [pTooltip]="badge.hint"
             [attr.aria-label]="'Update playroom ' + room.name + ': ' + badge.hint"
             (click)="$event.stopPropagation(); editRoom.emit(room.name)"
+            tooltipEvent="both"
           >
             {{ badge.label }}
           </button>
         } @else {
-          <span class="card-outdated" [title]="badge.hint">{{ badge.label }}</span>
+          <span class="card-outdated" [pTooltip]="badge.hint" tooltipEvent="both" tabindex="0">{{
+            badge.label
+          }}</span>
         }
       }
     </div>
@@ -92,16 +103,16 @@
       </div>
     </div>
     <div class="card-host">{{ room.host || '—' }}</div>
-    <div class="card-actions" (click)="$event.stopPropagation()">
+    <div class="card-actions">
       @if (pendingOperation) {
         <span role="status">{{ pendingOperation }}…</span>
       } @else if (room.status === 'ready') {
         <p-button
           label="Connect"
-          icon="pi pi-terminal"
+          icon="pi pi-desktop"
           size="small"
           styleClass="card-primary-btn"
-          [attr.aria-label]="'Connect to playroom ' + room.name"
+          [ariaLabel]="'Connect to playroom ' + room.name"
           (click)="$event.stopPropagation(); connectRoom.emit(room.name)"
         />
         <p-button
@@ -110,9 +121,10 @@
           severity="secondary"
           [outlined]="true"
           styleClass="card-icon-btn"
-          title="Open in editor"
-          [attr.aria-label]="'Open playroom ' + room.name + ' in editor'"
+          pTooltip="Open in editor"
+          [ariaLabel]="'Open playroom ' + room.name + ' in editor'"
           (click)="$event.stopPropagation(); openInEditor.emit(room.name)"
+          tooltipEvent="both"
         />
         <p-button
           icon="pi pi-stop-circle"
@@ -120,9 +132,10 @@
           severity="secondary"
           [outlined]="true"
           styleClass="card-icon-btn"
-          title="Stop"
-          [attr.aria-label]="'Stop playroom ' + room.name"
+          pTooltip="Stop"
+          [ariaLabel]="'Stop playroom ' + room.name"
           (click)="$event.stopPropagation(); stopRoom.emit(room.name)"
+          tooltipEvent="both"
         />
       } @else if (room.status === 'stopped') {
         <p-button
@@ -130,7 +143,7 @@
           icon="pi pi-power-off"
           size="small"
           styleClass="card-primary-btn"
-          [attr.aria-label]="'Start playroom ' + room.name"
+          [ariaLabel]="'Start playroom ' + room.name"
           (click)="$event.stopPropagation(); startRoom.emit(room.name)"
         />
       } @else if (room.status === 'failed') {
@@ -142,7 +155,7 @@
           icon="pi pi-pencil"
           size="small"
           styleClass="card-primary-btn"
-          [attr.aria-label]="'Edit playroom ' + room.name"
+          [ariaLabel]="'Edit playroom ' + room.name"
           (click)="$event.stopPropagation(); editRoom.emit(room.name)"
         />
       }
@@ -157,9 +170,10 @@
           severity="secondary"
           [text]="true"
           styleClass="card-icon-btn"
-          [attr.aria-label]="'More actions for playroom ' + room.name"
-          title="More actions"
+          [ariaLabel]="'More actions for playroom ' + room.name"
+          pTooltip="More actions"
           (click)="$event.stopPropagation(); menu.toggle($event)"
+          tooltipEvent="both"
         />
         <p-menu #menu [model]="menuItems()" [popup]="true" appendTo="body">
           <ng-template #end>

@@ -22,7 +22,7 @@
   font-family: var(--font-mono);
 }
 .punt {
-  color: var(--cyan);
+  color: var(--link);
 }
 
 /* Announced, not drawn. Screens that render nothing while they load still owe

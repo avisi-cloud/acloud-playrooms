@@ -25,17 +25,22 @@
     <summary>Advanced delete flags</summary>
     <div class="field-row mt-3">
       <div class="field-group">
-        <label class="field-label">Wait timeout</label>
-        <input pInputText class="w-full" [(ngModel)]="deleteTimeout" />
+        <label class="field-label" for="playroom-actions-host-deleteTimeout">Wait timeout</label>
+        <input
+          id="playroom-actions-host-deleteTimeout"
+          pInputText
+          class="w-full"
+          [(ngModel)]="deleteTimeout"
+        />
       </div>
       <div class="toggle-stack">
         <label class="toggle-line" for="delete-playroom-no-wait">
           <span>{{ optionTexts['no-wait'].label }}<small class="flag-ref">--no-wait</small></span>
           <p-toggleswitch inputId="delete-playroom-no-wait" [(ngModel)]="deleteNoWait" />
         </label>
-        <label class="toggle-line">
+        <label class="toggle-line" for="playroom-actions-host-deleteForce">
           <span>Delete one you do not own<small class="flag-ref">--force</small></span>
-          <p-toggleswitch [(ngModel)]="deleteForce" />
+          <p-toggleswitch inputId="playroom-actions-host-deleteForce" [(ngModel)]="deleteForce" />
         </label>
       </div>
     </div>

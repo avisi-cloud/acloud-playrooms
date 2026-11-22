@@ -1,3 +1,4 @@
+import { FieldDescriptionDirective } from '../../../shared/directives/field-description';
 import { describeComparison } from '../setting-changes/setting-changes';
 import { describeChanges, PlayroomUpdateField } from './describe-changes';
 import {
@@ -65,6 +66,7 @@ const EMPTY_ROOM: Playroom = {
 @Component({
   selector: 'app-playroom-update-drawer',
   imports: [
+    FieldDescriptionDirective,
     FormsModule,
     DrawerModule,
     ButtonModule,

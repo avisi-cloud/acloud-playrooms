@@ -1,3 +1,4 @@
+import { TooltipModule } from 'primeng/tooltip';
 import { Component, DestroyRef, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -31,6 +32,7 @@ const PALETTE_ACTIONS: MenuAction[] = [
 @Component({
   selector: 'app-command-palette',
   imports: [
+    TooltipModule,
     FormsModule,
     DialogModule,
     InputTextModule,
