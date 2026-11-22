@@ -87,7 +87,7 @@
 .wizard-step.active .wizard-step-marker {
   background: var(--cyan);
   border-color: var(--cyan);
-  color: #fff;
+  color: #001b25;
 }
 
 .wizard-step.done {

@@ -1,3 +1,5 @@
+import { OverlayFocusDirective } from '../../../../shared/directives/overlay-focus';
+import { FieldDescriptionDirective } from '../../../../shared/directives/field-description';
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -102,6 +104,8 @@ export function normalizePlayhouseSlug(name: string): string {
 @Component({
   selector: 'app-create-playhouse-drawer',
   imports: [
+    OverlayFocusDirective,
+    FieldDescriptionDirective,
     CommonModule,
     FormsModule,
     DrawerModule,

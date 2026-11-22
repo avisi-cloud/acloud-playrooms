@@ -55,7 +55,7 @@
   color: var(--tx);
 }
 .provisioning-banner > i {
-  color: var(--cyan);
+  color: var(--link);
   margin-top: 2px;
 }
 .provisioning-text {
@@ -70,7 +70,7 @@
   opacity: 0.8;
 }
 .provisioning-row .pi-spinner {
-  color: var(--cyan);
+  color: var(--link);
 }
 
 .manager-panel,
@@ -116,7 +116,7 @@
   justify-content: center;
   background: rgba(17, 153, 187, 0.12);
   border: 1px solid rgba(17, 153, 187, 0.22);
-  color: var(--cyan);
+  color: var(--link);
 }
 .current-slug {
   font-size: 15px;
@@ -268,7 +268,7 @@
 .selected-pill {
   border: 1px solid rgba(17, 153, 187, 0.25);
   background: rgba(17, 153, 187, 0.12);
-  color: var(--cyan);
+  color: var(--link);
   border-radius: 999px;
   padding: 2px 7px;
   font-size: 10px;
@@ -315,7 +315,7 @@
   background: color-mix(in srgb, var(--cyan) 10%, transparent);
   padding: 1px 5px;
   border-radius: 3px;
-  color: var(--cyan);
+  color: var(--link);
 }
 
 /* Identity and Version fold into the slug cell here. The table panel is now
@@ -363,7 +363,7 @@
   font-size: 11.5px;
 }
 .layout-updating {
-  color: var(--cyan);
+  color: var(--link);
   font-size: 11.5px;
 }
 .slug-meta > .muted {

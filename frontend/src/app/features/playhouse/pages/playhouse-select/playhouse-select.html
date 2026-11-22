@@ -15,9 +15,10 @@
           <button
             type="button"
             class="layout-badge-button"
-            [title]="layout.hint"
+            [pTooltip]="layout.hint"
             [attr.aria-label]="'Bring ' + playhouse.Slug + ' up to date'"
             (click)="askUpdate(playhouse, $event)"
+            tooltipEvent="both"
           >
             <p-tag [value]="layout.label" [severity]="layout.severity" styleClass="ph-tag" />
           </button>
@@ -25,8 +26,10 @@
           <p-tag
             [value]="layout.label"
             [severity]="layout.severity"
-            [title]="layout.hint"
+            [pTooltip]="layout.hint"
             styleClass="ph-tag"
+            tooltipEvent="both"
+            tabindex="0"
           />
         }
       }
@@ -38,7 +41,7 @@
 <div class="page-shell select-view">
   <header class="page-header">
     <div>
-      <h1 class="page-header-title">Playhouses<span class="punt">.</span></h1>
+      <h1 appPageHeading class="page-header-title">Playhouses<span class="punt">.</span></h1>
       <p class="page-header-sub">Manage the cluster layer that hosts your playrooms.</p>
     </div>
     <div class="page-header-actions">
@@ -159,7 +162,12 @@
                     <tr class="provisioning-row">
                       <td class="actions-col">
                         <div class="row-actions">
-                          <i class="pi pi-spin pi-spinner" title="Provisioning"></i>
+                          <i
+                            class="pi pi-spin pi-spinner"
+                            pTooltip="Provisioning"
+                            tooltipEvent="both"
+                            tabindex="0"
+                          ></i>
                         </div>
                       </td>
                       <td>
@@ -183,36 +191,49 @@
                       <td class="actions-col">
                         <div class="row-actions">
                           @if (isDeleting(playhouse.Slug)) {
-                            <i class="pi pi-spin pi-spinner" title="Deleting"></i>
+                            <i
+                              class="pi pi-spin pi-spinner"
+                              pTooltip="Deleting"
+                              tooltipEvent="both"
+                              tabindex="0"
+                            ></i>
                           } @else if (jobs.isConverging(playhouse.Slug)) {
-                            <i class="pi pi-spin pi-spinner" title="Updating"></i>
+                            <i
+                              class="pi pi-spin pi-spinner"
+                              pTooltip="Updating"
+                              tooltipEvent="both"
+                              tabindex="0"
+                            ></i>
                           } @else {
                             <p-button
                               icon="pi pi-arrow-right"
                               severity="secondary"
                               [outlined]="true"
                               size="small"
-                              title="Use playhouse"
-                              [attr.aria-label]="'Use playhouse ' + playhouse.Slug"
+                              pTooltip="Use playhouse"
+                              [ariaLabel]="'Use playhouse ' + playhouse.Slug"
                               (click)="selectPlayhouse(playhouse.Slug)"
+                              tooltipEvent="both"
                             />
                             <p-button
                               icon="pi pi-sliders-h"
                               severity="secondary"
                               [outlined]="true"
                               size="small"
-                              title="Edit playhouse"
-                              [attr.aria-label]="'Edit playhouse ' + playhouse.Slug"
+                              pTooltip="Edit playhouse"
+                              [ariaLabel]="'Edit playhouse ' + playhouse.Slug"
                               (click)="askUpdate(playhouse, $event)"
+                              tooltipEvent="both"
                             />
                             <p-button
                               icon="pi pi-trash"
                               severity="danger"
                               [outlined]="true"
                               size="small"
-                              title="Delete playhouse"
-                              [attr.aria-label]="'Delete playhouse ' + playhouse.Slug"
+                              pTooltip="Delete playhouse"
+                              [ariaLabel]="'Delete playhouse ' + playhouse.Slug"
                               (click)="askDelete(playhouse, $event)"
+                              tooltipEvent="both"
                             />
                           }
                         </div>
@@ -251,9 +272,10 @@
                                 <button
                                   type="button"
                                   class="layout-badge-button"
-                                  title="The create stopped after the cluster was made. Resume runs acloud playhouse update to finish it."
+                                  pTooltip="The create stopped after the cluster was made. Resume runs acloud playhouse update to finish it."
                                   [attr.aria-label]="'Resume the setup of ' + playhouse.Slug"
                                   (click)="resumeSetup(playhouse.Slug, $event)"
+                                  tooltipEvent="both"
                                 >
                                   <p-tag
                                     value="setup incomplete · resume"
@@ -388,13 +410,18 @@
     <summary>Advanced delete flags</summary>
     <div class="field-row mt-3">
       <div class="field-group">
-        <label class="field-label">Wait timeout</label>
-        <input pInputText class="w-full" [(ngModel)]="deleteTimeout" />
+        <label class="field-label" for="playhouse-select-deleteTimeout">Wait timeout</label>
+        <input
+          id="playhouse-select-deleteTimeout"
+          pInputText
+          class="w-full"
+          [(ngModel)]="deleteTimeout"
+        />
       </div>
       <div class="toggle-stack">
-        <label class="toggle-line">
+        <label class="toggle-line" for="playhouse-select-deleteForce">
           <span>Delete even if playrooms exist<small class="flag-ref">--force</small></span>
-          <p-toggleswitch [(ngModel)]="deleteForce" />
+          <p-toggleswitch inputId="playhouse-select-deleteForce" [(ngModel)]="deleteForce" />
         </label>
         <label class="toggle-line" for="delete-playhouse-no-wait">
           <span>{{ optionTexts['no-wait'].label }}<small class="flag-ref">--no-wait</small></span>

@@ -35,6 +35,39 @@ describe('Playroom connect dialog', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
+  it('keeps the footer accessible name equal to its visible action as the label changes', async () => {
+    TestBed.inject(PlayroomStateService).selectPlayhouse(room.playhouse);
+    vi.spyOn(wailsApi, 'updatePlayhouse').mockResolvedValue();
+    vi.spyOn(wailsApi, 'previewConnectPlayroom').mockResolvedValue(['preview']);
+    vi.spyOn(wailsApi, 'previewOpenPlayroomInEditor').mockResolvedValue(['preview']);
+    const fixture = TestBed.createComponent(PlayroomConnectDialogComponent);
+    fixture.componentRef.setInput('room', room);
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+    const component = fixture.componentInstance;
+    const primeDialog = fixture.debugElement.query(By.directive(Dialog))
+      .componentInstance as Dialog;
+    const expectActionLabel = (label: string) => {
+      const button = primeDialog
+        .container()
+        ?.querySelector<HTMLButtonElement>('.p-dialog-footer p-button:last-child button');
+      expect(button?.getAttribute('aria-label')).toBe(label);
+      expect(button?.querySelector('.p-button-label')?.textContent).toBe(label);
+    };
+    expectActionLabel('Connect');
+    component.via = 'nodeport';
+    component.requestAllowCurrentIP();
+    await component.allowCurrentIP();
+    await fixture.whenStable();
+    expectActionLabel('Connect again');
+    fixture.componentRef.setInput('visible', false);
+    await fixture.whenStable();
+    fixture.componentRef.setInput('tab', 'open');
+    fixture.componentRef.setInput('visible', true);
+    await fixture.whenStable();
+    expectActionLabel('Open');
+  });
+
   function escapeDialog() {
     const fixture = TestBed.createComponent(PlayroomConnectDialogComponent);
     fixture.detectChanges();

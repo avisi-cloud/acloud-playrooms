@@ -631,6 +631,11 @@ held to a cycle boundary by `keepMarkBreathingUntilCycleEnds`, over
 load, a Refresh, and any command in the activity log — and screens render
 nothing while they wait for the first of them.
 
+The main landmark's `aria-busy` follows `PageLoadingService.active()` directly.
+It becomes false as soon as page data finishes loading, while the decorative
+`.is-loading` class can remain until the 5.6-second breath cycle ends. Browser
+tests wait for `aria-busy="false"`, not the animation class.
+
 Commands are included because the activity indicator in the sidebar footer is a
 dot in a corner of a panel that stays closed: a twenty-minute playhouse create
 was invisible from every other screen. It is the same rule as the log's, so the
@@ -812,15 +817,31 @@ the two never fight over a line. ESLint additionally enforces the casing half of
 the naming rule above; the sentence half is a review matter, because no linter
 can see it.
 
-The linter reports **no errors and roughly seventy warnings**, and that split is
-deliberate. The warnings are one backlog: nearly every field label in the app is
-a plain `<label>` beside its PrimeNG control rather than bound to it, which a
-screen reader cannot associate. Fixing it means threading `inputId` through
-around sixty controls across ten templates — real work with real UI risk, and
-its own task rather than a side effect of turning the linter on. Leaving them as
-warnings keeps the count visible and stops it growing quietly. A handful of
-clickable non-button elements (the toast body, a console line, a room card)
-need a keyboard path for the same reason and are counted the same way.
+Accessibility rules are errors: labels use `for` and native `id` or PrimeNG
+`inputId`, and interactive elements have keyboard access. Icon buttons pass
+`ariaLabel` to the inner PrimeNG button. Informational tooltips use
+`tooltipEvent="both"` and have a keyboard focus target.
+
+Field hints and inline errors have IDs referenced by `aria-describedby`;
+`FieldDescriptionDirective` forwards descriptions to PrimeNG's inner control.
+Errors use `role="alert"`. The Connect dialog footer uses the same value for its
+visible label and `ariaLabel`, including **Connect again** after an allowlist
+update. Image selects keep the accessible name **Image** as
+the selected value changes. `PageHeadingDirective` focuses the destination's
+heading when it renders, including asynchronously loaded details, while an
+open modal keeps focus. A persistent polite live region announces reported
+room status changes; initial loads and unchanged polls stay quiet.
+
+`npm run test:contrast` measures text tokens against all three content surfaces
+in both themes and status text against the brightest fixed dark header stop.
+It also checks PrimeNG muted, placeholder and floating-label text tokens,
+which reuse `--tx-3` (hovered muted text uses `--tx-2`) in both themes instead
+of Aura's lighter surface palette. Secondary text buttons use `--tx-2` through
+the button preset; their dark pressed background uses `--surf-3` so the label
+keeps its contrast. The check covers normal, hover and pressed states.
+It runs inside `npm run check`.
+Brand fill colors stay separate from text colors. Axe browser tests in `e2e/accessibility.spec.ts` cover every route and
+the create drawer in both themes; run them with `npm run e2e`.
 
 `bindings/` is excluded from both tools. It is generated, and formatting it
 would only be undone by the next `wails3 generate bindings`.

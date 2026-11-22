@@ -72,6 +72,7 @@
         class="field-hint"
         [class.error]="nameError()"
         aria-live="polite"
+        [attr.role]="nameError() ? 'alert' : null"
         >{{ nameError() || 'Required. Lowercase letters, digits, dashes (DNS-1123).' }}</small
       >
       @if (nameSuggestion(); as suggestion) {
@@ -87,6 +88,7 @@
     <div class="field-group">
       <label class="field-label" for="create-image">{{ optionTexts.image.label }}</label>
       <p-select
+        ariaLabel="Image"
         inputId="create-image"
         [options]="images"
         [ngModel]="form.image"
@@ -97,6 +99,7 @@
         placeholder="Select or type an image"
         appendTo="body"
         [style]="{ width: '100%' }"
+        appFieldDescription="create-image-hint-1"
       >
         <ng-template let-image pTemplate="item">
           <div class="ca-option">
@@ -108,9 +111,13 @@
           </div>
         </ng-template>
       </p-select>
-      <small class="field-hint" [class.error]="imageErrorShown()">{{
-        imageErrorShown() || selectedImage()?.Description || optionTexts.image.hint
-      }}</small>
+      <small
+        class="field-hint"
+        [class.error]="imageErrorShown()"
+        id="create-image-hint-1"
+        [attr.role]="imageErrorShown() ? 'alert' : null"
+        >{{ imageErrorShown() || selectedImage()?.Description || optionTexts.image.hint }}</small
+      >
       @if (imageErrorShown()) {
         <p-button
           label="Go to Options"
@@ -140,6 +147,7 @@
         (ngModelChange)="chooseSize($event)"
         [style]="{ width: '100%' }"
         appendTo="body"
+        appFieldDescription="create-size-hint-1"
       >
         <ng-template let-option pTemplate="item">
           <div class="ca-option">
@@ -148,7 +156,7 @@
           </div>
         </ng-template>
       </p-select>
-      <small class="field-hint">{{ describeSize(selectedSize()) }}</small>
+      <small class="field-hint" id="create-size-hint-1">{{ describeSize(selectedSize()) }}</small>
     </div>
   </ng-template>
 
@@ -163,6 +171,7 @@
           placeholder="Template name"
           [(ngModel)]="templateName"
           (ngModelChange)="templateSaved = false"
+          aria-describedby="save-template-name-hint-1 save-template-name-hint-2 save-template-name-hint-3"
         />
         <p-button
           label="Save template"
@@ -173,14 +182,18 @@
           (click)="saveTemplate()"
         />
       </div>
-      <small class="field-hint"
+      <small class="field-hint" id="save-template-name-hint-1"
         >Saves environment keys only, without the room name, playhouse or SSH key.</small
       >
       @if (templateSaved) {
-        <small class="field-hint" role="status">Template saved.</small>
+        <small class="field-hint" role="status" id="save-template-name-hint-2"
+          >Template saved.</small
+        >
       }
       @if (templates.error()) {
-        <p class="field-hint error" role="alert">{{ templates.error() }}</p>
+        <p class="field-hint error" role="alert" id="save-template-name-hint-3">
+          {{ templates.error() }}
+        </p>
         <p-button
           label="Reload templates"
           severity="secondary"
@@ -239,8 +252,11 @@
                 pInputText
                 class="w-full"
                 [(ngModel)]="form.storage"
+                aria-describedby="create-storage-hint-1"
               />
-              <small class="field-hint">{{ optionTexts.storage.hint }}</small>
+              <small class="field-hint" id="create-storage-hint-1">{{
+                optionTexts.storage.hint
+              }}</small>
             </div>
             <ng-container *ngTemplateOutlet="sizeField" />
             <div class="field-row field-row--align-inputs">
@@ -251,6 +267,7 @@
                   ></label
                 ><input
                   id="create-cpu-request"
+                  aria-describedby="create-resources-hint"
                   pInputText
                   class="w-full"
                   [(ngModel)]="form.cpuReq"
@@ -261,7 +278,13 @@
                   >{{ optionTexts['cpu-limit'].label }}<wbr /><small class="flag-ref"
                     >--cpu-limit</small
                   ></label
-                ><input id="create-cpu-limit" pInputText class="w-full" [(ngModel)]="form.cpuLim" />
+                ><input
+                  id="create-cpu-limit"
+                  aria-describedby="create-resources-hint"
+                  pInputText
+                  class="w-full"
+                  [(ngModel)]="form.cpuLim"
+                />
               </div>
             </div>
             <div class="field-row field-row--align-inputs">
@@ -272,6 +295,7 @@
                   ></label
                 ><input
                   id="create-memory-request"
+                  aria-describedby="create-resources-hint"
                   pInputText
                   class="w-full"
                   [(ngModel)]="form.memReq"
@@ -284,13 +308,14 @@
                   ></label
                 ><input
                   id="create-memory-limit"
+                  aria-describedby="create-resources-hint"
                   pInputText
                   class="w-full"
                   [(ngModel)]="form.memLim"
                 />
               </div>
             </div>
-            <small class="field-hint"
+            <small id="create-resources-hint" class="field-hint"
               >Guaranteed is reserved for this playroom; maximum is the most it may use. Type
               <code>none</code> to leave one unset. Guaranteed <code>none</code> needs maximum
               <code>none</code> too, or Kubernetes reserves the whole maximum.</small
@@ -314,8 +339,11 @@
                 class="w-full"
                 [(ngModel)]="form.sshKey"
                 placeholder="~/.ssh/id_ed25519.pub"
+                aria-describedby="create-ssh-key-hint-1"
               />
-              <small class="field-hint">{{ optionTexts['ssh-key'].hint }}</small>
+              <small class="field-hint" id="create-ssh-key-hint-1">{{
+                optionTexts['ssh-key'].hint
+              }}</small>
             </div>
 
             <app-environment-editor [(values)]="form.env" />
@@ -361,6 +389,7 @@
                 [(ngModel)]="form.exposure"
                 [style]="{ width: '100%' }"
                 appendTo="body"
+                appFieldDescription="create-exposure-hint-1"
               >
                 <ng-template let-option pTemplate="item">
                   <div class="ca-option">
@@ -369,7 +398,9 @@
                   </div>
                 </ng-template>
               </p-select>
-              <small class="field-hint">{{ optionTexts.exposure.hint }}</small>
+              <small class="field-hint" id="create-exposure-hint-1">{{
+                optionTexts.exposure.hint
+              }}</small>
             </div>
             <label class="toggle-line" for="create-nodeport-ssh"
               ><span
@@ -379,8 +410,9 @@
                 inputId="create-nodeport-ssh"
                 [(ngModel)]="form.nodePortSSH"
                 [disabled]="form.exposure === 'nodeport'"
+                appFieldDescription="create-nodeport-ssh-hint"
             /></label>
-            <small class="field-hint">{{ nodePortSSHHint() }}</small>
+            <small id="create-nodeport-ssh-hint" class="field-hint">{{ nodePortSSHHint() }}</small>
             <div class="field-group mt-2">
               <label class="field-label" for="create-proxy-group">{{
                 optionTexts['proxy-group'].label
@@ -389,8 +421,11 @@
                 pInputText
                 class="w-full"
                 [(ngModel)]="form.proxyGroup"
+                aria-describedby="create-proxy-group-hint-1"
               />
-              <small class="field-hint">{{ optionTexts['proxy-group'].hint }}</small>
+              <small class="field-hint" id="create-proxy-group-hint-1">{{
+                optionTexts['proxy-group'].hint
+              }}</small>
             </div>
 
             <div class="section-label options-group-label">Behaviour</div>
@@ -403,8 +438,11 @@
                   pInputText
                   class="w-full"
                   [(ngModel)]="form.waitTimeout"
+                  aria-describedby="create-wait-timeout-hint-1"
                 />
-                <small class="field-hint">{{ optionTexts['wait-timeout'].hint }}</small>
+                <small class="field-hint" id="create-wait-timeout-hint-1">{{
+                  optionTexts['wait-timeout'].hint
+                }}</small>
               </div>
               <div class="toggle-stack">
                 <label class="toggle-line" for="create-no-wait"
@@ -424,16 +462,26 @@
             <label class="toggle-line mt-2" for="create-ephemeral"
               ><span
                 >{{ optionTexts.ephemeral.label }}<small class="flag-ref">--ephemeral</small></span
-              ><p-toggleswitch inputId="create-ephemeral" [(ngModel)]="form.ephemeral"
+              ><p-toggleswitch
+                inputId="create-ephemeral"
+                [(ngModel)]="form.ephemeral"
+                appFieldDescription="create-ephemeral-hint"
             /></label>
-            <small class="field-hint">{{ optionTexts.ephemeral.hint }}</small>
+            <small id="create-ephemeral-hint" class="field-hint">{{
+              optionTexts.ephemeral.hint
+            }}</small>
             <label class="toggle-line mt-2" for="create-read-only"
               ><span
                 >{{ optionTexts['read-only'].label
                 }}<small class="flag-ref">--read-only</small></span
-              ><p-toggleswitch inputId="create-read-only" [(ngModel)]="form.readOnly"
+              ><p-toggleswitch
+                inputId="create-read-only"
+                [(ngModel)]="form.readOnly"
+                appFieldDescription="create-read-only-hint"
             /></label>
-            <small class="field-hint">{{ optionTexts['read-only'].hint }}</small>
+            <small id="create-read-only-hint" class="field-hint">{{
+              optionTexts['read-only'].hint
+            }}</small>
 
             <div class="section-label options-group-label">Security</div>
             <label class="toggle-line" for="create-workspace-namespace"
@@ -443,8 +491,9 @@
               ><p-toggleswitch
                 inputId="create-workspace-namespace"
                 [(ngModel)]="form.workspaceNamespace"
+                appFieldDescription="create-workspace-namespace-hint"
             /></label>
-            <small class="field-hint"
+            <small id="create-workspace-namespace-hint" class="field-hint"
               >Lets the agent deploy to <code>playroom-{{ form.name || 'NAME' }}</code
               >, with its own kubeconfig, up to 20 pods and 4 CPU / 8 GiB. Without it, the playroom
               has no Kubernetes access.</small
@@ -472,6 +521,7 @@
                   [(ngModel)]="form.capabilities"
                   [style]="{ width: '100%' }"
                   appendTo="body"
+                  appFieldDescription="create-capabilities-hint-1"
                 >
                   <ng-template let-option pTemplate="item">
                     <div class="ca-option">
@@ -480,7 +530,9 @@
                     </div>
                   </ng-template>
                 </p-select>
-                <small class="field-hint">{{ optionTexts.capabilities.hint }}</small>
+                <small class="field-hint" id="create-capabilities-hint-1">{{
+                  optionTexts.capabilities.hint
+                }}</small>
               </div>
               <app-string-list-editor
                 [label]="optionTexts['cap-add'].label"
@@ -495,9 +547,14 @@
                 ><span
                   >{{ optionTexts.privileged.label
                   }}<small class="flag-ref">--privileged</small></span
-                ><p-toggleswitch inputId="create-privileged" [(ngModel)]="form.privileged"
+                ><p-toggleswitch
+                  inputId="create-privileged"
+                  [(ngModel)]="form.privileged"
+                  appFieldDescription="create-privileged-hint"
               /></label>
-              <small class="field-hint">{{ optionTexts.privileged.hint }}</small>
+              <small id="create-privileged-hint" class="field-hint">{{
+                optionTexts.privileged.hint
+              }}</small>
               @if (form.privileged) {
                 <div class="danger-note">
                   <i class="pi pi-exclamation-triangle"></i>
@@ -511,11 +568,14 @@
                   <span>I understand what privileged mode grants</span>
                   <p-toggleswitch
                     inputId="create-acknowledge-privileged"
+                    appFieldDescription="create-privileged-error"
                     [(ngModel)]="form.acknowledgePrivileged"
                   />
                 </label>
                 @if (touched && privilegedError()) {
-                  <small class="field-hint error">{{ privilegedError() }}</small>
+                  <small id="create-privileged-error" class="field-hint error" role="alert">{{
+                    privilegedError()
+                  }}</small>
                 }
               }
             </details>
@@ -593,7 +653,7 @@
             </div>
             <!-- Whatever is blocking Create, said next to the disabled button. -->
             @if (blockingError()) {
-              <div class="danger-copy danger-copy--strong">
+              <div class="danger-copy danger-copy--strong" role="alert">
                 <i class="pi pi-exclamation-triangle"></i>{{ blockingError() }}
               </div>
             }
@@ -630,7 +690,7 @@
       <ng-container *ngTemplateOutlet="sizeField" />
       <!-- The one blocker with no field in Easy, said next to the disabled Create. -->
       @if (privilegedError()) {
-        <div class="danger-copy danger-copy--strong">
+        <div class="danger-copy danger-copy--strong" role="alert">
           <i class="pi pi-exclamation-triangle"></i>{{ privilegedError() }}
         </div>
         <p-button

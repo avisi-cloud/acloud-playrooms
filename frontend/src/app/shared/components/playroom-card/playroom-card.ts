@@ -1,3 +1,4 @@
+import { TooltipModule } from 'primeng/tooltip';
 import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
@@ -29,7 +30,7 @@ import {
  */
 @Component({
   selector: 'app-playroom-card',
-  imports: [CommonModule, ButtonModule, MenuModule],
+  imports: [TooltipModule, CommonModule, ButtonModule, MenuModule],
   templateUrl: './playroom-card.html',
   styleUrl: './playroom-card.css',
   // PlayroomStateService rebuilds room objects rather than mutating them, so the

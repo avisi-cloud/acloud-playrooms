@@ -185,3 +185,33 @@ describe('last refreshed time', () => {
     expect(state.lastRefreshedAt()).toBeNull();
   });
 });
+
+describe('room status announcements', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({});
+  });
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('announces changes once without reading out the first list or unchanged polls', () => {
+    const state = TestBed.inject(PlayroomStateService);
+    state.selectPlayhouse('playhouse-demo');
+    const starting = {
+      ...listingToRoom({ Name: 'demo' }, 'playhouse-demo'),
+      status: 'starting' as const,
+    };
+    state.setRooms([starting]);
+    state.markRoomsLoaded('playhouse-demo');
+    expect(state.roomStatusAnnouncement()).toBe('');
+    state.setRooms([{ ...starting, status: 'ready' }]);
+    expect(state.roomStatusAnnouncement()).toBe('demo is ready');
+    const announce = vi.spyOn(state.roomStatusAnnouncement, 'set');
+    state.setRooms([{ ...starting, status: 'ready' }]);
+    expect(announce).not.toHaveBeenCalled();
+    state.noteScopeChange();
+    state.setRooms([starting]);
+    expect(state.roomStatusAnnouncement()).toBe('');
+    state.selectPlayhouse('playhouse-other');
+    expect(state.roomStatusAnnouncement()).toBe('');
+  });
+});

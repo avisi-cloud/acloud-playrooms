@@ -213,7 +213,7 @@
 }
 .card-icon {
   font-size: 11px;
-  color: var(--cyan);
+  color: var(--link);
 }
 
 .list-row {
@@ -259,7 +259,7 @@
 .ssh-host {
   font-family: var(--font-mono);
   font-size: 12px;
-  color: var(--cyan);
+  color: var(--link);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

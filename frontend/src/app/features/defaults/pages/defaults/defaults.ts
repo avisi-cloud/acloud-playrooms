@@ -1,3 +1,5 @@
+import { PageHeadingDirective } from '../../../../shared/directives/page-heading';
+import { TooltipModule } from 'primeng/tooltip';
 import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -152,6 +154,8 @@ const SLIDER_STEP = 0.01;
 @Component({
   selector: 'app-defaults-page',
   imports: [
+    PageHeadingDirective,
+    TooltipModule,
     CommonModule,
     FormsModule,
     ButtonModule,

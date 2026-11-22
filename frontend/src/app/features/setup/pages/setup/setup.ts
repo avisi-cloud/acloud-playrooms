@@ -1,3 +1,6 @@
+import { PageHeadingDirective } from '../../../../shared/directives/page-heading';
+import { FieldDescriptionDirective } from '../../../../shared/directives/field-description';
+import { TooltipModule } from 'primeng/tooltip';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -104,6 +107,9 @@ type SetupDefaultKey = 'ssh-key' | 'image';
 @Component({
   selector: 'app-setup-page',
   imports: [
+    PageHeadingDirective,
+    FieldDescriptionDirective,
+    TooltipModule,
     CommonModule,
     FormsModule,
     ButtonModule,

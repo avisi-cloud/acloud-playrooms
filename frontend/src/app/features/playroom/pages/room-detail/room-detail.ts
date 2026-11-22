@@ -1,3 +1,5 @@
+import { PageHeadingDirective } from '../../../../shared/directives/page-heading';
+import { TooltipModule } from 'primeng/tooltip';
 import { RoomKeepRunningComponent } from '../../../../shared/components/room-keep-running/room-keep-running';
 import { roomDeepLink } from '../../../../shared/utils/deep-link';
 import { ShortcutsService } from '../../../../core/services/shortcuts';
@@ -53,6 +55,8 @@ import {
 @Component({
   selector: 'app-room-detail-page',
   imports: [
+    PageHeadingDirective,
+    TooltipModule,
     RoomKeepRunningComponent,
     CommonModule,
     ButtonModule,

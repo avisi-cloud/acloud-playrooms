@@ -1,3 +1,6 @@
+import { OverlayFocusDirective } from '../../../../shared/directives/overlay-focus';
+import { FieldDescriptionDirective } from '../../../../shared/directives/field-description';
+import { TooltipModule } from 'primeng/tooltip';
 import { describeComparison } from '../../../../shared/components/setting-changes/setting-changes';
 import { describeChanges, PlayhouseUpdateField } from './describe-changes';
 import { CommonModule } from '@angular/common';
@@ -62,6 +65,9 @@ function blankForm(): UpdatePlayhouseForm {
 @Component({
   selector: 'app-update-playhouse-drawer',
   imports: [
+    OverlayFocusDirective,
+    FieldDescriptionDirective,
+    TooltipModule,
     CommonModule,
     FormsModule,
     DrawerModule,

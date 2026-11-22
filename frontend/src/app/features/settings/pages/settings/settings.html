@@ -7,7 +7,7 @@
       </button>
       <div class="page-header-divider"></div>
       <div class="page-header-stack">
-        <h1 class="page-header-title">Settings<span class="punt">.</span></h1>
+        <h1 appPageHeading class="page-header-title">Settings<span class="punt">.</span></h1>
         <p class="page-header-sub">Local tools and preferences for this app.</p>
       </div>
     </div>
@@ -51,6 +51,7 @@
                   [value]="option.value"
                   [checked]="state.themePreference() === option.value"
                   (change)="state.setThemePreference(option.value)"
+                  aria-describedby="theme-hint"
                 />
                 <i class="pi" [class]="option.icon" aria-hidden="true"></i>
                 <span>{{ option.label }}</span>
@@ -68,10 +69,13 @@
               inputId="background-grain"
               [ngModel]="state.backgroundGrain()"
               (ngModelChange)="state.setBackgroundGrain($event)"
+              appFieldDescription="background-grain-hint-1"
             />
             <span>{{ state.backgroundGrain() ? 'On' : 'Off' }}</span>
           </div>
-          <p class="field-hint">Adds a subtle texture to the app background.</p>
+          <p class="field-hint" id="background-grain-hint-1">
+            Adds a subtle texture to the app background.
+          </p>
         </div>
         <div class="field-group">
           <label class="field-label" for="ame-robot">AME Robot</label>
@@ -80,10 +84,11 @@
               inputId="ame-robot"
               [ngModel]="state.ameRobot()"
               (ngModelChange)="state.setAmeRobot($event)"
+              appFieldDescription="ame-robot-hint-1"
             />
             <span>{{ state.ameRobot() ? 'On' : 'Off' }}</span>
           </div>
-          <p class="field-hint">Shows the animated robot in the sidebar.</p>
+          <p class="field-hint" id="ame-robot-hint-1">Shows the animated robot in the sidebar.</p>
         </div>
       </section>
       <section class="notification-settings" aria-labelledby="updates-title">
@@ -264,10 +269,11 @@
               inputId="read-variables-from-login-shell"
               [ngModel]="environment.readVariablesFromLoginShell()"
               (ngModelChange)="environment.setReadVariablesFromLoginShell($event)"
+              appFieldDescription="read-variables-from-login-shell-hint-1"
             />
             <span>{{ environment.readVariablesFromLoginShell() ? 'On' : 'Off' }}</span>
           </div>
-          <p class="field-hint">
+          <p class="field-hint" id="read-variables-from-login-shell-hint-1">
             Runs your login shell to read bare KEY entries when checking or creating. Values stay
             private.
           </p>

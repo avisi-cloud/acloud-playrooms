@@ -1,3 +1,4 @@
+import { TooltipModule } from 'primeng/tooltip';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -24,7 +25,7 @@ import { copyToClipboard } from '../../utils';
  */
 @Component({
   selector: 'app-cli-console',
-  imports: [ButtonModule, DatePipe, FormsModule, InputTextModule, TagModule],
+  imports: [TooltipModule, ButtonModule, DatePipe, FormsModule, InputTextModule, TagModule],
   templateUrl: './cli-console.html',
   styleUrl: './cli-console.css',
   // Every value comes from signals, which notify on their own — and a streaming

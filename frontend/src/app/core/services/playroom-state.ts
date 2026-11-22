@@ -1,6 +1,6 @@
 import { DestroyRef, Injectable, inject, signal } from '@angular/core';
 import { Playroom, PreferredAction, Theme, ThemePreference } from '../../shared/models';
-import { readCache, updateCache } from '../../shared/utils';
+import { readCache, updateCache, statusLabel } from '../../shared/utils';
 
 export interface PlayroomSelection {
   playhouse: string;
@@ -19,6 +19,7 @@ export class PlayroomStateService {
   private readonly _backgroundGrain = signal<boolean>(true);
   private readonly _ameRobot = signal<boolean>(true);
   private readonly _roomsCount = signal<number>(0);
+  readonly roomStatusAnnouncement = signal('');
   private readonly _rooms = signal<Playroom[]>([]);
   private readonly _roomsLoadedFor = signal<string | null>(null);
   private readonly _lastRefreshedAt = signal<Date | null>(null);
@@ -97,6 +98,7 @@ export class PlayroomStateService {
     // A different playhouse invalidates the list, so the next visit loads
     // again rather than showing the previous playhouse's rooms.
     if (slug !== this._playhouse()) {
+      this.roomStatusAnnouncement.set('');
       this._roomsLoadedFor.set(null);
       this._lastRefreshedAt.set(null);
       this._rooms.set([]);
@@ -117,6 +119,17 @@ export class PlayroomStateService {
     this._roomsCount.set(n);
   }
   setRooms(rooms: Playroom[]): void {
+    if (this._roomsLoadedFor() === this._playhouse()) {
+      const previousRooms = new Map(this._rooms().map((room) => [room.name, room]));
+      const changes = rooms.filter((room) => {
+        const previous = previousRooms.get(room.name);
+        return previous && previous.status !== room.status;
+      });
+      if (changes.length)
+        this.roomStatusAnnouncement.set(
+          changes.map((room) => `${room.name} is ${statusLabel(room).toLowerCase()}`).join('. '),
+        );
+    }
     this._rooms.set(rooms);
   }
 
@@ -138,6 +151,7 @@ export class PlayroomStateService {
 
   /** Records that the context or organisation moved. */
   noteScopeChange(): void {
+    this.roomStatusAnnouncement.set('');
     this._roomsLoadedFor.set(null);
     this._lastRefreshedAt.set(null);
     this._scopeRevision.update((revision) => revision + 1);

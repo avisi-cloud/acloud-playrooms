@@ -26,6 +26,7 @@
     <div class="field-group">
       <label class="field-label" for="update-image">{{ optionTexts.image.label }}</label>
       <p-select
+        ariaLabel="Image"
         inputId="update-image"
         [options]="images"
         [ngModel]="form.image"
@@ -36,6 +37,7 @@
         placeholder="Select or type an image"
         appendTo="body"
         [style]="{ width: '100%' }"
+        appFieldDescription="update-image-hint-1"
       >
         <ng-template let-image pTemplate="item">
           <div class="ca-option">
@@ -47,7 +49,7 @@
           </div>
         </ng-template>
       </p-select>
-      <small class="field-hint"
+      <small class="field-hint" id="update-image-hint-1"
         >{{ comparisonFor('image')
         }}{{ selectedImage()?.Description ? ' · ' + selectedImage()?.Description : '' }}</small
       >
@@ -66,12 +68,19 @@
         class="w-full"
         [(ngModel)]="form.storage"
         (blur)="storageTouched = true"
+        aria-describedby="update-storage-hint-1"
       />
-      <small class="field-hint" [class.error]="storageError()">{{
-        storageError() ||
-          (comparisonFor('storage') ? comparisonFor('storage') + ' · ' : '') +
-            'Storage can only grow, without a restart.'
-      }}</small>
+      <small
+        class="field-hint"
+        [class.error]="storageError()"
+        id="update-storage-hint-1"
+        [attr.role]="storageError() ? 'alert' : null"
+        >{{
+          storageError() ||
+            (comparisonFor('storage') ? comparisonFor('storage') + ' · ' : '') +
+              'Storage can only grow, without a restart.'
+        }}</small
+      >
     </div>
     <div class="field-row field-row--align-inputs">
       <div class="field-group">
@@ -79,9 +88,15 @@
           >{{ optionTexts['cpu-request'].label }}<wbr /><small class="flag-ref"
             >--cpu-request</small
           ></label
-        ><input id="update-cpu-request" pInputText class="w-full" [(ngModel)]="form.cpuReq" />
+        ><input
+          aria-describedby="update-resources-hint update-cpu-request-hint-1"
+          id="update-cpu-request"
+          pInputText
+          class="w-full"
+          [(ngModel)]="form.cpuReq"
+        />
         @if (comparisonFor('cpuReq'); as comparison) {
-          <small class="field-hint">{{ comparison }}</small>
+          <small class="field-hint" id="update-cpu-request-hint-1">{{ comparison }}</small>
         }
       </div>
       <div class="field-group">
@@ -89,9 +104,15 @@
           >{{ optionTexts['cpu-limit'].label }}<wbr /><small class="flag-ref"
             >--cpu-limit</small
           ></label
-        ><input id="update-cpu-limit" pInputText class="w-full" [(ngModel)]="form.cpuLim" />
+        ><input
+          aria-describedby="update-resources-hint update-cpu-limit-hint-1"
+          id="update-cpu-limit"
+          pInputText
+          class="w-full"
+          [(ngModel)]="form.cpuLim"
+        />
         @if (comparisonFor('cpuLim'); as comparison) {
-          <small class="field-hint">{{ comparison }}</small>
+          <small class="field-hint" id="update-cpu-limit-hint-1">{{ comparison }}</small>
         }
       </div>
     </div>
@@ -101,9 +122,15 @@
           >{{ optionTexts['memory-request'].label }}<wbr /><small class="flag-ref"
             >--memory-request</small
           ></label
-        ><input id="update-memory-request" pInputText class="w-full" [(ngModel)]="form.memReq" />
+        ><input
+          aria-describedby="update-resources-hint update-memory-request-hint-1"
+          id="update-memory-request"
+          pInputText
+          class="w-full"
+          [(ngModel)]="form.memReq"
+        />
         @if (comparisonFor('memReq'); as comparison) {
-          <small class="field-hint">{{ comparison }}</small>
+          <small class="field-hint" id="update-memory-request-hint-1">{{ comparison }}</small>
         }
       </div>
       <div class="field-group">
@@ -111,13 +138,19 @@
           >{{ optionTexts['memory-limit'].label }}<wbr /><small class="flag-ref"
             >--memory-limit</small
           ></label
-        ><input id="update-memory-limit" pInputText class="w-full" [(ngModel)]="form.memLim" />
+        ><input
+          aria-describedby="update-resources-hint update-memory-limit-hint-1"
+          id="update-memory-limit"
+          pInputText
+          class="w-full"
+          [(ngModel)]="form.memLim"
+        />
         @if (comparisonFor('memLim'); as comparison) {
-          <small class="field-hint">{{ comparison }}</small>
+          <small class="field-hint" id="update-memory-limit-hint-1">{{ comparison }}</small>
         }
       </div>
     </div>
-    <small class="field-hint"
+    <small id="update-resources-hint" class="field-hint"
       >Guaranteed is reserved for this playroom; maximum is the most it may use. Type
       <code>none</code> to leave one unset — useful for a privileged playroom, which has its node to
       itself. Guaranteed <code>none</code> needs maximum <code>none</code> too, or Kubernetes
@@ -136,20 +169,28 @@
           pInputText
           class="w-full"
           [(ngModel)]="form.waitTimeout"
+          aria-describedby="update-wait-timeout-hint-1"
         />
-        <small class="field-hint">{{ optionTexts['wait-timeout'].hint }}</small>
+        <small class="field-hint" id="update-wait-timeout-hint-1">{{
+          optionTexts['wait-timeout'].hint
+        }}</small>
       </div>
       <div class="toggle-stack">
         <label class="toggle-line" for="update-no-wait"
           ><span>{{ optionTexts['no-wait'].label }}<small class="flag-ref">--no-wait</small></span
           ><p-toggleswitch inputId="update-no-wait" [(ngModel)]="form.noWait"
         /></label>
-        <label class="toggle-line"
+        <label class="toggle-line" for="playroom-update-drawer-changeReadOnly"
           ><span>Change the read-only setting</span
-          ><p-toggleswitch [(ngModel)]="form.changeReadOnly"
+          ><p-toggleswitch
+            inputId="playroom-update-drawer-changeReadOnly"
+            [(ngModel)]="form.changeReadOnly"
+            appFieldDescription="playroom-update-drawer-changeReadOnly-hint-1"
         /></label>
         @if (comparisonFor('readOnly'); as comparison) {
-          <small class="field-hint">{{ comparison }}</small>
+          <small class="field-hint" id="playroom-update-drawer-changeReadOnly-hint-1">{{
+            comparison
+          }}</small>
         }
         @if (form.changeReadOnly) {
           <!-- Indented behind a rule: a parent and its revealed child used to sit
@@ -169,14 +210,17 @@
 
   <section class="update-card" [class.is-dirty]="cardChanged('ports')">
     <div class="update-card-head">{{ optionTexts.port.label }}</div>
-    <label class="toggle-line"
+    <label class="toggle-line" for="playroom-update-drawer-changePorts"
       ><span>Replace the forwarded ports<small class="flag-ref">--port</small></span
-      ><p-toggleswitch [(ngModel)]="form.changePorts"
+      ><p-toggleswitch inputId="playroom-update-drawer-changePorts" [(ngModel)]="form.changePorts"
     /></label>
     @if (form.changePorts) {
       <div class="toggle-children">
-        <label class="toggle-line"
-          ><span>Remove every forwarded port</span><p-toggleswitch [(ngModel)]="form.clearPorts"
+        <label class="toggle-line" for="playroom-update-drawer-clearPorts"
+          ><span>Remove every forwarded port</span
+          ><p-toggleswitch
+            inputId="playroom-update-drawer-clearPorts"
+            [(ngModel)]="form.clearPorts"
         /></label>
         @if (!form.clearPorts) {
           <app-string-list-editor
@@ -209,6 +253,7 @@
         [(ngModel)]="form.capabilities"
         [style]="{ width: '100%' }"
         appendTo="body"
+        appFieldDescription="update-capabilities-hint-1"
       >
         <ng-template let-option pTemplate="item">
           <div class="ca-option">
@@ -217,7 +262,7 @@
           </div>
         </ng-template>
       </p-select>
-      <small class="field-hint"
+      <small class="field-hint" id="update-capabilities-hint-1"
         >{{ comparisonFor('capabilities') }}{{ comparisonFor('capabilities') ? ' · ' : '' }}Added
         capabilities are kept when the profile changes.</small
       >
@@ -290,9 +335,12 @@
     <div class="update-card-head">Connectivity</div>
     <label class="toggle-line" for="update-move-to-tailscale"
       ><span>Move to Tailscale<small class="flag-ref">--exposure tailscale</small></span
-      ><p-toggleswitch inputId="update-move-to-tailscale" [(ngModel)]="form.moveToTailscale"
+      ><p-toggleswitch
+        inputId="update-move-to-tailscale"
+        [(ngModel)]="form.moveToTailscale"
+        appFieldDescription="update-move-to-tailscale-hint"
     /></label>
-    <small class="field-hint"
+    <small id="update-move-to-tailscale-hint" class="field-hint"
       >{{ comparisonFor('moveToTailscale')
       }}{{
         form.moveToTailscale
@@ -325,7 +373,7 @@
   }
   <p class="field-hint">Closing keeps your changes for this room until you quit or switch scope.</p>
   @if (blockingError()) {
-    <div class="danger-copy danger-copy--strong">
+    <div class="danger-copy danger-copy--strong" role="alert">
       <i class="pi pi-exclamation-triangle"></i>{{ blockingError() }}
     </div>
   }

@@ -14,6 +14,11 @@
         [ngModel]="value"
         (ngModelChange)="replaceValueAt($index, $event)"
         (paste)="pasteLinesAt($index, $event)"
+        [attr.aria-describedby]="
+          (hint ? suggestionListId + '-hint ' : '') +
+            (itemErrors[$index] || itemHints[$index] ? suggestionListId + '-row-' + $index : '') ||
+          null
+        "
         [attr.aria-invalid]="itemErrors[$index] ? true : null"
         [attr.list]="suggestions.length ? suggestionListId : null"
         [placeholder]="placeholder"
@@ -23,14 +28,19 @@
         severity="danger"
         [text]="true"
         size="small"
-        [attr.aria-label]="'Remove ' + itemLabel + ' ' + ($index + 1)"
+        [ariaLabel]="'Remove ' + itemLabel + ' ' + ($index + 1)"
         (click)="removeValueAt($index)"
       />
     </div>
     @if (itemErrors[$index] || itemHints[$index]; as text) {
-      <small class="field-hint" [class.error]="itemErrors[$index]" aria-live="polite">{{
-        text
-      }}</small>
+      <small
+        [id]="suggestionListId + '-row-' + $index"
+        class="field-hint"
+        [class.error]="itemErrors[$index]"
+        aria-live="polite"
+        [attr.role]="itemErrors[$index] ? 'alert' : null"
+        >{{ text }}</small
+      >
     }
   }
   @if (suggestions.length) {
@@ -48,6 +58,6 @@
     (click)="addBlankRow()"
   />
   @if (hint) {
-    <small class="field-hint">{{ hint }}</small>
+    <small class="field-hint" [id]="suggestionListId + '-hint'">{{ hint }}</small>
   }
 </div>

@@ -1,3 +1,4 @@
+import { TooltipModule } from 'primeng/tooltip';
 import { UpdateNoticesComponent } from './shared/components/update-notices/update-notices';
 import { ScheduleNoticesComponent } from './shared/components/schedule-notices/schedule-notices';
 import { DeepLinksService } from './core/services/deep-links';
@@ -63,6 +64,7 @@ export type CurrentScopeState = 'signed-out' | 'no-playhouse' | 'playhouse-selec
   },
   // The sidebar has its own dark theme boundary, including when the workspace is light.
   imports: [
+    TooltipModule,
     ScheduleNoticesComponent,
     UpdateNoticesComponent,
     CommandPaletteComponent,
@@ -116,19 +118,9 @@ export class App implements OnInit {
    * any command the user started. Held to the end of the breath — see BREATH_MS.
    */
   readonly shellBusy = this._shellBusy.asReadonly();
-  private hasActivatedRoute = false;
 
   updateMascotMotionForDocumentVisibility(): void {
     this.mascotMotionPaused.set(document.hidden);
-  }
-
-  focusRoutedContent(): void {
-    if (this.hasActivatedRoute && !this.showPlayhouseChooser)
-      setTimeout(() => {
-        if (!this.showPlayhouseChooser)
-          document.getElementById('main-content')?.focus({ preventScroll: true });
-      });
-    this.hasActivatedRoute = true;
   }
 
   readonly currentScopeState = computed<CurrentScopeState>(() => {

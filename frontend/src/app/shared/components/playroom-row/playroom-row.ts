@@ -1,3 +1,4 @@
+import { TooltipModule } from 'primeng/tooltip';
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
@@ -8,7 +9,7 @@ import { PlayroomCardComponent } from '../playroom-card/playroom-card';
 @Component({
   // eslint-disable-next-line @angular-eslint/component-selector -- Keep native table row semantics.
   selector: 'tr[app-playroom-row]',
-  imports: [CommonModule, ButtonModule, MenuModule],
+  imports: [TooltipModule, CommonModule, ButtonModule, MenuModule],
   templateUrl: './playroom-row.html',
   styleUrl: './playroom-row.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

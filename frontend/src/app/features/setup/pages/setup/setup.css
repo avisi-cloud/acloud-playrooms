@@ -57,7 +57,7 @@
 
 .setup-note .pi {
   margin-top: 2px;
-  color: var(--cyan);
+  color: var(--link);
 }
 
 .setup-tool {

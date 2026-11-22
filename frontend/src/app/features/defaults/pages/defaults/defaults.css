@@ -22,7 +22,7 @@
 
 .dirty-count {
   font-size: 11.5px;
-  color: var(--cyan);
+  color: var(--link);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -142,7 +142,7 @@
 .slider-current-val {
   font-size: 12px;
   font-weight: 600;
-  color: var(--cyan);
+  color: var(--link);
   font-family: var(--font-mono);
   white-space: nowrap;
 }

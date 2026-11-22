@@ -250,7 +250,7 @@
 }
 
 .punt {
-  color: var(--cyan);
+  color: var(--busy-on-dark);
 }
 
 /* Scrolls rather than clips. The tool list comes from the backend, and at the

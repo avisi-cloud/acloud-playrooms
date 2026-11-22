@@ -1,3 +1,4 @@
+import { FieldDescriptionDirective } from '../../../../shared/directives/field-description';
 import { PlayroomTemplatesService } from '../../../../core/services/playroom-templates';
 import type { PlayroomTemplate } from '../../../../shared/models/playroom-template';
 import { createFormFromTemplate } from '../../../../shared/utils/playroom-template';
@@ -82,6 +83,7 @@ const INPUT_FIELDS_SHOWN_IN_EASY_MODE: (keyof PlayroomCreateInput)[] = [
 @Component({
   selector: 'app-create-playroom-drawer',
   imports: [
+    FieldDescriptionDirective,
     CommonModule,
     DialogModule,
     EnvironmentEditorComponent,

@@ -27,6 +27,15 @@ const AvisiPreset = definePreset(Aura, {
     },
     colorScheme: {
       light: {
+        text: {
+          mutedColor: 'var(--tx-3)',
+          hoverMutedColor: 'var(--tx-2)',
+        },
+        formField: {
+          placeholderColor: 'var(--tx-3)',
+          floatLabelColor: 'var(--tx-3)',
+          floatLabelActiveColor: 'var(--tx-3)',
+        },
         primary: {
           color: '{primary.700}',
           contrastColor: '#ffffff',
@@ -57,6 +66,15 @@ const AvisiPreset = definePreset(Aura, {
         },
       },
       dark: {
+        text: {
+          mutedColor: 'var(--tx-3)',
+          hoverMutedColor: 'var(--tx-2)',
+        },
+        formField: {
+          placeholderColor: 'var(--tx-3)',
+          floatLabelColor: 'var(--tx-3)',
+          floatLabelActiveColor: 'var(--tx-3)',
+        },
         primary: {
           color: '{primary.400}',
           contrastColor: '#003345',
@@ -82,6 +100,37 @@ const AvisiPreset = definePreset(Aura, {
           800: '#003345',
           900: '#002233',
           950: '#001520',
+        },
+      },
+    },
+  },
+  components: {
+    button: {
+      colorScheme: {
+        light: {
+          text: {
+            secondary: {
+              color: 'var(--tx-2)',
+            },
+          },
+          outlined: {
+            secondary: {
+              color: 'var(--tx-2)',
+            },
+          },
+        },
+        dark: {
+          text: {
+            secondary: {
+              color: 'var(--tx-2)',
+              activeBackground: 'var(--surf-3)',
+            },
+          },
+          outlined: {
+            secondary: {
+              color: 'var(--tx-2)',
+            },
+          },
         },
       },
     },

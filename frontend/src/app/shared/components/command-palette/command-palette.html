@@ -48,7 +48,9 @@
         (keydown.enter)="chooseCommand(command)"
         tabindex="-1"
       >
-        <span class="palette-label" [title]="command.label">{{ command.label }}</span>
+        <span class="palette-label" [pTooltip]="command.label" tooltipEvent="both" tabindex="0">{{
+          command.label
+        }}</span>
         <small>{{ command.category }}</small>
       </div>
     }

@@ -10,7 +10,7 @@
       </button>
       <div class="page-header-divider"></div>
       <div class="page-header-stack">
-        <h1 class="page-header-title">Defaults<span class="punt">.</span></h1>
+        <h1 appPageHeading class="page-header-title">Defaults<span class="punt">.</span></h1>
         <p class="page-header-sub">
           Override the built-in values used when creating playrooms, here and in the terminal.
         </p>
@@ -25,9 +25,10 @@
         severity="secondary"
         [outlined]="true"
         size="small"
-        title="Clears every configured default, restoring the built-in values"
+        pTooltip="Clears every configured default, restoring the built-in values"
         [disabled]="loading() || saving() || !hasConfigured()"
         (click)="showResetConfirmation = true"
+        tooltipEvent="both"
       />
       <p-button
         label="Save"
@@ -100,9 +101,10 @@
                     <button
                       class="reset-btn"
                       type="button"
-                      title="Revert to built-in"
+                      pTooltip="Revert to built-in"
                       [attr.aria-label]="'Revert ' + row.label + ' to its built-in value'"
                       (click)="markDirty(row.Key, row.Builtin)"
+                      tooltipEvent="both"
                     >
                       <i class="pi pi-undo"></i>
                     </button>

@@ -229,7 +229,7 @@ test('offers a session fix on the room error panel', async ({ page }) => {
 
 test('confirms the NodePort allowlist command and offers another connection', async ({ page }) => {
   await openRoom(page, 'api-development');
-  await page.getByRole('button', { name: 'Connect', exact: true }).click();
+  await page.getByRole('button', { name: /\bConnect$/ }).click();
   const dialog = page.getByRole('dialog', { name: 'Connect to api-development', exact: true });
   await dialog.locator('#connect-via').click();
   await page.getByRole('option', { name: 'NodePort', exact: true }).click();

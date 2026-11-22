@@ -93,7 +93,7 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--idle-on-dark);
   flex-shrink: 0;
   white-space: nowrap;
 }
@@ -111,7 +111,7 @@
 
 .card-sub {
   font-size: 11px;
-  color: rgba(191, 224, 236, 0.6);
+  color: var(--idle-on-dark);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -193,7 +193,7 @@
 .card-raw-status {
   font-family: var(--font-mono);
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.38);
+  color: var(--idle-on-dark);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -246,7 +246,7 @@
 .card-host {
   font-family: var(--font-mono);
   font-size: 10.5px;
-  color: var(--cyan);
+  color: var(--link);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -286,7 +286,7 @@
   border: 1px solid color-mix(in srgb, var(--cyan) 45%, transparent);
   border-radius: 999px;
   background: none;
-  color: var(--cyan);
+  color: var(--busy-on-dark);
   font-size: 10px;
   font-weight: 600;
   white-space: nowrap;
@@ -380,4 +380,8 @@ button.card-outdated:focus-visible {
   flex-shrink: 0;
   accent-color: var(--link);
   cursor: pointer;
+}
+
+.playroom-card:not(.stopped) .punt {
+  color: var(--busy-on-dark);
 }

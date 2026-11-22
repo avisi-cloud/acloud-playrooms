@@ -1,4 +1,6 @@
 <p-drawer
+  appOverlayFocus="Edit playhouse"
+  [appOverlayVisible]="visible"
   [visible]="visible"
   (visibleChange)="visibleChange.emit($event); visible = $event"
   position="right"
@@ -23,8 +25,9 @@
   >
     <div class="ph-update-card-head">Connectivity</div>
     <div class="field-group">
-      <label class="field-label">Exposure</label>
+      <label class="field-label" for="update-playhouse-drawer-exposure">Exposure</label>
       <p-select
+        inputId="update-playhouse-drawer-exposure"
         [options]="exposureOptions"
         optionLabel="label"
         optionValue="id"
@@ -32,6 +35,7 @@
         (ngModelChange)="onExposureChange($event)"
         appendTo="body"
         [style]="{ width: '100%' }"
+        appFieldDescription="update-playhouse-drawer-exposure-hint-1"
       >
         <ng-template let-option pTemplate="item">
           <div class="ca-option">
@@ -40,7 +44,7 @@
           </div>
         </ng-template>
       </p-select>
-      <small class="field-hint">{{
+      <small class="field-hint" id="update-playhouse-drawer-exposure-hint-1">{{
         comparisonFor('exposure') || 'Existing playrooms keep their own exposure.'
       }}</small>
     </div>
@@ -57,6 +61,7 @@
         [(ngModel)]="form.defaultVia"
         appendTo="body"
         [style]="{ width: '100%' }"
+        appFieldDescription="ph-update-default-via-hint-1"
       >
         <ng-template let-option pTemplate="item">
           <div class="ca-option">
@@ -65,7 +70,7 @@
           </div>
         </ng-template>
       </p-select>
-      <small class="field-hint"
+      <small class="field-hint" id="ph-update-default-via-hint-1"
         >{{ comparisonFor('defaultVia') }}{{ comparisonFor('defaultVia') ? ' · ' : ''
         }}{{ defaultConnectionPathHint }}</small
       >
@@ -73,28 +78,38 @@
 
     @if (showsTailscaleCredentials()) {
       <div class="field-group">
-        <label class="field-label">Tailscale OAuth client id</label>
+        <label class="field-label" for="update-playhouse-drawer-tailscaleOAuthClientID"
+          >Tailscale OAuth client id</label
+        >
         <input
+          id="update-playhouse-drawer-tailscaleOAuthClientID"
           pInputText
           class="w-full"
           [(ngModel)]="form.tailscaleOAuthClientID"
           spellcheck="false"
           autocomplete="off"
+          aria-describedby="update-playhouse-drawer-tailscaleOAuthClientID-hint-1"
         />
         @if (comparisonFor('tailscaleOAuthClientID'); as comparison) {
-          <small class="field-hint">{{ comparison }}</small>
+          <small class="field-hint" id="update-playhouse-drawer-tailscaleOAuthClientID-hint-1">{{
+            comparison
+          }}</small>
         }
       </div>
       <div class="field-group">
-        <label class="field-label">Tailscale OAuth client secret</label>
+        <label class="field-label" for="update-playhouse-drawer-tailscaleOAuthClientSecret"
+          >Tailscale OAuth client secret</label
+        >
         <input
+          id="update-playhouse-drawer-tailscaleOAuthClientSecret"
           pInputText
           class="w-full"
           type="password"
           [(ngModel)]="form.tailscaleOAuthClientSecret"
           autocomplete="off"
+          aria-describedby="update-playhouse-drawer-tailscaleOAuthClientSecret-hint-1"
         />
-        <small class="field-hint"
+        <small class="field-hint" id="update-playhouse-drawer-tailscaleOAuthClientSecret-hint-1"
           >{{ comparisonFor('tailscaleOAuthClientSecret')
           }}{{ comparisonFor('tailscaleOAuthClientSecret') ? ' · ' : '' }}Stored in the cluster on
           first use, so leave both blank for a playhouse already on Tailscale. Fill them in to
@@ -155,9 +170,10 @@
         placeholder="keep the current channel"
         spellcheck="false"
         autocomplete="off"
+        aria-describedby="ph-update-channel-hint-1"
       />
       @if (comparisonFor('updateChannel'); as comparison) {
-        <small class="field-hint">{{ comparison }}</small>
+        <small class="field-hint" id="ph-update-channel-hint-1">{{ comparison }}</small>
       }
     </div>
   </section>
@@ -169,29 +185,41 @@
     <div class="ph-update-card-head">Capacity</div>
     <div class="field-row">
       <div class="field-group">
-        <label class="field-label">Max playroom nodes</label>
+        <label class="field-label" for="update-playhouse-drawer-maxPlayroomNodes"
+          >Max playroom nodes</label
+        >
         <input
+          id="update-playhouse-drawer-maxPlayroomNodes"
           pInputText
           class="w-full"
           type="number"
           min="0"
           [(ngModel)]="form.maxPlayroomNodes"
+          aria-describedby="update-playhouse-drawer-maxPlayroomNodes-hint-1"
         />
         @if (comparisonFor('maxPlayroomNodes'); as comparison) {
-          <small class="field-hint">{{ comparison }}</small>
+          <small class="field-hint" id="update-playhouse-drawer-maxPlayroomNodes-hint-1">{{
+            comparison
+          }}</small>
         }
       </div>
       <div class="field-group">
-        <label class="field-label">Max privileged nodes</label>
+        <label class="field-label" for="update-playhouse-drawer-maxPrivilegedNodes"
+          >Max privileged nodes</label
+        >
         <input
+          id="update-playhouse-drawer-maxPrivilegedNodes"
           pInputText
           class="w-full"
           type="number"
           min="0"
           [(ngModel)]="form.maxPrivilegedNodes"
+          aria-describedby="update-playhouse-drawer-maxPrivilegedNodes-hint-1"
         />
         @if (comparisonFor('maxPrivilegedNodes'); as comparison) {
-          <small class="field-hint">{{ comparison }}</small>
+          <small class="field-hint" id="update-playhouse-drawer-maxPrivilegedNodes-hint-1">{{
+            comparison
+          }}</small>
         }
       </div>
     </div>
@@ -202,8 +230,16 @@
     <div class="ph-update-card-head">Behaviour</div>
     <div class="field-group">
       <label class="field-label" for="ph-update-wait-timeout">Wait timeout</label>
-      <input id="ph-update-wait-timeout" pInputText class="w-full" [(ngModel)]="form.waitTimeout" />
-      <small class="field-hint">How long to wait for the update to finish.</small>
+      <input
+        id="ph-update-wait-timeout"
+        pInputText
+        class="w-full"
+        [(ngModel)]="form.waitTimeout"
+        aria-describedby="ph-update-wait-timeout-hint-1"
+      />
+      <small class="field-hint" id="ph-update-wait-timeout-hint-1"
+        >How long to wait for the update to finish.</small
+      >
     </div>
   </section>
 
@@ -232,8 +268,9 @@
       severity="secondary"
       [outlined]="true"
       size="small"
-      title="Update with no changes: converge to the playhouse layout this acloud ships"
+      pTooltip="Update with no changes: converge to the playhouse layout this acloud ships"
       (click)="submitBringUpToDate()"
+      tooltipEvent="both"
     />
     <p-button label="Cancel" severity="secondary" [text]="true" size="small" (click)="close()" />
     <p-button

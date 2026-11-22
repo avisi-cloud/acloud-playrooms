@@ -255,7 +255,7 @@
 }
 
 .field-hint .link {
-  color: var(--cyan);
+  color: var(--link);
   cursor: pointer;
   text-decoration: underline;
 }

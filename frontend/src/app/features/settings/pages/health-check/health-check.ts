@@ -1,3 +1,4 @@
+import { PageHeadingDirective } from '../../../../shared/directives/page-heading';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -34,7 +35,7 @@ const ACTION_LABEL: Record<Exclude<HealthAction, ''>, string> = {
 /** Checks everything a working connection needs, with a fix for each problem. */
 @Component({
   selector: 'app-health-check-page',
-  imports: [ButtonModule, TagModule],
+  imports: [PageHeadingDirective, ButtonModule, TagModule],
   templateUrl: './health-check.html',
   styleUrl: './health-check.css',
 })

@@ -2,7 +2,9 @@
   <header class="page-header">
     <div class="page-header-left">
       <div class="page-header-stack">
-        <h1 class="page-header-title">Set up Acloud Playrooms<span class="punt">.</span></h1>
+        <h1 appPageHeading class="page-header-title">
+          Set up Acloud Playrooms<span class="punt">.</span>
+        </h1>
         <p class="page-header-sub">Everything you need before your first playroom.</p>
       </div>
     </div>
@@ -12,8 +14,9 @@
         severity="secondary"
         [outlined]="true"
         size="small"
-        [title]="setup.setupCompleted() ? '' : 'Setup opens again the next time the app starts'"
+        [pTooltip]="setup.setupCompleted() ? '' : 'Setup opens again the next time the app starts'"
         (click)="setUpLater()"
+        tooltipEvent="both"
       />
     </div>
   </header>
@@ -154,8 +157,11 @@
                     placeholder="Select a playhouse"
                     appendTo="body"
                     [style]="{ width: '100%' }"
+                    appFieldDescription="setup-playhouse-hint-1"
                   />
-                  <small class="field-hint">You can switch later from the sidebar.</small>
+                  <small class="field-hint" id="setup-playhouse-hint-1"
+                    >You can switch later from the sidebar.</small
+                  >
                 </div>
               }
             }
@@ -202,12 +208,16 @@
                   autocorrect="off"
                   autocapitalize="off"
                   autocomplete="off"
+                  aria-describedby="setup-ssh-key-hint-1"
                 />
-                <small class="field-hint">{{ optionTexts['ssh-key'].hint }}</small>
+                <small class="field-hint" id="setup-ssh-key-hint-1">{{
+                  optionTexts['ssh-key'].hint
+                }}</small>
               </div>
               <div class="field-group">
                 <label class="field-label" for="setup-image">{{ optionTexts.image.label }}</label>
                 <p-select
+                  ariaLabel="Image"
                   inputId="setup-image"
                   [options]="imageOptions"
                   optionLabel="label"
@@ -216,8 +226,11 @@
                   (ngModelChange)="imageDraft.set($event ?? '')"
                   appendTo="body"
                   [style]="{ width: '100%' }"
+                  appFieldDescription="setup-image-hint-1"
                 />
-                <small class="field-hint">The workspace image new playrooms start from.</small>
+                <small class="field-hint" id="setup-image-hint-1"
+                  >The workspace image new playrooms start from.</small
+                >
               </div>
             }
 
