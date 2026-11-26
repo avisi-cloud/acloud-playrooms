@@ -60,6 +60,6 @@
     "msgpackr-extract@3.0.4": true
   },
   "overrides": {
-    "vite": "8.3.5"
+    "vite": "8.4.0"
   }
 }
